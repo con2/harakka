@@ -978,16 +978,38 @@ export class BookingService {
   ) {
     const supabase = req.supabase;
 
-    // Validate the items to be rejected
+    // Fetch booking items from the view
     if (itemIds && itemIds.length > 0) {
-      const { data: statusCheck } = await supabase
-        .from("booking_items")
-        .select("status")
-        .eq("booking_id", bookingId)
-        .eq("provider_organization_id", providerOrgId)
-        .in("id", itemIds);
+      const { data: bookingDetails, error: bookingDetailsError } =
+        await supabase
+          .from("view_bookings_with_details")
+          .select(
+            `
+            id,
+            booking_items(
+              id,
+              status,
+              quantity,
+              storage_items (
+                translations
+              )
+            )
+          `,
+          )
+          .eq("id", bookingId)
+          .eq("provider_organization_id", providerOrgId);
 
-      const hasNonPending = statusCheck
+      if (bookingDetailsError) handleSupabaseError(bookingDetailsError);
+      if (!bookingDetails) {
+        throw new BadRequestException("Failed to fetch booking details");
+      }
+
+      // Process the booking items
+      const bookingItems = bookingDetails.flatMap(
+        (booking) => booking.booking_items,
+      );
+
+      const hasNonPending = bookingItems
         ?.map((i) => i.status)
         .some((status) => status !== "pending");
 
@@ -1026,18 +1048,31 @@ export class BookingService {
       handleSupabaseError(updateErr);
     }
 
-    // Check if all items in the booking are rejected (excluding cancelled)
-    const { data: items, error: itemsErr } = await supabase
-      .from("booking_items")
-      .select("status")
-      .eq("booking_id", bookingId);
+    // Check if all items in the booking are rejected
+    const { data: booking, error: bookingErr } = await supabase
+      .from("view_bookings_with_details")
+      .select(
+        `
+            id,
+            booking_items(
+              id,
+              status,
+              quantity,
+              storage_items (
+                translations
+              )
+            )
+          `,
+      )
+      .eq("id", bookingId);
 
-    if (itemsErr || !items) {
-      handleSupabaseError(itemsErr);
+    if (bookingErr) handleSupabaseError(bookingErr);
+    if (!booking) {
+      throw new BadRequestException("This booking does not exist");
     }
-    if (!items) {
-      throw new BadRequestException("Failed to fetch booking items");
-    }
+
+    // Flatten the booking_items array from the items
+    const items = booking.flatMap((item) => item.booking_items);
 
     // Filter out cancelled items when determining booking status
     const activeItems = items.filter((it) => it.status !== "cancelled");
@@ -1058,7 +1093,7 @@ export class BookingService {
         .eq("id", bookingId);
 
       if (bookingUpdateErr) {
-        throw new BadRequestException("Failed to set booking to rejected");
+        handleSupabaseError(bookingUpdateErr);
       }
 
       // Send rejection email only if the entire booking is rejected
@@ -1081,19 +1116,51 @@ export class BookingService {
         .eq("id", bookingId);
 
       if (bookingUpdateErr) {
-        throw new BadRequestException("Failed to set booking to confirmed");
+        handleSupabaseError(bookingUpdateErr);
       }
 
       // Send partly confirmed email if there are still confirmed items
-      const confirmedItems = activeItems.filter(
-        (item) => item.status === "confirmed",
-      );
-      const rejectedItems = activeItems.filter(
-        (item) => item.status === "rejected",
-      );
 
-      console.log("Confirmed Items:", confirmedItems);
-      console.log("Rejected Items:", rejectedItems);
+      // Prepare confirmed items with translations
+      const confirmedItems = activeItems
+        .filter((item) => item.status === "confirmed")
+        .map((item) => {
+          const translations = item.storage_items?.translations
+            ? JSON.parse(JSON.stringify(item.storage_items.translations))
+            : {};
+
+          return {
+            ...item,
+            translations: {
+              fi: {
+                name: translations.fi?.item_name || "Tuntematon kohde",
+              },
+              en: {
+                name: translations.en?.item_name || "Unknown Item",
+              },
+            },
+          };
+        });
+
+      const rejectedItems = activeItems
+        .filter((item) => item.status === "rejected")
+        .map((item) => {
+          const translations = item.storage_items?.translations
+            ? JSON.parse(JSON.stringify(item.storage_items.translations))
+            : {};
+
+          return {
+            ...item,
+            translations: {
+              fi: {
+                name: translations.fi?.item_name || "Tuntematon kohde",
+              },
+              en: {
+                name: translations.en?.item_name || "Unknown Item",
+              },
+            },
+          };
+        });
 
       try {
         await this.mailService.sendBookingMail(

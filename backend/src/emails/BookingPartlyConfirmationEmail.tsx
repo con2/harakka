@@ -96,7 +96,8 @@ const BookingPartlyConfirmationEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {confirmedItems.map((item, index) => (
               <li key={index}>
-                {item.translations.fi.name} - {item.quantity}
+                {item.translations?.fi?.name || "Tuntematon kohde"} -{" "}
+                {item.quantity}
               </li>
             ))}
           </ul>
@@ -107,7 +108,8 @@ const BookingPartlyConfirmationEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {rejectedItems.map((item, index) => (
               <li key={index}>
-                {item.translations.fi.name} - {item.quantity}
+                {item.translations?.fi?.name || "Tuntematon kohde"} -{" "}
+                {item.quantity}
               </li>
             ))}
           </ul>
@@ -136,7 +138,8 @@ const BookingPartlyConfirmationEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {confirmedItems.map((item, index) => (
               <li key={index}>
-                {item.translations.en.name} - {item.quantity}
+                {item.translations?.en?.name || "Unknown Item"} -{" "}
+                {item.quantity}
               </li>
             ))}
           </ul>
@@ -147,7 +150,8 @@ const BookingPartlyConfirmationEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {rejectedItems.map((item, index) => (
               <li key={index}>
-                {item.translations.en.name} - {item.quantity}
+                {item.translations?.en?.name || "Unknown Item"} -{" "}
+                {item.quantity}
               </li>
             ))}
           </ul>
