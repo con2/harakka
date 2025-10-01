@@ -673,17 +673,7 @@ const MyBookingsPage = () => {
 
         <div className="space-y-4">
           {/* Booking details */}
-          <div className="grid grid-cols-2 gap-4 mb-2">
-            <div>
-              <h3 className="font-semibold text-md mb-1">
-                {t.myBookingsPage.bookingDetails.customerInfo[lang]}
-              </h3>
-              <p className="text-sm text-grey-500">
-                {booking?.full_name ?? ""}
-              </p>
-              <p className="text-sm text-gray-500">{booking?.email}</p>
-            </div>
-
+          <div className="grid grid-cols-2 gap-4 mb-8">
             <div>
               <h3 className="font-semibold text-md mb-1">
                 {t.myBookingsPage.bookingDetails.bookingInfo[lang]}
@@ -697,12 +687,8 @@ const MyBookingsPage = () => {
                 {formatDate(booking.created_at, "d MMM yyyy")}
               </p>
             </div>
-          </div>
-
-          <div>
-            {/* Booking Dates and Date Picker */}
             <div className="mb-4">
-              <h3 className="font-semibold text-md mb-2">
+              <h3 className="font-semibold text-md mb-1">
                 {t.myBookingsPage.headings.bookingDates[lang]}
               </h3>
               <div>
@@ -725,6 +711,10 @@ const MyBookingsPage = () => {
                 )}
               </div>
             </div>
+          </div>
+
+          <div>
+            {/* Booking Dates and Date Picker */}
 
             {/* Booking Items */}
             {loading || _loadingAvailability ? (
