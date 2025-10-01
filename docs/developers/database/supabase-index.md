@@ -19,16 +19,12 @@ This document explains how we use Supabase (Pro plan) with Branching and the Git
 ## Supabase Docs Index
 
 - Supabase Local Development Guide — Current
-  - Path: docs/developers/supabase-local-development.md
+  - Path: [Supabase Local Development](supabase-local-development.md)
   - Purpose: Docker/CLI install details, local commands, running local stack. Use this for local-only workflows. For migrations/branching, see this page.
 
 - Migration Separation Documentation — Deep-dive
-  - Path: docs/developers/README_MIGRATION_SEPARATION.md
+  - Path: [Migration Seperation](migration-seperation.md)
   - Purpose: Background on separating auth/storage vs public schema to satisfy preview branch constraints. Read for context; follow this page for the workflow.
-
-- Supabase Setup Guide (Legacy) — Deprecated
-  - Path: docs/developers/backend/supabase-setup.md
-  - Purpose: Historical manual setup for auth, storage, and policies. Kept for reference only. Do not follow for day-to-day work.
 
 ## Sources
 
