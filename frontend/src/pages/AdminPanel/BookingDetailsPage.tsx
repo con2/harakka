@@ -384,12 +384,20 @@ const BookingDetailsPage = () => {
         if (orgLocationsLoading) {
           return t.bookingDetailsPage.modal.bookingItems.columns.loading[lang];
         }
+
         const locId = row.original.location_id;
         const loc = orgLocations.find((l) => l.storage_location_id === locId);
-        return (
+        const name =
           loc?.storage_locations?.name ||
           t.uiComponents.dataTable.emptyCell[lang] ||
-          "—"
+          "—";
+
+        return (
+          <span
+            className={row.original.status === "cancelled" ? "opacity-50" : ""}
+          >
+            {name}
+          </span>
         );
       },
     },
