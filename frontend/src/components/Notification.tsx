@@ -491,9 +491,16 @@ export const Notifications: React.FC<Props> = ({ userId }) => {
         {/* Notification bell */}
         <Button
           variant="ghost"
+          aria-label={t.navigation.aria.labels.notifications[lang].replace(
+            "{number}",
+            unseen.toString(),
+          )}
           className="relative hover:bg-(--subtle-grey) w-fit px-2"
         >
-          <Bell className="!h-4.5 !w-5 text-(--midnight-black)" />
+          <Bell
+            aria-hidden="true"
+            className="!h-4.5 !w-5 text-(--midnight-black)"
+          />
           {/* Notification count badge */}
           {unseen > 0 && (
             <Badge className="absolute -right-1 -top-1 h-4 min-w-[1rem] px-1 text-[0.625rem] font-sans text-white leading-none !bg-(--emerald-green)">

@@ -18,6 +18,10 @@ export const myBookingsPage = {
       en: "Mark as Picked Up",
       fi: "Merkitse noudetuksi",
     },
+    return: {
+      en: "Mark Items Returned",
+      fi: "Merkitse palautetuiksi",
+    },
   },
   headings: {
     createdAt: {
@@ -141,6 +145,10 @@ export const myBookingsPage = {
       },
     },
     toast: {
+      noChanges: {
+        en: "No changes to save",
+        fi: "Ei muutoksia tallennettavaksi",
+      },
       bookingUpdated: {
         fi: "Tilaus päivitetty!",
         en: "Booking updated!",
@@ -168,6 +176,24 @@ export const myBookingsPage = {
       updatingBooking: {
         fi: "Päivitetään tilausta...",
         en: "Updating your booking...",
+      },
+    },
+  },
+  aria: {
+    labels: {
+      quantity: {
+        decrease: {
+          en: "Reduce quantity to {number}",
+          fi: "Vähennä määrää arvoon {number}",
+        },
+        increase: {
+          en: "Increase quantity to {number}",
+          fi: "Lisää määrää arvoon {number}",
+        },
+        enterQuantity: {
+          en: "Enter quantity. Current quantity {number}.",
+          fi: "Anna määrä. Nykyinen määrä {number}.",
+        },
       },
     },
   },

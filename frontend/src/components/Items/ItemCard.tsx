@@ -13,25 +13,30 @@ import { getItemById } from "@/store/slices/itemsSlice";
 import { t } from "@/translations";
 import { ItemTranslation } from "@/types";
 import { ItemImageAvailabilityInfo } from "@/types/storage";
-import { Clock, MapPin } from "lucide-react";
+import { Clock, MapPin, Minus, Plus } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   getItemImages,
   selectItemImages,
-} from "../../store/slices/itemImagesSlice";
-import { Item } from "../../types/item";
+} from "@/store/slices/itemImagesSlice";
+import { Item } from "@/types/item";
 import { Input } from "../ui/input";
 import { itemsApi } from "@/api/services/items";
+import { cn } from "@/lib/utils";
+import { ImageSchemaType } from "@/store/utils/validate";
 
 interface ItemsCardProps {
-  item: Item;
+  item: Item & {
+    images?: { main: ImageSchemaType };
+  };
+  preview?: boolean;
 }
 
-const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
+const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const itemImages = useAppSelector(selectItemImages);
@@ -61,53 +66,53 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   const failedImageUrlsRef = useRef<Set<string>>(new Set());
 
   // Stable URL calculation that won't change between renders
-  const stableImageUrl = useMemo(() => {
+  const stableImage = useMemo(() => {
     // Get all possible images for this item
     const validImages = itemImagesForCurrentItem.filter(
       (img) => !failedImageUrlsRef.current.has(img.image_url),
     );
 
-    // Find thumbnail image for this item
-    const thumbnailImage = validImages.find(
-      (img) => img.image_type === "thumbnail",
-    );
+    // Return main image if found, or first valid image if no main image.
+    const displayImg =
+      validImages.find((img) => img.image_type === "main") ?? validImages[0];
 
-    // If no thumbnail found, try to get main image
-    const mainImage = thumbnailImage
-      ? null
-      : validImages.find((img) => img.image_type === "main");
-
-    // Use thumbnail or main image URL
-    return thumbnailImage?.image_url || mainImage?.image_url || "";
+    return {
+      image_url: displayImg?.image_url || "",
+      object_fit: displayImg?.object_fit || "cover",
+    };
   }, [itemImagesForCurrentItem]);
 
   // Image handling states
-  const [currentImageUrl, setCurrentImageUrl] = useState("");
+  const [currentImage, setCurrentImage] = useState({
+    image_url: "",
+    object_fit: "cover",
+  });
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const imageLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Set the image URL just once when it changes
   useEffect(() => {
-    if (stableImageUrl && !failedImageUrlsRef.current.has(stableImageUrl)) {
+    const { image_url } = stableImage;
+    if (image_url && !failedImageUrlsRef.current.has(image_url)) {
       // Clear any existing timeout
       if (imageLoadingTimeoutRef.current) {
         clearTimeout(imageLoadingTimeoutRef.current);
       }
 
-      setCurrentImageUrl(stableImageUrl);
+      setCurrentImage(stableImage);
       setIsImageLoading(true);
       setLoadFailed(false);
 
       // Set a timeout to prevent infinite loading
       imageLoadingTimeoutRef.current = setTimeout(() => {
         setIsImageLoading(false);
-        failedImageUrlsRef.current.add(stableImageUrl); // Mark as failed due to timeout
-        console.warn(`Image loading timed out for ${stableImageUrl}`);
+        failedImageUrlsRef.current.add(stableImage.image_url); // Mark as failed due to timeout
+        console.warn(`Image loading timed out for ${stableImage.image_url}`);
       }, 5000); // 5 seconds timeout
     } else {
       // If no URL or URL previously failed
-      setCurrentImageUrl("");
+      setCurrentImage(stableImage);
       setIsImageLoading(false);
       setLoadFailed(true);
     }
@@ -118,7 +123,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         clearTimeout(imageLoadingTimeoutRef.current);
       }
     };
-  }, [stableImageUrl]);
+  }, [stableImage]);
 
   // Fetch images only once per item
   useEffect(() => {
@@ -214,7 +219,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
   return (
     <Card
       data-cy="items-card"
-      className="w-full flex flex-col justify-between p-4 flex-[1_0_250px]"
+      className={cn(
+        "w-full flex flex-col justify-between p-4 flex-[1_0_250px]",
+        preview && "shadow-none max-w-[350px]",
+      )}
     >
       {/* Image Section */}
       <div
@@ -227,9 +235,14 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
           </div>
         )}
         <img
-          src={currentImageUrl || imagePlaceholder}
+          src={
+            item.images?.main?.url || currentImage.image_url || imagePlaceholder
+          }
           alt={itemContent?.item_name || "Tuotteen kuva"}
-          className="w-full h-full object-cover transition-opacity duration-300"
+          className={cn(
+            "w-full h-full transition-opacity duration-300",
+            `object-${preview ? item.images?.main?.metadata?.object_fit : currentImage.object_fit}`,
+          )}
           onLoad={() => {
             if (imageLoadingTimeoutRef.current) {
               clearTimeout(imageLoadingTimeoutRef.current);
@@ -240,9 +253,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
           }}
           onError={(e) => {
             // Prevent infinite loops by tracking which URLs have failed
-            if (currentImageUrl) {
-              console.warn(`Failed to load image: ${currentImageUrl}`);
-              failedImageUrlsRef.current.add(currentImageUrl);
+            if (currentImage.image_url) {
+              console.warn(`Failed to load image: ${currentImage.image_url}`);
+              failedImageUrlsRef.current.add(currentImage.image_url);
             }
 
             // Clear the timeout
@@ -288,7 +301,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
       </div>
 
       {/* Display selected booking timeframe if it exists */}
-      {startDate && endDate && (
+      {startDate && endDate && !preview && (
         <div
           className="bg-slate-100 p-2 rounded-md mb-1 flex flex-col items-center"
           data-cy="item-timeframe"
@@ -311,16 +324,24 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
         <div className="flex flex-col flex-wrap items-center space-y-2 justify-between">
           <div className="flex items-center">
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => setQuantity(Math.max(0, quantity - 1))}
               className="h-8 w-8 p-0"
+              aria-label={t.itemCard.aria.labels.quantity.reduce[lang].replace(
+                "{number}",
+                (quantity - 1).toString(),
+              )}
               disabled={quantity <= 0}
             >
-              -
+              <Minus aria-hidden />
             </Button>
             <Input
               type="text"
+              aria-label={t.itemCard.aria.labels.quantity.enterQuantity[
+                lang
+              ].replace("{number}", quantity.toString())}
               value={quantity}
               onChange={(e) => {
                 const value = parseInt(e.target.value) || 0;
@@ -336,6 +357,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
               max={availabilityInfo.availableQuantity}
             />
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => {
@@ -344,24 +366,27 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
                 );
               }}
               className="h-8 w-8 p-0"
+              aria-label={t.itemCard.aria.labels.quantity.increase[
+                lang
+              ].replace("{number}", (quantity - 1).toString())}
               disabled={quantity >= availabilityInfo.availableQuantity}
             >
-              +
+              <Plus aria-hidden />
             </Button>
           </div>
 
           <div className="flex items-center justify-end mb-3 mt-1">
-            {availabilityInfo.isChecking ? (
+            {!preview && availabilityInfo.isChecking ? (
               <p className="text-xs text-slate-400 italic m-0">
                 {t.itemCard.checkingAvailability[lang]}
               </p>
-            ) : availabilityInfo.error ? (
+            ) : !preview && availabilityInfo.error ? (
               <p className="text-xs text-red-500 italic m-0">
                 {t.itemCard.availabilityError[lang]}
               </p>
             ) : (
               <p className="text-xs text-slate-400 italic m-0">
-                {startDate && endDate
+                {!preview && startDate && endDate
                   ? availabilityInfo.availableQuantity > 0
                     ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
                     : `${t.itemCard.notAvailable[lang]}`
@@ -383,7 +408,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
               }
             >
               <Button
-                onClick={handleAddToCart}
+                type="button"
+                onClick={!preview ? handleAddToCart : () => {}}
                 className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-white hover:bg-secondary"
                 disabled={isAddToCartDisabled}
                 style={{
@@ -409,7 +435,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item }) => {
 
       {/* View Details Button */}
       <Button
-        onClick={() => handleItemClick(item.id)}
+        type="button"
+        onClick={!preview ? () => handleItemClick(item.id) : () => {}}
         className="w-full bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
         data-cy="item-view-details-btn"
       >

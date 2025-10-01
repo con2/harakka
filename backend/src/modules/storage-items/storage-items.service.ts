@@ -17,6 +17,7 @@ import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { calculateAvailableQuantity } from "src/utils/booking.utils";
 import {
   applyItemFilters,
+  mapItemImagesUpdate,
   payloadToStorageItem,
 } from "@src/utils/storage-items.utils";
 import { ApiResponse, ApiSingleResponse } from "@common/response.types"; // Import ApiSingleResponse for type safety
@@ -28,10 +29,18 @@ import { mapItemImages, mapTagLinks } from "@src/utils/storage-items.utils";
 import { ItemImagesService } from "../item-images/item-images.service";
 import { parse, ParseResult } from "papaparse";
 import { Item, ItemSchema } from "./schema/item-schema";
-import { UpdateItem, UpdateResponse } from "@common/items/storage-items.types";
+import {
+  Image,
+  UpdateItem,
+  UpdateResponse,
+} from "@common/items/storage-items.types";
 import { ZodError } from "zod";
 import { CSVItem, ProcessedCSV } from "@common/items/csv.types";
 import type { Database } from "@common/supabase.types";
+import {
+  ItemImageInsert,
+  ItemImageUpdate,
+} from "../item-images/types/item-image.types";
 
 @Injectable()
 export class StorageItemsService {
@@ -731,7 +740,11 @@ export class StorageItemsService {
     const supabase = req.supabase;
     // Extract properties that shouldn't be sent to the database
     const { tags, location_details, images, ...itemData } = item;
-
+    const { main, details } = images;
+    const mappedImages: ItemImageInsert[] = mapItemImagesUpdate(
+      main ? [...details, main] : details,
+      item_id,
+    );
     // Update the main item
     const {
       data: updatedItem,
@@ -762,6 +775,11 @@ export class StorageItemsService {
     const { storage_locations, ...rest } = updatedItem;
     const formattedItem = { ...rest, location_details: storage_locations };
 
+    // Update images
+    const { error: imageUpdateErr } = await supabase
+      .from("storage_item_images")
+      .upsert(mappedImages);
+    if (imageUpdateErr) handleSupabaseError(imageUpdateErr);
     return {
       success: true,
       item: formattedItem,

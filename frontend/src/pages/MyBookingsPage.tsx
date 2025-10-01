@@ -3,21 +3,23 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   selectCurrentBooking,
-  getBookingByID,
   getBookingItems,
   cancelBooking,
   updateBooking,
   selectUserBookings,
+  selectBooking,
+  selectBookingPagination,
 } from "@/store/slices/bookingsSlice";
 import { getOwnBookings } from "@/store/slices/bookingsSlice";
 import { selectSelectedUser } from "@/store/slices/usersSlice";
 import { Button } from "@/components/ui/button";
+import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import Spinner from "@/components/Spinner";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2, RotateCcw } from "lucide-react";
+import { ArrowLeft, Trash2, RotateCcw, Minus, Plus } from "lucide-react";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import {
   getItemImages,
@@ -110,6 +112,7 @@ const MyBookingsPage = () => {
   const [itemsMarkedForRemoval, setItemsMarkedForRemoval] = useState<
     Set<string>
   >(new Set());
+  const pagination = useAppSelector(selectBookingPagination);
 
   useEffect(() => {
     if (!id) return;
@@ -117,7 +120,14 @@ const MyBookingsPage = () => {
     setLoading(true);
     void (async () => {
       try {
-        await dispatch(getBookingByID(id)).unwrap();
+        const res = await dispatch(
+          getOwnBookings({ page: pagination.page, limit: pagination.limit }),
+        ).unwrap();
+        const list = (res && "data" in res ? res.data : []) as
+          | typeof userBookings
+          | undefined;
+        const found = list?.find((b) => b.id === id) || null;
+        if (found) dispatch(selectBooking(found));
         await dispatch(getBookingItems(id)).unwrap();
       } catch {
         // ignore - errors stored in slice
@@ -125,7 +135,7 @@ const MyBookingsPage = () => {
         setLoading(false);
       }
     })();
-  }, [id, dispatch]);
+  }, [id, dispatch, pagination.page, pagination.limit]);
 
   // When booking is loaded, populate edit form defaults
   useEffect(() => {
@@ -233,6 +243,8 @@ const MyBookingsPage = () => {
       header: t.myBookingsPage.columns.quantity[lang],
       cell: ({ row }) => {
         const item = row.original;
+
+        if (item.status === "cancelled" || !showEdit) return item.quantity;
         const isMarkedForRemoval = itemsMarkedForRemoval.has(String(item.id));
 
         if (!showEdit || !allItemsPending || isMarkedForRemoval) {
@@ -256,11 +268,16 @@ const MyBookingsPage = () => {
                 disabled={
                   (itemQuantities[String(item.id)] ?? item.quantity ?? 0) <= 1
                 }
-                aria-label="decrease quantity"
+                aria-label={t.myBookingsPage.aria.labels.quantity.decrease[
+                  lang
+                ].replace("{number}", (item.quantity - 1).toString())}
               >
-                -
+                <Minus aria-hidden />
               </Button>
               <Input
+                aria-label={t.myBookingsPage.aria.labels.quantity.enterQuantity[
+                  lang
+                ].replace("{number}", item.quantity.toString())}
                 value={itemQuantities[String(item.id)] ?? item.quantity}
                 onChange={(e) => {
                   const val = Number(e.target.value);
@@ -280,11 +297,13 @@ const MyBookingsPage = () => {
                   (itemQuantities[String(item.id)] ?? item.quantity ?? 0) >=
                   (availability[item.item_id] ?? Infinity)
                 }
-                aria-label="increase quantity"
+                aria-label={t.myBookingsPage.aria.labels.quantity.increase[
+                  lang
+                ].replace("{number}", (item.quantity + 1).toString())}
               >
-                +
+                <Plus aria-hidden />
               </Button>
-            </div>{" "}
+            </div>
             <div className="text-xs text-muted-foreground">
               {t.myBookingsPage.headings.availability[lang]}{" "}
               {availability[item.item_id] ?? "-"}
@@ -325,9 +344,7 @@ const MyBookingsPage = () => {
         );
         const location = org?.locations?.find((l) => l.id === item.location_id);
 
-        if (!location?.self_pickup || location.pickup_status !== "confirmed") {
-          return null;
-        }
+        if (!location?.self_pickup) return null;
 
         return (
           <div className="flex gap-1">
@@ -342,6 +359,17 @@ const MyBookingsPage = () => {
               >
                 {t.myBookingsPage.buttons.pickedUp[lang]}
               </BookingPickupButton>
+            )}
+            {/* Show return button if item is already picked up */}
+            {item.status === "picked_up" && booking?.id && (
+              <BookingReturnButton
+                onSuccess={refetchBookings}
+                location_id={item.location_id}
+                id={booking.id}
+                org_id={item.provider_organization_id}
+              >
+                {t.myBookingsPage.buttons.return[lang]}
+              </BookingReturnButton>
             )}
           </div>
         );
@@ -441,10 +469,23 @@ const MyBookingsPage = () => {
   }, [booking, formatDate]);
 
   const refetchBookings = () => {
-    if (id) {
-      void dispatch(getBookingByID(id));
-      void dispatch(getBookingItems(id));
-    }
+    if (!id) return;
+    void (async () => {
+      try {
+        const res = await dispatch(
+          getOwnBookings({ page: pagination.page, limit: pagination.limit }),
+        ).unwrap();
+        const list = (res && "data" in res ? res.data : []) as
+          | typeof userBookings
+          | undefined;
+        const found = list?.find((b) => b.id === id) || null;
+        if (found) dispatch(selectBooking(found));
+      } catch {
+        // ignore
+      } finally {
+        void dispatch(getBookingItems(id));
+      }
+    })();
   };
 
   // Edit helper functions - using shared utilities
@@ -509,8 +550,8 @@ const MyBookingsPage = () => {
         if (user?.id) {
           void dispatch(
             getOwnBookings({
-              page: 1,
-              limit: 10,
+              page: pagination.page,
+              limit: pagination.limit,
             }),
           );
         }
@@ -538,7 +579,7 @@ const MyBookingsPage = () => {
 
       if (!hasRemovals && !hasQuantityChanges && !hasDateChanges) {
         setShowEdit(false);
-        toast.info("No changes to save");
+        toast.info(t.myBookingsPage.edit.toast.noChanges[lang]);
         return;
       }
 
@@ -550,17 +591,15 @@ const MyBookingsPage = () => {
 
         // Clear marked items and refresh data
         setItemsMarkedForRemoval(new Set());
-        await dispatch(getBookingByID(booking.id!)).unwrap();
+        const res = await dispatch(
+          getOwnBookings({ page: pagination.page, limit: pagination.limit }),
+        ).unwrap();
+        const list = (res && "data" in res ? res.data : []) as
+          | typeof userBookings
+          | undefined;
+        const found = list?.find((b) => b.id === booking.id) || null;
+        if (found) dispatch(selectBooking(found));
         await dispatch(getBookingItems(booking.id!)).unwrap();
-
-        if (user?.id) {
-          void dispatch(
-            getOwnBookings({
-              page: 1,
-              limit: 10,
-            }),
-          );
-        }
       })();
 
       // Determine success message
@@ -614,10 +653,10 @@ const MyBookingsPage = () => {
         </div>
 
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-xl font-semibold pt-2">
+          <h2 className="text-xl text-primary font-semibold pt-2">
             {t.myBookingsPage.bookingDetails.title[lang]}{" "}
             {booking.booking_number}
-          </h3>
+          </h2>
           {/* Cancel booking button */}
           {booking.status === "pending" && allItemsPending && !showEdit && (
             <Button

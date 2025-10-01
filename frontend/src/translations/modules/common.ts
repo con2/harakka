@@ -162,4 +162,15 @@ export const common = {
       fi: "Virheellinen tiedosto",
     },
   },
+  loading: {
+    en: "Loading",
+    fi: "Ladataan",
+  },
+  // If some data is missing, i.e. activeOrgName, fallback to neutral string
+  fallbacks: {
+    yourOrg: {
+      en: "your organization",
+      fi: "sinun organisaatiosi",
+    },
+  },
 };

@@ -95,4 +95,24 @@ export const navigation = {
       fi: "Avaa ilmoitukset",
     },
   },
+  aria: {
+    labels: {
+      cart: {
+        en: "Go to cart. {number} items",
+        fi: "Siirry ostoskoriin. {number} tuotetta",
+      },
+      logIn: {
+        en: "Log in",
+        fi: "Kirjaudu sisään",
+      },
+      logo: {
+        en: "Home",
+        fi: "Etusivu",
+      },
+      notifications: {
+        en: "Notifications. {number} unread",
+        fi: "Ilmoitukset. {number} lukematonta",
+      },
+    },
+  },
 };

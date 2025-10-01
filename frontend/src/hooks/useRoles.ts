@@ -483,7 +483,7 @@ export const useRoles = () => {
   }, [refreshCurrentUserRoles, refreshAllUserRoles]);
 
   const setupPeriodicSessionCheck = useCallback(
-    (intervalMinutes = 5) => {
+    (intervalMinutes = 4) => {
       // Don't set up checks if not authenticated
       if (!isAuthenticated) return () => {};
 
