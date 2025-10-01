@@ -319,44 +319,6 @@ const BookingList = () => {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h1 className="text-xl">{t.bookingList.title[lang]}</h1>
-          <Button
-            onClick={() => {
-              if (scopeOverdue) {
-                setOverdueLoading(true);
-                bookingsApi
-                  .getOverdueBookings(currentPage, 10)
-                  .then((res) => {
-                    setOverdueRows(res.data as unknown as OverdueBookingRow[]);
-                    setOverduePageCount(res.metadata?.totalPages ?? 1);
-                  })
-                  .catch((err: unknown) => {
-                    const anyErr = err as {
-                      response?: { data?: { message?: string } };
-                    };
-                    const msg =
-                      anyErr?.response?.data?.message ||
-                      (err instanceof Error ? err.message : String(err));
-                    setOverdueError(msg);
-                  })
-                  .finally(() => setOverdueLoading(false));
-              } else {
-                void dispatch(
-                  getOrderedBookings({
-                    ordered_by: orderBy,
-                    ascending: getAscending(orderBy),
-                    page: currentPage,
-                    limit: 10,
-                    searchquery: debouncedSearchQuery,
-                    status_filter:
-                      statusFilter !== "all" ? statusFilter : undefined,
-                  }),
-                );
-              }
-            }}
-            className="bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
-          >
-            {t.bookingList.buttons.refresh[lang]}
-          </Button>
         </div>
         {/* Search and Filters */}
         <div className="flex flex-wrap gap-4 items-center justify-between">
