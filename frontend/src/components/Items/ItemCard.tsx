@@ -28,7 +28,7 @@ import { Input } from "../ui/input";
 import { itemsApi } from "@/api/services/items";
 import { cn } from "@/lib/utils";
 import { ImageSchemaType } from "@/store/utils/validate";
-import { extractCityFromLocationName } from "@/utils/validation";
+import { extractCityFromLocationName } from "@/utils/locationValidation";
 
 interface ItemsCardProps {
   item: Item & {

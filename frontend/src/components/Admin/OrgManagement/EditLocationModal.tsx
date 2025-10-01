@@ -24,7 +24,7 @@ import {
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-import { isValidCityName, normalizeCityName } from "@/utils/validation";
+import { isValidCityName, normalizeCityName } from "@/utils/locationValidation";
 
 interface EditLocationModalProps {
   location: OrgLocationWithNames | null;

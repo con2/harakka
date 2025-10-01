@@ -12,7 +12,7 @@ import {
 } from "@/store/slices/locationsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-import { extractCityFromLocationName } from "@/utils/validation";
+import { extractCityFromLocationName } from "@/utils/locationValidation";
 import { FilterValue } from "@/types";
 import {
   fetchAllOrganizations,

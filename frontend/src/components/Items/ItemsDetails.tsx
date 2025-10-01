@@ -28,7 +28,7 @@ import imagePlaceholder from "@/assets/defaultImage.jpg";
 import { useTranslation } from "@/hooks/useTranslation";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
-import { extractCityFromLocationName } from "@/utils/validation";
+import { extractCityFromLocationName } from "@/utils/locationValidation";
 import {
   Item,
   ItemImage,

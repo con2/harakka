@@ -28,7 +28,7 @@ import { toastConfirm } from "../components/ui/toastConfirm";
 import { TooltipTrigger, TooltipContent } from "../components/ui/tooltip";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { ProfileCompletionModal } from "../components/Profile/ProfileCompletionModal";
-import { extractCityFromLocationName } from "@/utils/validation";
+import { extractCityFromLocationName } from "@/utils/locationValidation";
 import InlineTimeframePicker from "../components/InlineTimeframeSelector";
 import LocationList from "../components/Cart/LocationList";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
