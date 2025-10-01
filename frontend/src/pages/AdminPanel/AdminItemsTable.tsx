@@ -39,6 +39,8 @@ import {
   selectCategories,
 } from "@/store/slices/categoriesSlice";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@radix-ui/react-tooltip";
+import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -181,6 +183,32 @@ const AdminItemsTable = () => {
           return t.uiComponents.dataTable.emptyCell[lang] || "—";
         }
         return name.charAt(0).toUpperCase() + name.slice(1);
+      },
+    },
+    {
+      header: t.adminItemsTable.columns.placement[lang],
+      size: 150,
+      maxSize: 200,
+      id: "placement_description",
+      cell: ({ row }) => {
+        const { placement_description } = row.original;
+        const hasOverflow = placement_description.length >= 60;
+        if (hasOverflow)
+          return (
+            <Tooltip>
+              <TooltipTrigger>
+                <p className="truncate max-w-[200px]">
+                  {placement_description}
+                </p>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[300px]">
+                {placement_description}
+              </TooltipContent>
+            </Tooltip>
+          );
+        return (
+          <p className="truncate max-w-[200px]">{placement_description}</p>
+        );
       },
     },
     {
