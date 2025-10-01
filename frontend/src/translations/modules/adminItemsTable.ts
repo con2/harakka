@@ -5,8 +5,8 @@ export const adminItemsTable = {
   },
   filters: {
     searchPlaceholder: {
-      fi: "Hae nimellä tai tyypillä",
-      en: "Search by name or type",
+      fi: "Hae tuotteita",
+      en: "Search items",
     },
     status: {
       all: {
@@ -150,6 +150,14 @@ export const adminItemsTable = {
     units: {
       fi: "kpl",
       en: "pcs",
+    },
+  },
+  aria: {
+    labels: {
+      statusFilter: {
+        en: "Filter by item activity status",
+        fi: "Suodata tuotteen aktiivisuustilan mukaan",
+      },
     },
   },
 };

@@ -7,8 +7,8 @@ export const categories = {
   },
   placeholders: {
     search: {
-      en: "Search",
-      fi: "Haku",
+      en: "Search categories",
+      fi: "Hae kategorioita",
     },
   },
   table: {
@@ -53,6 +53,14 @@ export const categories = {
     addNew: {
       en: "Add New Category",
       fi: "Lisää uusi kategoria",
+    },
+  },
+  aria: {
+    labels: {
+      deleteCategory: {
+        en: "Delete category {category_name}",
+        fi: "Poista kategoria {category_name}",
+      },
     },
   },
 };

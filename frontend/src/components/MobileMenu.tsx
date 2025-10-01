@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import { SheetContent } from "./ui/sheet";
+import { SheetContent, SheetDescription, SheetTitle } from "./ui/sheet";
 import { useLanguage } from "@/context/LanguageContext";
 
 type MobileMenuProps = {
@@ -56,6 +56,12 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
           className="w-40 mb-4 hover:cursor-pointer"
           onClick={() => handleNavigation("/")}
         />
+        <SheetTitle className="sr-only">
+          {t.mobileMenu.aria.title[lang]}
+        </SheetTitle>
+        <SheetDescription className="sr-only">
+          {t.mobileMenu.aria.description[lang]}
+        </SheetDescription>
 
         <div>
           {/* User Links */}

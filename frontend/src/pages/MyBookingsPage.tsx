@@ -19,7 +19,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import Spinner from "@/components/Spinner";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2, RotateCcw } from "lucide-react";
+import { ArrowLeft, Trash2, RotateCcw, Minus, Plus } from "lucide-react";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import {
   getItemImages,
@@ -243,6 +243,8 @@ const MyBookingsPage = () => {
       header: t.myBookingsPage.columns.quantity[lang],
       cell: ({ row }) => {
         const item = row.original;
+
+        if (item.status === "cancelled" || !showEdit) return item.quantity;
         const isMarkedForRemoval = itemsMarkedForRemoval.has(String(item.id));
 
         if (!showEdit || !allItemsPending || isMarkedForRemoval) {
@@ -266,11 +268,16 @@ const MyBookingsPage = () => {
                 disabled={
                   (itemQuantities[String(item.id)] ?? item.quantity ?? 0) <= 1
                 }
-                aria-label="decrease quantity"
+                aria-label={t.myBookingsPage.aria.labels.quantity.decrease[
+                  lang
+                ].replace("{number}", (item.quantity - 1).toString())}
               >
-                -
+                <Minus aria-hidden />
               </Button>
               <Input
+                aria-label={t.myBookingsPage.aria.labels.quantity.enterQuantity[
+                  lang
+                ].replace("{number}", item.quantity.toString())}
                 value={itemQuantities[String(item.id)] ?? item.quantity}
                 onChange={(e) => {
                   const val = Number(e.target.value);
@@ -290,11 +297,13 @@ const MyBookingsPage = () => {
                   (itemQuantities[String(item.id)] ?? item.quantity ?? 0) >=
                   (availability[item.item_id] ?? Infinity)
                 }
-                aria-label="increase quantity"
+                aria-label={t.myBookingsPage.aria.labels.quantity.increase[
+                  lang
+                ].replace("{number}", (item.quantity + 1).toString())}
               >
-                +
+                <Plus aria-hidden />
               </Button>
-            </div>{" "}
+            </div>
             <div className="text-xs text-muted-foreground">
               {t.myBookingsPage.headings.availability[lang]}{" "}
               {availability[item.item_id] ?? "-"}
@@ -644,10 +653,10 @@ const MyBookingsPage = () => {
         </div>
 
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-xl font-semibold pt-2">
+          <h2 className="text-xl text-primary font-semibold pt-2">
             {t.myBookingsPage.bookingDetails.title[lang]}{" "}
             {booking.booking_number}
-          </h3>
+          </h2>
           {/* Cancel booking button */}
           {booking.status === "pending" && allItemsPending && !showEdit && (
             <Button

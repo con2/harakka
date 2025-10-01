@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchAllOrganizations,
-  fetchOrganizationById,
   selectOrganizations,
   selectOrganizationLoading,
   updateOrganization,
-  createOrganization,
-  setSelectedOrganization,
 } from "@/store/slices/organizationSlice";
 import { OrganizationDetails } from "@/types/organization";
-import { Building2, Edit, Eye, LoaderCircle } from "lucide-react";
+import { Building2, LoaderCircle, Plus } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
 import { t } from "@/translations";
@@ -18,32 +16,19 @@ import { useLanguage } from "@/context/LanguageContext";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import OrganizationDelete from "@/components/Admin/Organizations/OrganizationDelete";
-import OrganizationModal, {
-  OrganizationFormValues,
-} from "@/components/Admin/Organizations/OrganizationModal";
+import { toastConfirm } from "@/components/ui/toastConfirm";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDate } from "date-fns";
 
 const Organizations = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { lang } = useLanguage();
-
-  // global Redux state
   const organizations = useAppSelector(selectOrganizations);
   const loading = useAppSelector(selectOrganizationLoading);
-  // const error = useAppSelector(selectOrganizationError);
   const totalPages = useAppSelector((state) => state.organizations.totalPages);
 
-  // local state
   const [currentPage, setCurrentPage] = useState(1);
-  const selectedOrg = useAppSelector(
-    (state) => state.organizations.selectedOrganization,
-  );
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"view" | "edit" | "create">(
-    "view",
-  );
   const limit = 10;
 
   // Fetch organizations on mount & page change
@@ -51,90 +36,62 @@ const Organizations = () => {
     void dispatch(fetchAllOrganizations({ page: currentPage, limit }));
   }, [dispatch, currentPage]);
 
-  // Open modal in "view" mode
-  const openDetailsModal = async (org: OrganizationDetails) => {
-    // Optional: fetch fresh data for this org
-    const resultAction = await dispatch(fetchOrganizationById(org.id));
-    if (fetchOrganizationById.fulfilled.match(resultAction)) {
-      dispatch(setSelectedOrganization(resultAction.payload));
-      setModalMode("view");
-      setModalOpen(true);
-    } else {
-      toast.error(
-        t.organizations.toasts.creationFailed[lang] || "Something went wrong.",
-      );
-    }
+  const openDetailsPage = (org: OrganizationDetails) => {
+    void navigate(`/admin/organizations/${org.id}`);
   };
 
-  // Open modal in "edit" mode
-  const openEditModal = async (org: OrganizationDetails) => {
-    const resultAction = await dispatch(fetchOrganizationById(org.id));
-    if (fetchOrganizationById.fulfilled.match(resultAction)) {
-      dispatch(setSelectedOrganization(resultAction.payload));
-      setModalMode("edit");
-      setModalOpen(true);
-    } else {
-      toast.error(
-        t.organizations.toasts.creationFailed[lang] || "Something went wrong.",
-      );
-    }
-  };
-
-  // Open modal in "create" mode
-  const openCreateModal = () => {
-    dispatch(setSelectedOrganization(null));
-    setModalMode("create");
-    setModalOpen(true);
+  const openCreatePage = () => {
+    void navigate("/admin/organizations/create");
   };
 
   // Handle toggle active/inactive
-  const handleToggle = async (id: string, checked: boolean) => {
-    try {
-      await dispatch(
-        updateOrganization({ id, data: { is_active: checked } }),
-      ).unwrap();
-      toast.success(
-        checked
-          ? t.adminItemsTable.messages.toast.activateSuccess[lang]
-          : t.adminItemsTable.messages.toast.deactivateSuccess[lang],
-      );
-    } catch {
-      toast.error(t.adminItemsTable.messages.toast.statusUpdateFail[lang]);
-    }
+  const handleToggle = (id: string, checked: boolean) => {
+    // Find the organization to check if it's protected
+    const org = organizations.find((o) => o.id === id);
+    const isProtected = org?.name === "Global" || org?.name === "High council";
+
+    if (isProtected) return;
+
+    toastConfirm({
+      title: checked
+        ? t.organizationDetailsPage.confirmation.statusChange.activateTitle[
+            lang
+          ]
+        : t.organizationDetailsPage.confirmation.statusChange.deactivateTitle[
+            lang
+          ],
+      description: checked
+        ? t.organizationDetailsPage.confirmation.statusChange
+            .activateDescription[lang]
+        : t.organizationDetailsPage.confirmation.statusChange
+            .deactivateDescription[lang],
+      confirmText:
+        t.organizationDetailsPage.confirmation.statusChange.confirm[lang],
+      cancelText:
+        t.organizationDetailsPage.confirmation.statusChange.cancel[lang],
+      onConfirm: async () => {
+        try {
+          await dispatch(
+            updateOrganization({ id, data: { is_active: checked } }),
+          ).unwrap();
+          toast.success(
+            checked
+              ? t.organizationDetailsPage.toasts.activateSuccess[lang]
+              : t.organizationDetailsPage.toasts.deactivateSuccess[lang],
+          );
+        } catch {
+          toast.error(t.organizationDetailsPage.toasts.statusUpdateError[lang]);
+        }
+      },
+      onCancel: () => {},
+    });
   };
 
-  // Handle modal form submit (create or update)
-  const onSubmit = async (data: OrganizationFormValues) => {
-    try {
-      if (modalMode === "create") {
-        await dispatch(createOrganization(data)).unwrap();
-        toast.success(t.organizations.toasts.created[lang]);
-      } else if (modalMode === "edit" && selectedOrg) {
-        await dispatch(
-          updateOrganization({ id: selectedOrg.id, data }),
-        ).unwrap();
-        toast.success(
-          t.organizations.toasts.updated[lang] || "Organization updated!",
-        );
-      }
-      setModalOpen(false);
-      dispatch(setSelectedOrganization(null));
-      // Reload list after changes
-      void dispatch(fetchAllOrganizations({ page: currentPage, limit }));
-    } catch {
-      toast.error(
-        t.organizations.toasts.creationFailed[lang] || "Something went wrong.",
-      );
-    }
-  };
-
-  // Handle pagination
   const handlePageChange = (newPage: number) => {
     if (newPage < 1) return;
     setCurrentPage(newPage);
   };
 
-  // Table columns
   const columns: ColumnDef<OrganizationDetails>[] = [
     {
       header: t.organizations.columns.logo[lang],
@@ -157,8 +114,12 @@ const Organizations = () => {
       accessorKey: "name",
       cell: ({ row }) => (
         <button
-          className="text-primary"
-          onClick={() => openDetailsModal(row.original)}
+          className="text-primary hover:underline font-medium text-left"
+          onClick={() => openDetailsPage(row.original)}
+          aria-label={t.organizations.accessibility.viewDetails[lang].replace(
+            "{orgName}",
+            row.original.name,
+          )}
         >
           {row.original.name}
         </button>
@@ -181,19 +142,31 @@ const Organizations = () => {
     {
       header: t.organizations.columns.isActive[lang],
       accessorKey: "is_active",
-      cell: ({ row }) => (
-        <Switch
-          checked={row.original.is_active}
-          onCheckedChange={(checked) => handleToggle(row.original.id, checked)}
-        />
-      ),
+      cell: ({ row }) => {
+        const isProtected =
+          row.original.name === "Global" ||
+          row.original.name === "High council";
+        return (
+          <Switch
+            checked={row.original.is_active}
+            onCheckedChange={(checked) =>
+              handleToggle(row.original.id, checked)
+            }
+            disabled={isProtected}
+            aria-label={`${row.original.is_active ? t.organizations.accessibility.toggleStatus.deactivate[lang] : t.organizations.accessibility.toggleStatus.activate[lang]}${isProtected ? t.organizations.accessibility.toggleStatus.protected[lang] : ""}`.replace(
+              "{orgName}",
+              row.original.name,
+            )}
+          />
+        );
+      },
     },
     {
       header: t.organizations.columns.createdAt[lang],
       accessorKey: "created_at",
       cell: ({ row }) =>
         row.original.created_at
-          ? new Date(row.original.created_at).toLocaleDateString()
+          ? formatDate(new Date(row.original.created_at), "d MMM yyyy")
           : "—",
     },
   ];
@@ -205,76 +178,46 @@ const Organizations = () => {
 
         {/* Add New Org button */}
         <div className="flex gap-4 justify-end">
-          <Button onClick={openCreateModal} variant="outline" size="sm">
+          <Button
+            onClick={openCreatePage}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Plus aria-hidden />
             {t.organizations.createButton[lang]}
           </Button>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-8">
-          <LoaderCircle className="animate-spin text-muted" />
+        <div
+          className="flex justify-center p-8"
+          role="status"
+          aria-live="polite"
+        >
+          <LoaderCircle
+            className="animate-spin text-muted"
+            aria-hidden="true"
+          />
+          <span className="sr-only">
+            {t.organizations.accessibility.loading[lang]}
+          </span>
         </div>
       ) : (
         <PaginatedDataTable
-          columns={[
-            ...columns,
-            {
-              id: "actions",
-              cell: ({ row }) => {
-                const org = row.original;
-                return (
-                  <div className="flex gap-2">
-                    {/* view */}
-                    <Button
-                      size="sm"
-                      onClick={() => openDetailsModal(org)}
-                      title={t.organizations.view[lang]}
-                      className="text-gray-500 hover:text-primary hover:bg-primary/10"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-
-                    {/* edit */}
-                    <Button
-                      size="sm"
-                      onClick={() => openEditModal(org)}
-                      title={t.organizations.edit[lang]}
-                      className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-
-                    {/* delete */}
-                    <OrganizationDelete
-                      id={org.id}
-                      onDeleted={() => {
-                        void dispatch(
-                          fetchAllOrganizations({ page: currentPage, limit }),
-                        );
-                      }}
-                    />
-                  </div>
-                );
-              },
-            },
-          ]}
+          columns={columns}
           data={organizations}
           pageIndex={currentPage - 1}
           pageCount={totalPages}
           onPageChange={(page) => handlePageChange(page + 1)}
           originalSorting="created_at"
+          rowProps={(row) => ({
+            onClick: () => openDetailsPage(row.original),
+            className: "cursor-pointer hover:bg-muted/50",
+          })}
         />
       )}
-
-      {/* Modal */}
-      <OrganizationModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        onSubmit={onSubmit}
-        mode={modalMode}
-        organization={selectedOrg}
-      />
     </div>
   );
 };

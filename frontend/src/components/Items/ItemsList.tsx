@@ -131,11 +131,12 @@ const ItemsList: React.FC = () => {
           />
           {searchQuery && (
             <button
+              aria-label={t.itemsList.aria.labels.clearSearch[lang]}
               type="button"
               onClick={() => setSearchQuery("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              <X className="w-4 h-4" />
+              <X aria-hidden className="w-4 h-4" />
             </button>
           )}
         </div>
