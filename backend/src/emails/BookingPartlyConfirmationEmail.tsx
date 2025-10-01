@@ -5,7 +5,7 @@ import {
   Body,
   Container,
   Text,
-  //Section,
+  Section,
   Img,
 } from "@react-email/components";
 import { EmailProps } from "src/modules/mail/interfaces/mail.interface";
@@ -22,9 +22,6 @@ const BookingPartlyConfirmationEmail = ({
   confirmedItems,
   rejectedItems,
 }: BookingPartlyConfirmationEmailProps) => {
-  console.log("Confirmed Items in Email:", confirmedItems);
-  console.log("Rejected Items in Email:", rejectedItems);
-
   return (
     <Html>
       <Head>
@@ -57,6 +54,18 @@ const BookingPartlyConfirmationEmail = ({
             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
           }}
         >
+          <Section
+            style={{
+              backgroundImage:
+                "url('https://i0.wp.com/nordiclarp.org/wp-content/uploads/2023/11/Odysseus-warp-core-scaled.jpeg?resize=900%2C1200&ssl=1')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              height: "250px",
+              borderRadius: "8px",
+              marginBottom: "20px",
+            }}
+          ></Section>
+
           <Text
             style={{
               fontFamily: "'Roboto'",
@@ -96,8 +105,7 @@ const BookingPartlyConfirmationEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {confirmedItems.map((item, index) => (
               <li key={index}>
-                {item.translations?.fi?.name || "Tuntematon kohde"} -{" "}
-                {item.quantity}
+                {item.translations.fi.name} (x{item.quantity})
               </li>
             ))}
           </ul>
@@ -108,8 +116,7 @@ const BookingPartlyConfirmationEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {rejectedItems.map((item, index) => (
               <li key={index}>
-                {item.translations?.fi?.name || "Tuntematon kohde"} -{" "}
-                {item.quantity}
+                {item.translations.fi.name} (x{item.quantity})
               </li>
             ))}
           </ul>
@@ -138,8 +145,7 @@ const BookingPartlyConfirmationEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {confirmedItems.map((item, index) => (
               <li key={index}>
-                {item.translations?.en?.name || "Unknown Item"} -{" "}
-                {item.quantity}
+                {item.translations?.en?.name} (x{item.quantity})
               </li>
             ))}
           </ul>
@@ -150,8 +156,7 @@ const BookingPartlyConfirmationEmail = ({
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {rejectedItems.map((item, index) => (
               <li key={index}>
-                {item.translations?.en?.name || "Unknown Item"} -{" "}
-                {item.quantity}
+                {item.translations?.en?.name} (x{item.quantity})
               </li>
             ))}
           </ul>
@@ -161,6 +166,38 @@ const BookingPartlyConfirmationEmail = ({
             <br />
             <strong>Pickup location:</strong> {location}
             <br />
+          </Text>
+
+          <Section style={{ textAlign: "center", marginTop: "30px" }}>
+            <a
+              href="https://agreeable-grass-049dc8010.6.azurestaticapps.net/profile?tab=bookings"
+              style={{
+                backgroundColor: "#2f5D9E",
+                color: "#ffffff",
+                padding: "12px 24px",
+                borderRadius: "4px",
+                textDecoration: "none",
+                fontWeight: "bold",
+                display: "inline-block",
+                fontSize: "16px",
+              }}
+            >
+              View your Booking
+            </a>
+          </Section>
+          <Text
+            style={{ fontSize: "14px", color: "#666666", marginTop: "30px" }}
+          >
+            If you have any questions, contact us by answering this mail or use
+            the{" "}
+            <a
+              href="https://agreeable-grass-049dc8010.6.azurestaticapps.net/contact-us/"
+              style={{ color: "#2f5D9E" }}
+            >
+              {" "}
+              contact form{" "}
+            </a>
+            on our website.
           </Text>
         </Container>
       </Body>
