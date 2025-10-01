@@ -109,6 +109,12 @@ export const NotificationMobile: React.FC<Props> = ({
                   </button>
                 </div>
               )}
+              {showToggle && !viewAll && otherUnread > 0 && (
+                <span className="ml-1 text-[0.7rem] text-muted-foreground">
+                  {t.navigation.notifications.otherContextsPrefix[lang]}{" "}
+                  {otherUnread}
+                </span>
+              )}
               {visibleFeed.length > 0 &&
                 (viewAll ? unseen > 0 : visibleUnseen > 0) && (
                   /* Mark All Read */
