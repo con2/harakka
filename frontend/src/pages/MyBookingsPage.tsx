@@ -327,14 +327,13 @@ const MyBookingsPage = () => {
     },
     {
       accessorKey: "self_pickup",
-      header:
-        booking?.status !== "confirmed"
-          ? ""
-          : t.myBookingsPage.columns.selfPickup[lang],
+      header: booking?.booking_items?.some((item) => item.self_pickup)
+        ? t.myBookingsPage.columns.selfPickup[lang]
+        : "",
       cell: ({ row }) => {
         const item = row.original;
 
-        if (booking?.status === "pending" || !item.self_pickup) {
+        if (!item.self_pickup) {
           return null;
         }
 
