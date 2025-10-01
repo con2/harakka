@@ -179,6 +179,32 @@ export class BookingItemsService {
         );
       throw new BadRequestException("Failed to remove booking item");
     }
+
+    // Check if all booking items are now cancelled and update parent booking status
+    const { data: allItems, error: allItemsError } = await supabase
+      .from("booking_items")
+      .select("status")
+      .eq("booking_id", booking_id);
+
+    if (!allItemsError && allItems && allItems.length > 0) {
+      const allStatuses = allItems.map((item) => item.status);
+
+      // If all items are cancelled, update booking status to cancelled
+      if (allStatuses.every((status) => status === "cancelled")) {
+        const { error: bookingUpdateError } = await supabase
+          .from("bookings")
+          .update({ status: "cancelled" })
+          .eq("id", booking_id);
+
+        if (bookingUpdateError) {
+          console.error(
+            "Failed to update booking status to cancelled:",
+            bookingUpdateError,
+          );
+        }
+      }
+    }
+
     return result;
   }
   // Hard delete
@@ -258,6 +284,36 @@ export class BookingItemsService {
     if (result.error) {
       console.error(result.error);
       throw new BadRequestException("Failed to update booking item");
+    }
+
+    // If status was updated to cancelled, check if all booking items are now cancelled
+    if (
+      updated_booking_item.status === "cancelled" &&
+      result.data?.booking_id
+    ) {
+      const { data: allItems, error: allItemsError } = await supabase
+        .from("booking_items")
+        .select("status")
+        .eq("booking_id", result.data.booking_id);
+
+      if (!allItemsError && allItems && allItems.length > 0) {
+        const allStatuses = allItems.map((item) => item.status);
+
+        // If all items are cancelled, update booking status to cancelled
+        if (allStatuses.every((status) => status === "cancelled")) {
+          const { error: bookingUpdateError } = await supabase
+            .from("bookings")
+            .update({ status: "cancelled" })
+            .eq("id", result.data.booking_id);
+
+          if (bookingUpdateError) {
+            console.error(
+              "Failed to update booking status to cancelled:",
+              bookingUpdateError,
+            );
+          }
+        }
+      }
     }
 
     return result;
