@@ -57,4 +57,12 @@ export const itemCard = {
       },
     },
   },
+  updateQuantity: {
+    fi: "Päivitä määrä",
+    en: "Update Quantity",
+  },
+  updatedInCart: {
+    fi: "päivitetty koriin",
+    en: "updated in cart",
+  },
 };

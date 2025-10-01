@@ -8,7 +8,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { addToCart } from "@/store/slices/cartSlice";
+import { addToCart, updateQuantity } from "@/store/slices/cartSlice";
 import { getItemById } from "@/store/slices/itemsSlice";
 import { t } from "@/translations";
 import { ItemTranslation } from "@/types";
@@ -41,8 +41,12 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
   const dispatch = useAppDispatch();
   const itemImages = useAppSelector(selectItemImages);
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
-  const [quantity, setQuantity] = useState(0);
+
   const cartItems = useAppSelector((state) => state.cart.items);
+  const existingCartItem = cartItems.find(
+    (cartItem) => cartItem.item.id === item.id,
+  );
+  const [quantity, setQuantity] = useState(existingCartItem?.quantity || 0);
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
@@ -143,32 +147,43 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
     void navigate(`/storage/items/${itemId}`);
   };
 
-  const handleAddToCart = () => {
+  const handleUpdateCart = () => {
     if (!item) return;
 
     const availability = availabilityInfo.availableQuantity;
 
-    const existingCartItem = cartItems.find(
-      (cartItem) => cartItem.item.id === item.id,
-    );
-    const currentQuantity = existingCartItem?.quantity ?? 0;
-
-    if (currentQuantity + quantity > availability) {
+    if (quantity > availability) {
       toast.warning(
         `${t.cart.toast.itemsExceedQuantity[lang]} ${availability}.`,
       );
       return;
     }
-    void dispatch(
-      addToCart({
-        item: item,
-        quantity: quantity,
-        startDate: startDate ? startDate : undefined,
-        endDate: endDate ? endDate : undefined,
-      }),
-    );
 
-    toast.success(`${itemContent?.item_name} ${t.itemCard.addedToCart[lang]}`);
+    if (existingCartItem) {
+      // Update quantity in the cart
+      void dispatch(
+        updateQuantity({
+          id: item.id,
+          quantity: quantity,
+        }),
+      );
+      toast.success(
+        `${itemContent?.item_name} ${t.itemCard.updatedInCart[lang]}`,
+      );
+    } else {
+      // Add item to the cart
+      void dispatch(
+        addToCart({
+          item: item,
+          quantity: quantity,
+          startDate: startDate ? startDate : undefined,
+          endDate: endDate ? endDate : undefined,
+        }),
+      );
+      toast.success(
+        `${itemContent?.item_name} ${t.itemCard.addedToCart[lang]}`,
+      );
+    }
   };
 
   // Update availability info based on dates selection
@@ -409,7 +424,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
             >
               <Button
                 type="button"
-                onClick={!preview ? handleAddToCart : () => {}}
+                onClick={!preview ? handleUpdateCart : () => {}}
                 className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-white hover:bg-secondary"
                 disabled={isAddToCartDisabled}
                 style={{
@@ -417,7 +432,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
                 }}
                 data-cy="item-add-to-cart-btn"
               >
-                {t.itemDetails.items.addToCart[lang]}
+                {existingCartItem
+                  ? t.itemCard.updateQuantity[lang]
+                  : t.itemDetails.items.addToCart[lang]}
               </Button>
             </span>
           </TooltipTrigger>
