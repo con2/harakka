@@ -18,6 +18,8 @@ import TagDetailsPage from "@/pages/AdminPanel/TagDetailsPage";
 import AddTag from "@/pages/AdminPanel/AddTag";
 import Logs from "@/pages/AdminPanel/Logs";
 import Organizations from "@/pages/AdminPanel/Organizations";
+import OrganizationDetailsPage from "@/pages/AdminPanel/OrganizationDetailsPage";
+import CreateOrganizationPage from "@/pages/AdminPanel/CreateOrganizationPage";
 import OrganizationLocations from "@/pages/AdminPanel/OrganizationLocations";
 import Categories from "@/pages/AdminPanel/Categories";
 
@@ -221,6 +223,22 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute allowedRoles={["super_admin"]}>
                 <Organizations />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "organizations/create",
+            element: (
+              <ProtectedRoute allowedRoles={["super_admin"]}>
+                <CreateOrganizationPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "organizations/:id",
+            element: (
+              <ProtectedRoute allowedRoles={["super_admin"]}>
+                <OrganizationDetailsPage />
               </ProtectedRoute>
             ),
           },

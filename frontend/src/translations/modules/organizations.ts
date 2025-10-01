@@ -130,14 +130,42 @@ export const organizations = {
       fi: "Organisaation luonti epäonnistui.",
       en: "Failed to create organization.",
     },
+    activateSuccess: {
+      fi: "Organisaatio aktivoitu onnistuneesti",
+      en: "Organization activated successfully",
+    },
+    deactivateSuccess: {
+      fi: "Organisaatio deaktivoitu onnistuneesti",
+      en: "Organization deactivated successfully",
+    },
+    statusUpdateError: {
+      fi: "Tilan päivitys epäonnistui",
+      en: "Failed to update status",
+    },
   },
-  view: {
-    fi: "Näytä",
-    en: "View",
-  },
-  edit: {
-    fi: "Muokkaa",
-    en: "Edit",
+  accessibility: {
+    viewDetails: {
+      fi: "Näytä {orgName} organisaation tiedot",
+      en: "View details for {orgName} organization",
+    },
+    toggleStatus: {
+      activate: {
+        fi: "Aktivoi {orgName} organisaatio",
+        en: "Activate {orgName} organization",
+      },
+      deactivate: {
+        fi: "Deaktivoi {orgName} organisaatio",
+        en: "Deactivate {orgName} organization",
+      },
+      protected: {
+        fi: " (suojattu organisaatio)",
+        en: " (protected organization)",
+      },
+    },
+    loading: {
+      fi: "Ladataan organisaatioita...",
+      en: "Loading organizations...",
+    },
   },
 };
 
@@ -188,6 +216,12 @@ export const organizationDelete = {
     generalError: {
       en: "Something went wrong.",
       fi: "Jotain meni pieleen.",
+    },
+  },
+  accessibility: {
+    deleteButton: {
+      fi: "Poista organisaatio - {title}",
+      en: "Delete organization - {title}",
     },
   },
 };
