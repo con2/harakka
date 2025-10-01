@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { isValidCityName, normalizeCityName } from "@/utils/validation";
 
 interface EditLocationModalProps {
   location: OrgLocationWithNames | null;
@@ -124,17 +125,30 @@ const EditLocationModal = ({
   // Populate form when location changes
   useEffect(() => {
     if (location) {
-      // Parse the address if it exists, assuming format "street, city, postcode"
+      // Parse the address if it exists
       const address = location.storage_locations?.address || "";
       const addressParts = address.split(", ");
       const street = addressParts[0] || "";
-      const city = addressParts[1] || "";
+      const addressCity = addressParts[1] || "";
       const postcode = addressParts[2] || "";
 
+      // Parse the location name to extract location name and city
+      // format: "Location Name - City"
+      const fullLocationName = location.storage_locations?.name || "";
+      const dashIndex = fullLocationName.lastIndexOf(" - ");
+
+      let locationName = fullLocationName;
+      let cityName = addressCity; // fallback to address city
+
+      if (dashIndex > 0) {
+        locationName = fullLocationName.substring(0, dashIndex);
+        cityName = fullLocationName.substring(dashIndex + 3);
+      }
+
       setFormData({
-        name: location.storage_locations?.name || "",
+        name: locationName,
         street,
-        city,
+        city: cityName,
         postcode,
         description: location.storage_locations?.description || "",
         latitude: undefined, // We don't have these from the current relation?
@@ -160,6 +174,12 @@ const EditLocationModal = ({
       return;
     }
 
+    // Validate city name format (from the city field, not location name)
+    if (!isValidCityName(formData.city)) {
+      toast.error(t.editLocationModal.validation.invalidCityName[lang]);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -170,7 +190,7 @@ const EditLocationModal = ({
           is_active: formData.is_active,
         },
         storage_location: {
-          name: formData.name,
+          name: `${formData.name} - ${normalizeCityName(formData.city)}`,
           address: combinedAddress,
           description: formData.description,
           latitude: formData.latitude,
@@ -238,14 +258,22 @@ const EditLocationModal = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <FormField
-            id="name"
-            label={t.editLocationModal.fields.name.label[lang]}
-            value={formData.name}
-            onChange={updateField("name")}
-            placeholder={t.editLocationModal.fields.name.placeholder[lang]}
-            required
-          />
+          {/* Location Name */}
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-sm font-medium">
+              {t.editLocationModal.fields.name.label[lang]} *
+            </Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => updateField("name")(e.target.value)}
+              placeholder={t.editLocationModal.fields.name.placeholder[lang]}
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              {t.editLocationModal.fields.name.notVisibleToUsers[lang]}
+            </p>
+          </div>
 
           {/* Address Fields */}
           <div className="space-y-4">
