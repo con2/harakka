@@ -1,4 +1,3 @@
-import React from "react";
 import { MapPin } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
@@ -20,17 +19,17 @@ interface LocationAnalysis {
   cityName: string | null;
 }
 
-interface LocationListProps {
+interface MultipleLocationsProps {
   itemsByLocation: LocationGroup[];
   locationAnalysis: LocationAnalysis;
   hasMultipleLocations: boolean;
 }
 
-const LocationList: React.FC<LocationListProps> = ({
+export default function MultipleLocations({
   itemsByLocation,
   locationAnalysis,
   hasMultipleLocations,
-}) => {
+}: MultipleLocationsProps) {
   const { lang } = useLanguage();
 
   if (!hasMultipleLocations) return null;
@@ -43,15 +42,15 @@ const LocationList: React.FC<LocationListProps> = ({
       <h4 className="text-blue-800 font-semibold mb-2 flex items-center gap-2">
         <MapPin className="h-5 w-5" />
         {locationAnalysis.sameCity && locationAnalysis.cityName
-          ? t.cart.locations.sameCityMultipleLocations[lang]
+          ? t.multipleLocations.sameCityMultipleLocations[lang]
               .replace("{count}", itemsByLocation.length.toString())
               .replace("{city}", locationAnalysis.cityName)
-          : t.cart.locations.differentLocations[lang]}
+          : t.multipleLocations.differentLocations[lang]}
       </h4>
       <p className="text-blue-700 text-sm mb-3">
         {locationAnalysis.sameCity
-          ? t.cart.locations.sameCityPickupInfo[lang]
-          : t.cart.locations.pickupInfo[lang]}
+          ? t.multipleLocations.sameCityPickupInfo[lang]
+          : t.multipleLocations.pickupInfo[lang]}
       </p>
 
       {/* Only show location list if items are in different cities */}
@@ -90,8 +89,8 @@ const LocationList: React.FC<LocationListProps> = ({
                   <span className="text-blue-600 font-normal">
                     ({group.count}{" "}
                     {group.count === 1
-                      ? t.cart.locations.itemCountSingular[lang]
-                      : t.cart.locations.itemCount[lang]}
+                      ? t.multipleLocations.itemCountSingular[lang]
+                      : t.multipleLocations.itemCount[lang]}
                     )
                   </span>
                   {group.addresses.length > 0 && (
@@ -107,6 +106,4 @@ const LocationList: React.FC<LocationListProps> = ({
       )}
     </div>
   );
-};
-
-export default LocationList;
+}

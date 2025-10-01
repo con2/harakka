@@ -30,7 +30,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { ProfileCompletionModal } from "../components/Profile/ProfileCompletionModal";
 import { extractCityFromLocationName } from "@/utils/locationValidation";
 import InlineTimeframePicker from "../components/InlineTimeframeSelector";
-import LocationList from "../components/Cart/LocationList";
+import MultipleLocations from "../components/Cart/MultipleLocations";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   clearCart,
@@ -670,7 +670,7 @@ const Cart: React.FC = () => {
           </div>
 
           {/* Multiple Locations Notice */}
-          <LocationList
+          <MultipleLocations
             itemsByLocation={itemsByLocation}
             locationAnalysis={locationAnalysis}
             hasMultipleLocations={hasMultipleLocations}

@@ -40,6 +40,7 @@ import { locationsList } from "./modules/locationsList";
 import { login } from "./modules/login";
 import { logs } from "./modules/logs";
 import { mobileMenu } from "./modules/mobileMenu";
+import { multipleLocations } from "./modules/multipleLocations";
 import { myBookings } from "./modules/myBookings";
 import { myBookingsPage } from "./modules/myBookingsPage";
 import { myProfile } from "./modules/myProfile";
@@ -128,6 +129,7 @@ export const t = {
   login,
   logs,
   mobileMenu,
+  multipleLocations,
   myBookings,
   myBookingsPage,
   myProfile,
