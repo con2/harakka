@@ -21,7 +21,9 @@ const LandingPage = () => {
 
       {/* Content on top of image */}
       <div className="flex flex-col justify-center items-center min-h-screen text-white text-center px-4 gap-2">
-        <h2 className="text-5xl font-bold mb-4 text-white drop-shadow-[0_3px_4px_rgba(0,0,0,0.7)]"></h2>
+        <h2 className="text-5xl font-bold mb-4 text-white drop-shadow-[0_3px_4px_rgba(0,0,0,0.7)]">
+          {t.landingPage.heading[lang]}
+        </h2>
         <p className="mb-6 text-xl text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]">
           {t.landingPage.subheading[lang]}
         </p>
