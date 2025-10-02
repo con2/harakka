@@ -2,28 +2,36 @@
 
 This document provides a comprehensive reference for the backend API endpoints in the Storage and Booking Application.
 
-## Table of Contents <!-- change table of contents -->
+## Table of Contents
 
 - [General Information](#general-information)
-- [Authentication](#authentication)
-- [Users and Profiles](#users-and-profiles)
-- [Storage Items](#storage-items)
-- [Storage Locations](#storage-locations)
-- [Tags](#tags)
-- [Orders](#orders) <!-- change to bookings -->
-- [Payments and Invoices](#payments-and-invoices)
-- [Logs](#logs)
-- [Error Handling](#error-handling)
-- [Response Type](#response-type)
+  - [Authentication](#authentication)
+  - [Request & Response Format](#request--response-format)
+- [Core Endpoints](#core-endpoints)
+  - [Authentication](#authentication-auth)
+  - [Users and Profiles](#users-users)
+    - [User Banning](#user-banning-user-banning)
+    - [User Roles](#roles-roles)
+  - [Organizations](#organizations-organizations)
+  - [Storage Items](#storage-items-items)
+    - [Categories](#categories-categories)
+    - [Tags](#tags-tags)
+    - [Locations](#locations-storage-locations)
+  - [Bookings](#bookings-bookings)
+  - [Email System](#email-system-mail)
+  - [Logging](#logging-logs)
+  - [Error Handling](#error-responses)
+  - [Response Types](#response-type)
+  - [Notes](#notes)
 
-## General Information
+## General-Information
 
 ## Base URL
 
 All API endpoints are relative to the base URL:
 
 - **Development**: `http://localhost:3000`
-- **Production**: `https://api.your-production-domain.com` <!-- change to actual domain -->
+- **Production**: `https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net/` <!-- toDo: change to actual domain -->
 
 ## Authentication
 
@@ -33,7 +41,7 @@ All API endpoints require authentication via JWT token in the `Authorization` he
 Authorization: Bearer <jwt-token>
 ```
 
-### Response Format
+### Request & Response Format
 
 Successful responses follow this general structure:
 
@@ -71,11 +79,9 @@ Error responses follow this structure:
 
 ---
 
-## **Core Endpoints**
+## Health Check (`/`)
 
-### Health Check (`/`)
-
-#### Get Application Status
+### Get Application Status
 
 ```http
 GET /
@@ -91,6 +97,8 @@ GET /
 ```
 
 ---
+
+## **Core Endpoints**
 
 ## **Authentication (`/auth`)**
 
@@ -137,8 +145,6 @@ Content-Type: application/json
   "refresh_token": "refresh-token-here"
 }
 ```
-
----
 
 ## **Users (`/users`)**
 
@@ -211,6 +217,47 @@ GET /roles
       "description": "Organization admin"
     }
   ]
+}
+```
+
+---
+
+## **Organizations (`/organizations`)**
+
+### Get All Organizations
+
+```http
+GET /organizations?page=1&limit=10
+```
+
+### Get Organization by ID
+
+```http
+GET /organizations/:id
+```
+
+### Create Organization
+
+```http
+POST /organizations
+Content-Type: application/json
+
+{
+  "name": "New Organization",
+  "description": "Organization description",
+  "website": "https://example.com",
+  "address": "123 Main St"
+}
+```
+
+### Update Organization
+
+```http
+PUT /organizations/:id
+Content-Type: application/json
+
+{
+  "name": "Updated Name"
 }
 ```
 
@@ -337,15 +384,57 @@ Content-Type: multipart/form-data
 
 ---
 
-## Storage Locations
+---
 
-### Get All Locations
+## **Item Images (`/item-images`)**
+
+### Upload Image
+
+```http
+POST /item-images/upload
+Content-Type: multipart/form-data
+
+{
+  "file": <image-file>,
+  "itemId": "uuid"
+}
+```
+
+**Response:**
+
+```json
+{
+  "data": {
+    "id": "uuid",
+    "url": "https://storage-url/image.jpg",
+    "thumbnail_url": "https://storage-url/thumb.jpg"
+  }
+}
+```
+
+### Get Item Images
+
+```http
+GET /item-images/:itemId
+```
+
+### Delete Image
+
+```http
+DELETE /item-images/:imageId
+```
+
+---
+
+## Tags
+
+### Get All Tags
 
 ```
-GET /locations
+GET /tags
 ```
 
-Returns a list of all storage locations.
+Returns a list of all tags.
 
 **Response 200**
 
@@ -353,18 +442,64 @@ Returns a list of all storage locations.
 [
   {
     "id": "uuid",
-    "name": "Main Storage",
-    "description": "Primary storage facility",
-    "address": "123 Main St, City",
-    "latitude": 60.1699,
-    "longitude": 24.9384,
-    "is_active": true,
-    "image_url": "https://example.com/location.jpg",
+    "translations": {
+      "en": { "name": "Armor" },
+      "fi": { "name": "Haarniska" }
+    },
     "created_at": "2023-01-01T00:00:00Z"
   }
   // ...
 ]
 ```
+
+---
+
+## **Categories (`/categories`)**
+
+### Get All Categories
+
+```http
+GET /categories?lang=en
+```
+
+### Create Category
+
+```http
+POST /categories
+Content-Type: application/json
+
+{
+  "translations": {
+    "en": "Electronics",
+    "de": "Elektronik"
+  },
+  "sort_order": 1
+}
+```
+
+---
+
+## **Tags (`/tags`)**
+
+### Get All Tags
+
+```http
+GET /tags
+```
+
+### Create Tag
+
+```http
+POST /tags
+Content-Type: application/json
+
+{
+  "name": "outdoor",
+  "color": "#0d00ffff"
+}
+```
+
+---
 
 ## **Bookings (`/bookings`)**
 
@@ -454,47 +589,6 @@ Content-Type: application/json
 
 ---
 
-## **Organizations (`/organizations`)**
-
-### Get All Organizations
-
-```http
-GET /organizations?page=1&limit=10
-```
-
-### Get Organization by ID
-
-```http
-GET /organizations/:id
-```
-
-### Create Organization
-
-```http
-POST /organizations
-Content-Type: application/json
-
-{
-  "name": "New Organization",
-  "description": "Organization description",
-  "website": "https://example.com",
-  "address": "123 Main St"
-}
-```
-
-### Update Organization
-
-```http
-PUT /organizations/:id
-Content-Type: application/json
-
-{
-  "name": "Updated Name"
-}
-```
-
----
-
 ## **Locations (`/storage-locations`)**
 
 ### Get All Storage Locations
@@ -513,119 +607,6 @@ Content-Type: application/json
   "name": "Warehouse A",
   "address": "123 Storage St",
   "organization_id": "uuid"
-}
-```
-
----
-
-## **Item Images (`/item-images`)**
-
-### Upload Image
-
-```http
-POST /item-images/upload
-Content-Type: multipart/form-data
-
-{
-  "file": <image-file>,
-  "itemId": "uuid"
-}
-```
-
-**Response:**
-
-```json
-{
-  "data": {
-    "id": "uuid",
-    "url": "https://storage-url/image.jpg",
-    "thumbnail_url": "https://storage-url/thumb.jpg"
-  }
-}
-```
-
-### Get Item Images
-
-```http
-GET /item-images/:itemId
-```
-
-### Delete Image
-
-```http
-DELETE /item-images/:imageId
-```
-
----
-
-## Tags
-
-### Get All Tags
-
-```
-GET /tags
-```
-
-Returns a list of all tags.
-
-**Response 200**
-
-```json
-[
-  {
-    "id": "uuid",
-    "translations": {
-      "en": { "name": "Armor" },
-      "fi": { "name": "Haarniska" }
-    },
-    "created_at": "2023-01-01T00:00:00Z"
-  }
-  // ...
-]
-```
-
-## **Categories (`/categories`)**
-
-### Get All Categories
-
-```http
-GET /categories?lang=en
-```
-
-### Create Category
-
-```http
-POST /categories
-Content-Type: application/json
-
-{
-  "translations": {
-    "en": "Electronics",
-    "de": "Elektronik"
-  },
-  "sort_order": 1
-}
-```
-
----
-
-## **Tags (`/tags`)**
-
-### Get All Tags
-
-```http
-GET /tags
-```
-
-### Create Tag
-
-```http
-POST /tags
-Content-Type: application/json
-
-{
-  "name": "outdoor",
-  "color": "#bf00ffff"
 }
 ```
 
@@ -833,3 +814,4 @@ export type ApiSingleResponse<T> = PostgrestSingleResponse<T> & {
 - [Authentication & Security](./security.md)
 - [Email System](./email-system.md)
 - [Modules Overview](./modules.md)
+- [Query-Constructor](./queryconstructor.md)
