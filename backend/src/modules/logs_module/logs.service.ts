@@ -28,77 +28,130 @@ export class LogsService {
     search?: string,
   ): Promise<ApiResponse<LogMessage>> {
     const supabase = req.supabase;
-    const { from, to } = getPaginationRange(page, limit);
+    const { from: startIndex, to } = getPaginationRange(page, limit);
+    const rangeEnd = Math.max(to, 0);
+
+    const normalizedLevel = level
+      ? ["error", "warning", "info", "debug"].includes(level.toLowerCase())
+        ? (level.toLowerCase() as LogMessage["level"])
+        : undefined
+      : undefined;
+    const normalizedSearch = search?.trim() ?? "";
 
     const includeAudit = !logType || logType === "audit";
     const includeSystem = !logType || logType === "system";
 
-    const combinedLogs: LogMessage[] = [];
+    const lowerSearch = normalizedSearch.toLowerCase();
+
+    const systemLogs = includeSystem
+      ? this.systemLogs
+          .filter((log) => {
+            const matchesLevel = normalizedLevel
+              ? log.level === normalizedLevel
+              : true;
+            const matchesSearch = normalizedSearch
+              ? log.message.toLowerCase().includes(lowerSearch) ||
+                JSON.stringify(log.metadata || {})
+                  .toLowerCase()
+                  .includes(lowerSearch)
+              : true;
+            return matchesLevel && matchesSearch;
+          })
+          .map((log) => ({ ...log }))
+      : [];
+
+    let auditLogs: LogMessage[] = [];
+    let auditTotal = 0;
 
     if (includeAudit) {
-      // Fetch all audit logs without range
-      const { data: auditLogs, error } = await supabase
-        .from("audit_logs")
-        .select("*")
-        .order("created_at", { ascending: false });
+      if (normalizedLevel === "error") {
+        // Audit logs never map to error in determineLogLevel; skip querying
+        auditLogs = [];
+        auditTotal = 0;
+      } else {
+        let auditQuery = supabase
+          .from("audit_logs")
+          .select("*", { count: "exact" })
+          .order("created_at", { ascending: false });
 
-      // New error handling for Supabase
-      if (error) {
-        handleSupabaseError(error);
+        if (normalizedLevel === "warning") {
+          auditQuery = auditQuery.eq("action", "delete");
+        } else if (normalizedLevel === "info") {
+          auditQuery = auditQuery.in("action", ["insert", "update"]);
+        } else if (normalizedLevel === "debug") {
+          auditQuery = auditQuery.not(
+            "action",
+            "in",
+            '("insert","update","delete")',
+          );
+        }
+
+        if (normalizedSearch) {
+          const escapedSearch = normalizedSearch.replace(/[%_]/g, (char) => {
+            return `\\${char}`;
+          });
+          const likeTerm = `%${escapedSearch}%`;
+          auditQuery = auditQuery.or(
+            [
+              `table_name.ilike.${likeTerm}`,
+              `action.ilike.${likeTerm}`,
+              `record_id.ilike.${likeTerm}`,
+              `user_id.ilike.${likeTerm}`,
+              `old_values::text.ilike.${likeTerm}`,
+              `new_values::text.ilike.${likeTerm}`,
+            ].join(","),
+          );
+        }
+
+        const {
+          data: auditData,
+          error,
+          count,
+        } = await auditQuery.range(0, rangeEnd);
+
+        if (error) {
+          handleSupabaseError(error);
+        }
+
+        auditTotal = count ?? 0;
+
+        auditLogs = (auditData || []).map((log) => ({
+          id: log.id,
+          timestamp: log.created_at ?? new Date().toISOString(),
+          level: this.determineLogLevel(log.action),
+          message: this.formatLogMessage(log as AuditLog),
+          source: `DB:${log.table_name}`,
+          metadata: {
+            action: log.action,
+            recordId: log.record_id,
+            userId: log.user_id ?? undefined,
+            oldValues: log.old_values,
+            newValues: log.new_values,
+            logType: "audit",
+          },
+        }));
       }
-
-      const formattedAuditLogs = (auditLogs || []).map((log) => ({
-        id: log.id,
-        timestamp: log.created_at ?? new Date().toISOString(),
-        level: this.determineLogLevel(log.action),
-        message: this.formatLogMessage(log as AuditLog),
-        source: `DB:${log.table_name}`,
-        metadata: {
-          action: log.action,
-          recordId: log.record_id,
-          userId: log.user_id ?? undefined,
-          oldValues: log.old_values,
-          newValues: log.new_values,
-          logType: "audit",
-        },
-      }));
-
-      combinedLogs.push(...formattedAuditLogs);
     }
 
-    if (includeSystem) {
-      combinedLogs.push(...this.systemLogs);
-    }
-
-    // filtering and search
-    const filteredLogs = combinedLogs.filter((log) => {
-      const matchesLevel = level
-        ? log.level.toLowerCase() === level.toLowerCase()
-        : true;
-      const matchesSearch = search
-        ? log.message.toLowerCase().includes(search.toLowerCase()) ||
-          JSON.stringify(log.metadata || {})
-            .toLowerCase()
-            .includes(search.toLowerCase())
-        : true;
-      return matchesLevel && matchesSearch;
-    });
-
-    // sort by newest first
-    filteredLogs.sort(
+    const combinedLogs = [...auditLogs, ...systemLogs];
+    combinedLogs.sort(
       (a, b) =>
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     );
 
-    // paginate filtered logs
-    const paginatedLogs = filteredLogs.slice(from, to + 1);
+    const safeLimit = Math.max(1, limit);
+    const paginatedLogs = combinedLogs.slice(
+      startIndex,
+      startIndex + safeLimit,
+    );
 
-    const meta = getPaginationMeta(filteredLogs.length, page, limit);
+    const totalRecords = auditTotal + systemLogs.length;
+    const meta = getPaginationMeta(totalRecords, page, safeLimit);
 
     return {
       data: paginatedLogs,
       error: null,
-      count: filteredLogs.length,
+      count: totalRecords,
       status: 200,
       statusText: "OK",
       metadata: meta,
