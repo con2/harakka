@@ -14,14 +14,6 @@ export const addItemForm = {
       fi: "Tuotteen nimi (EN)",
       en: "Item Name (EN)",
     },
-    itemTypeFi: {
-      fi: "Tuotteen tyyppi (FI)",
-      en: "Item Type (FI)",
-    },
-    itemTypeEn: {
-      fi: "Tuotteen tyyppi (EN)",
-      en: "Item Type (EN)",
-    },
     descriptionFi: {
       fi: "Kuvaus (FI)",
       en: "Description (FI)",
@@ -47,8 +39,8 @@ export const addItemForm = {
       en: "Total Quantity",
     },
     placement: {
-      en: "Placement",
-      fi: "Sijoittelu",
+      fi: "Sijoittelun kuvaus",
+      en: "Placement Description",
     },
   },
   buttons: {
@@ -133,39 +125,77 @@ export const addItemForm = {
   },
   messages: {
     validation: {
-      itemName: {
-        en: "Item name is required",
-        fi: "Tuotteen nimi on pakollinen",
+      multipleErrors: {
+        en: "Incorrect values provided for {amount} fields",
+        fi: "Virheellisiä arvoja annettu {amount} kentässä",
       },
-      itemType: {
-        en: "Item type is required",
-        fi: "Tuotteen tyyppi on pakollinen",
+      item_name: {
+        too_small: {
+          en: "Missing item name",
+          fi: "Tuotteen nimi puuttuu",
+        },
+        too_big: {
+          en: "Item name too long, please keep under 100 characters",
+          fi: "Tuotteen nimi on liian pitkä, pituus saa olla enintään 100 merkkiä",
+        },
       },
-      itemDescription: {
-        en: "Item description is required",
-        fi: "Tuotteen kuvaus on pakollinen",
-      },
-      location: {
-        en: "Location is required",
-        fi: "Sijainti on pakollinen",
+      item_description: {
+        too_small: {
+          en: "Missing item description",
+          fi: "Tuotteen kuvaus puuttuu",
+        },
+        too_big: {
+          en: "Item description too long, please keep under 250 characters",
+          fi: "Tuotteen kuvaus on liian pitkä, pituus saa olla enintään 250 merkkiä",
+        },
       },
       quantity: {
-        en: "Quantity is required",
-        fi: "Määrä on pakollinen",
-      },
-      category_id: {
-        en: "Category is required",
-        fi: "Kategoria vaaditaan",
+        too_small: {
+          en: "The value for quantity must be at least 1",
+          fi: "Määrän arvon on oltava vähintään 1",
+        },
       },
       placement_description: {
-        en: "A placement description is required",
-        fi: "Sijoittelun kuvaus on pakollinen",
+        too_small: {
+          en: "Missing placement description",
+          fi: "Sijoittelun kuvaus puuttuu",
+        },
+        too_big: {
+          en: "Placement description is too long, please keep it under 200 characters.",
+          fi: "Sijoittelun kuvaus on liian pitkä, pituus saa olla enintään 200 merkkiä.",
+        },
+        invalid_type: {
+          en: "Placement description is required.",
+          fi: "Sijoittelun kuvaus on pakollinen.",
+        },
+      },
+      location: {
+        invalid_type: {
+          en: "Location is required.",
+          fi: "Sijainti on pakollinen.",
+        },
+        invalid_string: {
+          en: "Location is invalid.",
+          fi: "Sijainti on virheellinen.",
+        },
+      },
+      invalid_type: {
+        en: "An invalid type was provided for {field}",
+        fi: "Virheellinen tyyppi annettu kentälle {field}",
+      },
+      invalid_input: {
+        en: "Field is not valid.",
+        fi: "Kenttä ei ole kelvollinen.",
+      },
+      images: {
+        en: "An unexpected error occured with the item images. Try re-uploading them. If that does not help contact support.",
+        fi: "Kuvissa tapahtui odottamaton virhe. Yritä ladata ne uudelleen. Jos se ei auta, ota yhteyttä tukeen.",
       },
     },
     error: {
       fallbackFormError: {
-        en: "Form contains errors",
-        fi: "Lomakkeessa on virheitä",
+        en: "An unexpected error occurred. Try again, or contact support if the error persists.",
+        fi: "Odottamaton virhe tapahtui. Yritä uudelleen tai ota yhteyttä tukeen, jos virhe toistuu.",
       },
     },
   },
