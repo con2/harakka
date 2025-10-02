@@ -7,6 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import {
   ArrowLeft,
@@ -160,8 +161,11 @@ export const UserMenu: React.FC = () => {
         {selectGroup === "roles" && (
           <>
             {roleOptions.map((opt) => (
-              <DropdownMenuItem
+              <DropdownMenuCheckboxItem
                 key={opt.value}
+                checked={
+                  opt.orgId === activeOrgId && opt.roleName === activeRoleName
+                }
                 onSelect={(e) => {
                   e.preventDefault();
                   handleContextChange(opt.value);
@@ -171,7 +175,7 @@ export const UserMenu: React.FC = () => {
                 className="text-sm"
               >
                 {opt.label}
-              </DropdownMenuItem>
+              </DropdownMenuCheckboxItem>
             ))}
           </>
         )}
@@ -180,8 +184,9 @@ export const UserMenu: React.FC = () => {
         {selectGroup === "languages" && (
           <>
             {SUPPORTED_LANGUAGES.map((l) => (
-              <DropdownMenuItem
+              <DropdownMenuCheckboxItem
                 key={l.key}
+                checked={lang === l.key}
                 onSelect={() => {
                   setLanguage(l.key as Language);
                   setSelectGroup("links");
@@ -190,7 +195,7 @@ export const UserMenu: React.FC = () => {
                 className="text-sm"
               >
                 {l.translations[lang]}
-              </DropdownMenuItem>
+              </DropdownMenuCheckboxItem>
             ))}
           </>
         )}
