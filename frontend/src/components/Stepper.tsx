@@ -4,9 +4,11 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setStepper, stepperCurrentNum } from "@/store/slices/uiSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { Translation } from "@common/database.types";
 
 export interface Step {
   icon?: ReactNode;
+  stepLabel: Translation;
 }
 
 export interface StepperProps {
@@ -39,7 +41,7 @@ export function Stepper({
           const stepNum = idx + 1;
           const isActive = stepNum === currentStep;
           return (
-            <div key={idx} className="flex gap-4 flex-wrap">
+            <div key={idx} className="flex gap-x-4 flex-wrap">
               <Button
                 variant={isActive ? "outline" : "default"}
                 size="lg"
@@ -48,7 +50,7 @@ export function Stepper({
                 onClick={
                   !disabled ? () => dispatch(setStepper(stepNum)) : undefined
                 }
-                aria-label={`${t.stepper.general.goToStep[lang]} ${stepNum}`}
+                aria-label={`${t.stepper.general.goToStep[lang]}: ${step.stepLabel[lang]}`}
               >
                 {step.icon ?? stepNum}
               </Button>

@@ -64,9 +64,9 @@ function OrgStep() {
   return (
     <div className="bg-white flex flex-col flex-wrap rounded border mt-4 max-w-[900px]">
       <div className="flex flex-col gap-2 flex-3  p-10">
-        <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-4">
+        <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-4 text-start text-primary font-main">
           {t.orgStep.heading.location[lang]}
-        </p>
+        </h2>
         <>
           {/* Location Selection */}
           <div className="flex justify-between items-center">
@@ -133,10 +133,10 @@ function OrgStep() {
 
       {/* Item Creations Choices: Manual or CSV Upload */}
       <div className="p-10">
-        <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-4">
+        <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-4 text-start text-primary font-main">
           {t.orgStep.heading.method[lang]}
-        </p>
-        <div className="gap-4 flex items-end items-start">
+        </h2>
+        <div className="gap-4 flex items-end flex-wrap items-start">
           <div className="flex flex-col flex-1">
             <Button
               disabled={selectedLoc === undefined}
