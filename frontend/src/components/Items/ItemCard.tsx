@@ -229,7 +229,8 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
     quantity > availabilityInfo.availableQuantity ||
     quantity <= 0 ||
     !isItemAvailableForTimeframe ||
-    availabilityInfo.isChecking;
+    availabilityInfo.isChecking ||
+    (existingCartItem && existingCartItem.quantity === quantity);
 
   return (
     <Card
@@ -442,8 +443,12 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
             <TooltipContent>
               {!startDate || !endDate ? (
                 <p>{t.itemCard.selectDatesFirst[lang]}</p>
+              ) : quantity <= 0 ? (
+                <p>{t.itemCard.selectValidQuantity[lang]}</p>
+              ) : existingCartItem && existingCartItem.quantity === quantity ? (
+                <p>{t.itemCard.quantityUnchanged[lang]}</p>
               ) : (
-                <p>{t.itemCard.selectValidQuantity[lang]} </p>
+                <p>{t.itemCard.selectValidQuantity[lang]}</p>
               )}
             </TooltipContent>
           )}
