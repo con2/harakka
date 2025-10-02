@@ -5,7 +5,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useLanguage } from "@/context/LanguageContext";
-import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart, updateQuantity } from "@/store/slices/cartSlice";
@@ -13,7 +12,7 @@ import { getItemById } from "@/store/slices/itemsSlice";
 import { t } from "@/translations";
 import { ItemTranslation } from "@/types";
 import { ItemImageAvailabilityInfo } from "@/types/storage";
-import { Clock, MapPin, Minus, Plus } from "lucide-react";
+import { MapPin, Minus, Plus } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -59,7 +58,6 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
   const { getTranslation } = useTranslation<ItemTranslation>();
   const itemContent = getTranslation(item, "fi") as ItemTranslation | undefined;
   const { lang } = useLanguage();
-  const { formatDate } = useFormattedDate();
 
   // Enhanced image finding with memoization to prevent recalculation on every render
   const itemImagesForCurrentItem = useMemo(
