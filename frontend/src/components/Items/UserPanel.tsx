@@ -53,7 +53,7 @@ const UserPanel = () => {
     void dispatch(
       fetchFilteredTags({
         page: 1,
-        limit: 10,
+        limit: 50,
         sortOrder: "desc",
         sortBy: "popularity_rank",
       }),
