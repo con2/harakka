@@ -12,9 +12,9 @@ export const adminPanel = {
       fi: "Tilaukset",
       en: "Bookings",
     },
-    overdue: {
-      fi: "Myöhästyneet",
-      en: "Overdue",
+    requests: {
+      fi: "Pyynnöt",
+      en: "Requests",
     },
     items: {
       fi: "Tuotteet",
