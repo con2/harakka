@@ -174,7 +174,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
 
   // Update availability info based on dates selection
   useEffect(() => {
-    if (startDate && endDate) {
+    if (startDate && endDate && !preview) {
       setAvailabilityInfo((prev) => ({
         ...prev,
         isChecking: true,
