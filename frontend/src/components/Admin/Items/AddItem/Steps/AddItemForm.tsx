@@ -279,7 +279,12 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
 
   /*------------------render-------------------------------------------------*/
   return (
-    <div className="bg-white flex flex-wrap rounded border max-w-[900px]">
+    <div
+      className={cn(
+        "bg-white flex flex-wrap rounded border max-w-[900px]",
+        onUpdate && "mt-4",
+      )}
+    >
       <Form {...form}>
         <form
           id="add-item-form"
