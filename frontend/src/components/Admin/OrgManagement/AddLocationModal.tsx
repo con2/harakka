@@ -21,6 +21,7 @@ import { CreateOrgLocationWithStorage } from "@/types/organizationLocation";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { isValidCityName, normalizeCityName } from "@/utils/locationValidation";
 
 interface AddLocationModalProps {
   organizationId: string;
@@ -73,6 +74,12 @@ const AddLocationModal = ({
       return;
     }
 
+    // Validate city name format (from the city field, not location name)
+    if (!isValidCityName(formData.city)) {
+      toast.error(t.addLocationModal.validation.invalidCityName[lang]);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -82,7 +89,7 @@ const AddLocationModal = ({
         organization_id: organizationId,
         is_active: formData.is_active,
         storage_location: {
-          name: formData.name,
+          name: `${formData.name} - ${normalizeCityName(formData.city)}`,
           address: combinedAddress,
           description: formData.description,
           latitude: formData.latitude,
@@ -145,7 +152,7 @@ const AddLocationModal = ({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Name */}
+            {/* Location Name */}
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium">
                 {t.addLocationModal.fields.name.label[lang]} *
@@ -159,6 +166,9 @@ const AddLocationModal = ({
                 placeholder={t.addLocationModal.fields.name.placeholder[lang]}
                 required
               />
+              <p className="text-xs italic text-muted-foreground">
+                {t.addLocationModal.fields.name.notVisibleToUsers[lang]}
+              </p>
             </div>
 
             {/* Image URL */}

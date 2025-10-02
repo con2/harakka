@@ -285,47 +285,12 @@ export class BookingController {
     return this.bookingService.updateBooking(id, userId, dto, req);
   }
 
-  /**
-   * Confirm a booking.
-   * Accessible by storage managers and tenant admins within their organization.
-   * @param bookingId - ID of the booking to confirm
-   * @param req - Authenticated request object
-   * @returns Confirmation result
-   */
-  //TODO: limit to activeContext organization
-  @Put(":id/confirm")
-  @Roles(["storage_manager", "tenant_admin"], {
-    match: "any",
-    sameOrg: true,
-  })
-  async confirm(@Param("id") bookingId: string, @Req() req: AuthRequest) {
-    const userId = req.user.id;
-    const supabase = req.supabase;
-
-    return this.bookingService.confirmBooking(bookingId, userId, supabase);
-  }
-
-  /**
-   * Reject a booking.
-   * Accessible by storage managers and tenant admins within their organization.
-   * @param id - ID of the booking to reject
-   * @param req - Authenticated request object
-   * @returns Rejection result
-   */
-  //TODO: limit to activeContext organization
-  @Put(":id/reject")
-  @Roles(["storage_manager", "tenant_admin"], {
-    match: "any",
-    sameOrg: true,
-  })
-  async reject(@Param("id") id: string, @Req() req: AuthRequest) {
-    const userId = req.user.id;
-    return this.bookingService.rejectBooking(id, userId, req);
-  }
-
-  //TODO: remove and replace by id/confirm, it already contain activeRole
   // Confirm booking items for the active organization; supports all or a selected subset via item_ids
   @Put(":id/confirm-for-org")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async confirmForOrg(
     @Param("id") id: string,
     @Req() req: AuthRequest,
@@ -346,6 +311,10 @@ export class BookingController {
   //TODO: remove and replace by id/reject, it already contain activeRole
   // Reject booking items for the active organization; supports all or a selected subset via item_ids
   @Put(":id/reject-for-org")
+  @Roles(["storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
   async rejectForOrg(
     @Param("id") id: string,
     @Req() req: AuthRequest,
@@ -438,6 +407,16 @@ export class BookingController {
   ) {
     const supabase = req.supabase;
     const { item_ids: itemIds, location_id, org_id } = body;
+
+    if (
+      !location_id ||
+      typeof location_id !== "string" ||
+      location_id.trim() === ""
+    ) {
+      throw new BadRequestException(
+        "'location_id' (UUID string) is required in body",
+      );
+    }
 
     // Org ID is either provided in the body (self_pickup) or the headers (admin pickup)
     const orgId = org_id ?? (req.headers["x-org-id"] as string);

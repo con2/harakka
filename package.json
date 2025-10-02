@@ -108,6 +108,6 @@
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.49.0",
-    "supabase": "^2.45.5"
+    "supabase": "^2.47.2"
   }
 }
