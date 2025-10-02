@@ -47,28 +47,34 @@ function Summary() {
     void dispatch(editLocalItem(id));
     dispatch(setPrevStep());
   };
-  const handleSubmit = async () => {
-    try {
-      await dispatch(createItem(form as ItemFormData)).unwrap();
-      if (uploadError) throw new Error(uploadError);
-      toast.success("Your items were created!");
-      const newItems = items.flatMap((item) => item.id);
-      void dispatch(setStepper(1));
-      void dispatch(clearOrgLocations());
-      void navigate("/admin/items", {
-        state: {
-          ascending: false,
-          newItems: newItems,
-          highlight: Array.from({ length: newItems.length }, (_, i) => i),
-        },
-      });
-    } catch (error) {
-      toast.error(
-        typeof error === "string"
-          ? error
-          : "Items could not be created. Contact support if the error persists.",
-      );
-    }
+  const handleSubmit = () => {
+    toast.promise(
+      (async () => {
+        const result = await dispatch(
+          createItem(form as ItemFormData),
+        ).unwrap();
+        if (uploadError) throw new Error(uploadError);
+
+        const newItems = items.flatMap((item) => item.id);
+
+        void dispatch(setStepper(1));
+        void dispatch(clearOrgLocations());
+        void navigate("/admin/items", {
+          state: {
+            ascending: false,
+            newItems,
+            highlight: Array.from({ length: newItems.length }, (_, i) => i),
+          },
+        });
+
+        return result;
+      })(),
+      {
+        loading: t.itemSummary.messages.toastPromise.loading[lang],
+        success: t.itemSummary.messages.toastPromise.success[lang],
+        error: t.itemSummary.messages.toastPromise.error[lang],
+      },
+    );
   };
 
   return (
