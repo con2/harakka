@@ -31,7 +31,6 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { toast } from "sonner";
-import { getFirstErrorMessage } from "@/utils/validate";
 import { t } from "@/translations";
 import { ReactNode, useEffect } from "react";
 import { buildCategoryTree, Category } from "@/store/utils/format";
@@ -94,10 +93,9 @@ function AddCategory() {
   };
 
   const onInvalidSubmit: SubmitErrorHandler<Category> = (errors) => {
-    const firstErrorKey = getFirstErrorMessage(errors);
-
-    if (firstErrorKey) {
-      toast.error(firstErrorKey);
+    console.log(errors);
+    if (errors.translations) {
+      toast.error(t.addCategory.messages.validation.translations?.[lang]);
     } else {
       toast.error(t.addCategory.messages.general[lang]);
     }
@@ -138,7 +136,7 @@ function AddCategory() {
         </h1>
 
         <div className="flex gap-4">
-          <div>
+          <div className="flex-1">
             <FormField
               control={form.control}
               name="translations.en"
@@ -152,7 +150,7 @@ function AddCategory() {
               )}
             />
           </div>
-          <div>
+          <div className="flex-1">
             <FormField
               control={form.control}
               name="translations.fi"
@@ -210,5 +208,4 @@ function AddCategory() {
     </Form>
   );
 }
-
 export default AddCategory;
