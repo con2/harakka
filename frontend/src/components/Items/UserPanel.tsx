@@ -25,7 +25,8 @@ import {
 } from "@/store/slices/categoriesSlice";
 import { buildCategoryTree } from "@/store/utils/format";
 import CategoryTree from "@/components/Items/CategoryTree";
-import { fetchAllOrgLocations } from "@/store/slices/organizationLocationsSlice";
+import { orgLocationsApi } from "@/api/services/organizationLocations";
+import type { OrgLocationWithNames } from "@/types/organizationLocation";
 
 interface NavigationState {
   preSelectedFilters?: {
@@ -83,11 +84,8 @@ const UserPanel = () => {
   const getVisible = <T,>(arr: T[], key: ExpandableSection) =>
     expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
 
-  // Fetch organization locations for all organizations to enable org-based location filtering
-  const orgLocations = useAppSelector(
-    (state) => state.orgLocations.orgLocations,
-  );
-  const [orgLocationsLoaded, setOrgLocationsLoaded] = useState(false);
+  // Local state for organization locations mapping (for filtering)
+  const [orgLocations, setOrgLocations] = useState<OrgLocationWithNames[]>([]);
 
   // Filter out organizations that shouldn't have items
   const filterableOrganizations = useMemo(() => {
@@ -108,24 +106,31 @@ const UserPanel = () => {
 
   // Fetch org locations when organizations are loaded
   useEffect(() => {
-    if (
-      organizations.length > 0 &&
-      !orgLocationsLoaded &&
-      filterableOrganizations.length > 0
-    ) {
-      // Fetch org locations for all organizations to map locations to orgs
-      filterableOrganizations.forEach((org) => {
-        void dispatch(
-          fetchAllOrgLocations({
-            orgId: org.id,
-            pageSize: 100,
-            currentPage: 1,
-          }),
-        );
-      });
-      setOrgLocationsLoaded(true);
+    if (filterableOrganizations.length > 0 && orgLocations.length === 0) {
+      // Fetch org locations for all orgs locally
+      const fetchOrgLocations = async () => {
+        try {
+          const allOrgLocations: OrgLocationWithNames[] = [];
+
+          // Fetch locations for each organization
+          for (const org of filterableOrganizations) {
+            const response = await orgLocationsApi.getAllOrgLocs(
+              org.id,
+              100,
+              1,
+            );
+            allOrgLocations.push(...response.data);
+          }
+
+          setOrgLocations(allOrgLocations);
+        } catch (error) {
+          console.error("Failed to fetch org locations:", error);
+        }
+      };
+
+      void fetchOrgLocations();
     }
-  }, [organizations, orgLocationsLoaded, filterableOrganizations, dispatch]);
+  }, [filterableOrganizations, orgLocations.length]);
 
   const toggleExpanded = (key: ExpandableSection) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -408,51 +413,66 @@ const UserPanel = () => {
               <label className="text-primary font-medium block mb-2">
                 {t.userPanel.locations.title[lang]}
               </label>
-              <div className="flex flex-col gap-2">
-                {visibleLocations.map((location) => {
-                  // Check if any of this city's location IDs are selected
-                  const isSelected = location.locationIds.some((id: string) =>
-                    filters.locationIds?.includes(id),
-                  );
-                  return (
-                    <label
-                      key={location.id}
-                      className={`flex items-center gap-2 text-sm cursor-pointer ${
-                        isSelected
-                          ? "text-secondary"
-                          : "text-slate-600 hover:text-secondary"
-                      }`}
+              {cityLocationGroups.length === 0 &&
+              filters.orgIds &&
+              filters.orgIds.length > 0 ? (
+                <p className="text-sm text-slate-500 italic">
+                  {lang === "en"
+                    ? "No locations found for selected organizations"
+                    : "Valituille organisaatioille ei löytynyt sijainteja"}
+                </p>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-2">
+                    {visibleLocations.map((location) => {
+                      // Check if any of this city's location IDs are selected
+                      const isSelected = location.locationIds.some(
+                        (id: string) => filters.locationIds?.includes(id),
+                      );
+                      return (
+                        <label
+                          key={location.id}
+                          className={`flex items-center gap-2 text-sm cursor-pointer ${
+                            isSelected
+                              ? "text-secondary"
+                              : "text-slate-600 hover:text-secondary"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              const updated = isSelected
+                                ? filters.locationIds.filter(
+                                    (id) => !location.locationIds.includes(id),
+                                  )
+                                : [
+                                    ...filters.locationIds,
+                                    ...location.locationIds,
+                                  ];
+                              handleFilterChange("locationIds", updated);
+                            }}
+                            className="accent-secondary"
+                          />
+                          <div className="flex items-center gap-1">
+                            <span>{location.name}</span>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {cityLocationGroups.length > MAX_VISIBLE && (
+                    <Button
+                      variant="ghost"
+                      className="text-left text-sm text-secondary"
+                      onClick={() => toggleExpanded("locations")}
                     >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => {
-                          const updated = isSelected
-                            ? filters.locationIds.filter(
-                                (id) => !location.locationIds.includes(id),
-                              )
-                            : [...filters.locationIds, ...location.locationIds];
-                          handleFilterChange("locationIds", updated);
-                        }}
-                        className="accent-secondary"
-                      />
-                      <div className="flex items-center gap-1">
-                        <span>{location.name}</span>
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-              {cityLocationGroups.length > MAX_VISIBLE && (
-                <Button
-                  variant="ghost"
-                  className="text-left text-sm text-secondary"
-                  onClick={() => toggleExpanded("locations")}
-                >
-                  {expanded.locations
-                    ? t.userPanel.categories.showLess[lang]
-                    : t.userPanel.categories.seeAll[lang]}
-                </Button>
+                      {expanded.locations
+                        ? t.userPanel.categories.showLess[lang]
+                        : t.userPanel.categories.seeAll[lang]}
+                    </Button>
+                  )}
+                </>
               )}
             </div>
 
