@@ -258,7 +258,11 @@ const UserPanel = () => {
     }
     count += filters.categories.length;
     count += filters.tagIds.length;
-    count += filters.locationIds.length;
+    const selectedCityGroups = cityLocationGroups.filter((cityGroup) =>
+      cityGroup.locationIds.some((id) => filters.locationIds.includes(id)),
+    );
+    count += selectedCityGroups.length;
+
     count += filters.orgIds?.length ?? 0;
     return count;
   };
