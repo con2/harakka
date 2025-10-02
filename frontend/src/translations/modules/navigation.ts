@@ -44,9 +44,75 @@ export const navigation = {
     },
   },
   notifications: {
-    label: { en: "Notifications", fi: "Ilmoitukset" },
-    none: { en: "Nothing new yet.", fi: "Ei uusia ilmoituksia" },
-    markAllRead: { en: "Mark all as read", fi: "Merkitse kaikki luetuiksi" },
-    srOpen: { en: "Open notifications", fi: "Avaa ilmoitukset" },
+    label: {
+      en: "Notifications",
+      fi: "Ilmoitukset",
+    },
+    none: {
+      en: "Nothing new yet.",
+      fi: "Ei uusia ilmoituksia",
+    },
+    markAllRead: {
+      en: "Mark all as read",
+      fi: "Merkitse kaikki luetuiksi",
+    },
+    markAsRead: {
+      en: "Mark as read",
+      fi: "Merkitse luetuksi",
+    },
+    deleteAll: {
+      en: "Delete all",
+      fi: "Poista kaikki",
+    },
+    deleteOne: {
+      en: "Delete notification",
+      fi: "Poista ilmoitus",
+    },
+    viewActive: {
+      en: "Active",
+      fi: "Konteksti",
+    },
+    viewAll: {
+      en: "All",
+      fi: "Kaikki",
+    },
+    otherContextsPrefix: {
+      en: "Others",
+      fi: "Muut",
+    },
+    toasts: {
+      switchedContext: {
+        en: "Switched to {role} in {org} to open this booking.",
+        fi: "Vaihdettiin rooliin {role} organisaatiossa {org} tämän varauksen avaamiseksi.",
+      },
+      revertedContext: {
+        en: "Reverted to {role} in {org}.",
+        fi: "Palattiin rooliin {role} organisaatiossa {org}.",
+      },
+    },
+    srOpen: {
+      en: "Open notifications",
+      fi: "Avaa ilmoitukset",
+    },
+  },
+  aria: {
+    labels: {
+      cart: {
+        en: "Go to cart. {number} items",
+        fi: "Siirry ostoskoriin. {number} tuotetta",
+      },
+      logIn: {
+        en: "Log in",
+        fi: "Kirjaudu sisään",
+      },
+      logo: {
+        en: "Home",
+        fi: "Etusivu",
+      },
+      notifications: {
+        en: "Notifications. {number} unread",
+        fi: "Ilmoitukset. {number} lukematonta",
+      },
+    },
   },
 };

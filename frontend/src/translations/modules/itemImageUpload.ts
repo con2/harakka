@@ -1,4 +1,10 @@
 export const itemImageUpload = {
+  headings: {
+    preview: {
+      en: "Preview",
+      fi: "Esikatselu",
+    },
+  },
   messages: {
     uploadFailed: {
       en: "Upload failed",
@@ -77,6 +83,10 @@ export const itemImageUpload = {
     altText: {
       fi: "Vaihtoehtoinen teksti",
       en: "Alt text",
+    },
+    imageCover: {
+      en: "Image fit",
+      fi: "Kuvan sovitus",
     },
   },
 };

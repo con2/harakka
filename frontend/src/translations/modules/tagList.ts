@@ -5,8 +5,8 @@ export const tagList = {
   },
   filters: {
     search: {
-      fi: "Hae nimellä (FI tai EN)",
-      en: "Search by name (FI or EN)",
+      fi: "Hae tunnisteita",
+      en: "Search tags",
     },
     assignment: {
       all: {
@@ -67,6 +67,18 @@ export const tagList = {
     edit: {
       fi: "Muokkaa tagia",
       en: "Edit Tag",
+    },
+  },
+  aria: {
+    labels: {
+      clearSearch: {
+        en: "Clear search",
+        fi: "Tyhjennä haku",
+      },
+      filterAssigned: {
+        en: "Filter tags by assignment status",
+        fi: "Suodata tunnisteita liitostilan mukaan",
+      },
     },
   },
 };

@@ -31,6 +31,7 @@ import {
   ValidBookingOrder,
   BookingItemInsert,
   OverdueRow,
+  BookingStatus,
 } from "./types/booking.interface";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { deriveOrgStatus } from "src/utils/booking.utils";
@@ -340,6 +341,8 @@ export class BookingService {
     userId: string,
     activeOrgId: string,
     activeRole: string,
+    status_filter?: BookingStatus | "all",
+    searchquery?: string,
   ) {
     const { from, to } = getPaginationRange(page, limit);
     const supabase = req.supabase;
@@ -360,6 +363,19 @@ export class BookingService {
       baseQuery.eq("user_id", userId).is("booked_by_org", null);
     } else if (isRequesterRole) {
       baseQuery.eq("booked_by_org", activeOrgId);
+    }
+
+    // Optional filters
+    if (status_filter && status_filter !== "all") {
+      const narrowed = status_filter;
+      baseQuery.eq("status", narrowed);
+    }
+    if (searchquery) {
+      baseQuery.or(
+        `booking_number.ilike.%${searchquery}%,` +
+          `full_name.ilike.%${searchquery}%,` +
+          `created_at_text.ilike.%${searchquery}%`,
+      );
     }
 
     const bookingItemsQuery = supabase
@@ -455,6 +471,7 @@ export class BookingService {
         booking_items: (import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
           storage_items: Partial<StorageItemRow>;
         })[];
+        has_items_from_multiple_orgs?: boolean;
       }
     >
   > {
@@ -465,6 +482,13 @@ export class BookingService {
       .single();
 
     if (result.error) handleSupabaseError(result.error);
+
+    // Get total booking items count
+    const { count: totalBookingItemsCount } = await this.supabaseService
+      .getServiceClient()
+      .from("booking_items")
+      .select("*", { count: "exact", head: true })
+      .eq("booking_id", booking_id);
 
     const booking_items_result: ApiResponse<
       import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
@@ -495,15 +519,23 @@ export class BookingService {
         org_status_for_active_org = deriveOrgStatus(statuses);
       }
     }
+    // Calculate if booking has items from multiple organizations
+    const orgBookingItemsCount = booking_items_result.data?.length || 0;
+    const has_items_from_multiple_orgs =
+      totalBookingItemsCount !== null &&
+      totalBookingItemsCount !== orgBookingItemsCount;
+
     // Spread result.data and allow extra property
     const bookingData: BookingPreview & {
       booking_items: (import("../booking_items/interfaces/booking-items.interfaces").BookingItemsRow & {
         storage_items: Partial<StorageItemRow>;
       })[];
       org_status_for_active_org?: string;
+      has_items_from_multiple_orgs?: boolean;
     } = {
       ...result.data,
       booking_items: booking_items_result.data,
+      has_items_from_multiple_orgs,
     };
     if (org_status_for_active_org !== undefined) {
       bookingData.org_status_for_active_org = org_status_for_active_org;
@@ -609,6 +641,35 @@ export class BookingService {
       throw new BadRequestException(
         "User must have at least one valid address before creating a booking",
       );
+    }
+
+    // Check availability for each item in the booking before we create it
+    const unavailableItems: {
+      item_id: string;
+      availableQuantity: number;
+    }[] = [];
+    for (const item of dto.items) {
+      const { item_id, quantity, start_date, end_date } = item;
+
+      const { availableQuantity } = await calculateAvailableQuantity(
+        supabase,
+        item_id,
+        start_date,
+        end_date,
+      );
+
+      if (quantity > availableQuantity) {
+        unavailableItems.push({
+          item_id,
+          availableQuantity,
+        });
+      }
+    }
+    if (unavailableItems.length > 0) {
+      throw new BadRequestException({
+        message:
+          "Unfortunately, some of your items have just been booked by another user",
+      });
     }
 
     // ... your profile checks and availability checks BEFORE any writes ...
@@ -1067,13 +1128,6 @@ export class BookingService {
 
     let warningMessage: string | null = null;
 
-    // 5.0 Validate that booking has at least one booking item
-    if (!dto.items || dto.items.length === 0) {
-      throw new BadRequestException(
-        "Booking must have at least one booking item",
-      );
-    }
-
     // 5.1 check the booking
     const { data: booking } = await supabase
       .from("bookings")
@@ -1095,17 +1149,43 @@ export class BookingService {
       throw new ForbiddenException("Not allowed to update this booking");
     }
 
-    // 5.4 Status check (users are restricted)
+    // 5.3 Status check (users are restricted)
     if (booking.status !== "pending") {
       throw new ForbiddenException(
         "Your booking has been confirmed. You can't update it.",
       );
     }
 
-    // 5.3. Delete existing items from booking_items to avoid douplicates
+    // 5.4 Check if any booking items have non-pending status
+    const { data: existingItems, error: itemsError } = await supabase
+      .from("booking_items")
+      .select("id, status, item_id, quantity, start_date, end_date")
+      .eq("booking_id", booking_id);
+
+    if (itemsError) {
+      throw new BadRequestException("Could not fetch existing booking items");
+    }
+
+    const hasNonPendingItems = existingItems?.some(
+      (item) => item.status !== "pending",
+    );
+
+    if (hasNonPendingItems) {
+      throw new ForbiddenException(
+        "Cannot update booking items when some items have already been confirmed or processed",
+      );
+    }
+
+    // 5.5 Handle case where all items are removed
+    if (!dto.items || dto.items.length === 0) {
+      // Cancel the entire booking if no items are provided
+      return await this.cancelBooking(booking_id, userId, req);
+    }
+
+    // 5.6. Delete existing items from booking_items to avoid duplicates
     await supabase.from("booking_items").delete().eq("booking_id", booking_id);
 
-    // 5.4. insert updated items with validations and availability checks
+    // 5.7. insert updated items with validations and availability checks
     const checkedItems: BookingItemInsert[] = [];
     for (const item of dto.items) {
       const { item_id, quantity, start_date, end_date } = item;
@@ -1137,7 +1217,7 @@ export class BookingService {
         throw new BadRequestException("Booking cannot exceed 6 weeks");
       }
 
-      // 5.5. Check virtual availability for the time range
+      // 5.8. Check availability for the time range
       const { availableQuantity } = await calculateAvailableQuantity(
         supabase,
         item_id,
@@ -1151,7 +1231,7 @@ export class BookingService {
         );
       }
 
-      // 5.6. Fetch location_id and org_id (provider_organization_id)
+      // 5.9. Fetch location_id and org_id (provider_organization_id)
       const { data: storageItem, error: storageError } = await supabase
         .from("storage_items")
         .select("location_id, org_id")
@@ -1178,7 +1258,7 @@ export class BookingService {
     }
     await this.bookingItemsService.createBookingItems(supabase, checkedItems);
 
-    // 5.8 notify user via centralized mail service
+    // 5.10 notify user via centralized mail service
     await this.mailService.sendBookingMail(BookingMailType.Update, {
       bookingId: booking_id,
       triggeredBy: userId,
@@ -1537,21 +1617,45 @@ export class BookingService {
     location_id: string,
     itemIds?: string[],
   ) {
+    if (!location_id) {
+      throw new BadRequestException("location_id is required for pickup");
+    }
+    // Current timestamp in ISO for consistent comparisons
+    const nowIso = new Date().toISOString();
+
+    // If a specific list of items is provided, validate both status and start_date
     if (itemIds && itemIds.length > 0) {
       const selectQuery = supabase
         .from("booking_items")
-        .select("status")
+        .select("id, status, start_date")
         .eq("booking_id", bookingId)
         .eq("provider_organization_id", orgId)
+        .eq("location_id", location_id)
         .in("id", itemIds);
-      const { data: selectData, error } = await selectQuery;
 
+      const { data: selectData, error } = await selectQuery;
       if (error) handleSupabaseError(error);
+
+      if (!selectData || selectData.length !== itemIds.length) {
+        throw new BadRequestException(
+          "All selected items must belong to the provided location",
+        );
+      }
+
       const unconfirmed = selectData.filter((r) => r.status !== "confirmed");
       if (unconfirmed.length > 0)
         throw new BadRequestException(
-          `Cannot pick-up items which are not confirmed`,
+          `Cannot pick up items which are not confirmed`,
         );
+
+      const tooEarly = selectData.filter(
+        (r) => new Date(r.start_date).toISOString() > nowIso,
+      );
+      if (tooEarly.length > 0) {
+        throw new BadRequestException(
+          `Cannot pick up items before their start date`,
+        );
+      }
     }
 
     const updateQuery = supabase
@@ -1559,8 +1663,10 @@ export class BookingService {
       .update({ status: "picked_up" })
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", orgId)
-      .eq("status", "confirmed");
-    if (location_id) updateQuery.eq("location_id", location_id);
+      .eq("status", "confirmed")
+      .eq("location_id", location_id)
+      // Guardrail: never allow pickup prior to start_date
+      .lte("start_date", nowIso);
     if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
     const { error: itemsUpdateError } = await updateQuery;
     if (itemsUpdateError) handleSupabaseError(itemsUpdateError);
@@ -1641,6 +1747,33 @@ export class BookingService {
     if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
     const { error: itemsUpdateError } = await updateQuery;
     if (itemsUpdateError) handleSupabaseError(itemsUpdateError);
+
+    // Check if all booking items are now cancelled and update parent booking status
+    const { data: allItems, error: allItemsError } = await supabase
+      .from("booking_items")
+      .select("status")
+      .eq("booking_id", bookingId);
+
+    if (allItemsError) handleSupabaseError(allItemsError);
+
+    if (allItems && allItems.length > 0) {
+      const allStatuses = allItems.map((item) => item.status);
+
+      // If all items are cancelled, update booking status to cancelled
+      if (allStatuses.every((status) => status === "cancelled")) {
+        const { error: bookingUpdateError } = await supabase
+          .from("bookings")
+          .update({ status: "cancelled" })
+          .eq("id", bookingId);
+
+        if (bookingUpdateError) {
+          console.error(
+            "Failed to update booking status to cancelled:",
+            bookingUpdateError,
+          );
+        }
+      }
+    }
 
     return {
       message: `Items cancelled for booking ${bookingId}`,

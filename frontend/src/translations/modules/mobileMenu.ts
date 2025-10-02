@@ -53,4 +53,14 @@ export const mobileMenu = {
       fi: "Admin-työkalut",
     },
   },
+  aria: {
+    title: {
+      en: "Mobile navigation",
+      fi: "Mobiilinavigointi",
+    },
+    description: {
+      en: "Navigation links for browsing, account, and admin functions",
+      fi: "Navigointilinkit selailu-, tili- ja järjestelmänvalvojan toiminnoille",
+    },
+  },
 };

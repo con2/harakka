@@ -58,11 +58,15 @@ export const bookingsApi = {
   getOwnBookings: async (
     page: number = 1,
     limit: number = 10,
+    status?: string,
+    search?: string,
   ): Promise<ApiResponse<BookingPreview>> => {
     const params = new URLSearchParams();
     params.append("page", page.toString());
     params.append("limit", limit.toString());
-    return api.get(`/bookings/my`);
+    if (status && status !== "all") params.append("status", status);
+    if (search && search.trim()) params.append("search", search.trim());
+    return api.get(`/bookings/my?${params.toString()}`);
   },
 
   /**
@@ -249,12 +253,13 @@ export const bookingsApi = {
    */
   pickUpItems: async (
     bookingId: string,
-    location_id?: string,
+    location_id: string,
     org_id?: string,
     itemIds?: string[],
   ): Promise<Booking> => {
     return api.patch(`/bookings/${bookingId}/pickup`, {
-      itemIds,
+      // Backend expects `item_ids` (snake_case)
+      item_ids: itemIds,
       location_id,
       org_id,
     });

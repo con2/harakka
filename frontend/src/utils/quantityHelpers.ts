@@ -15,7 +15,7 @@ interface QuantityItem {
 }
 
 /**
- * Decrements the quantity of an item by 1, with a minimum of 0
+ * Decrements the quantity of an item by 1, with a minimum of 1
  * @param item - The item to decrement
  * @param itemQuantities - Current quantity state
  * @param setItemQuantities - State setter for quantities
@@ -26,8 +26,8 @@ export const decrementQuantity = <T extends QuantityItem>(
   setItemQuantities: Dispatch<SetStateAction<Record<string, number>>>,
 ) => {
   const key = String(item.id);
-  const current = itemQuantities[key] ?? item.quantity ?? 0;
-  const next = Math.max(0, current - 1);
+  const current = itemQuantities[key] ?? item.quantity ?? 1;
+  const next = Math.max(1, current - 1);
   setItemQuantities((prev) => ({ ...prev, [key]: next }));
 };
 
@@ -65,12 +65,12 @@ export const updateQuantity = <T extends QuantityItem>(
   setItemQuantities: Dispatch<SetStateAction<Record<string, number>>>,
   availability?: { [itemId: string]: number },
 ) => {
-  if (isNaN(newQuantity) || newQuantity < 0) return;
+  if (isNaN(newQuantity) || newQuantity < 1) return;
 
   const key = String(item.id);
   const avail = availability?.[item.item_id];
   const maxAllowed = avail !== undefined ? avail : Infinity;
-  const finalQuantity = Math.min(newQuantity, maxAllowed);
+  const finalQuantity = Math.min(Math.max(1, newQuantity), maxAllowed);
 
   setItemQuantities((prev) => ({ ...prev, [key]: finalQuantity }));
 };

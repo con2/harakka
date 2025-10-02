@@ -151,7 +151,12 @@ const ProfilePictureUploader = () => {
 
   return (
     <>
-      <div
+      <button
+        aria-label={
+          currentImage
+            ? t.profilePicUploader.aria.labels.updateProfilePic[lang]
+            : t.profilePicUploader.aria.labels.updateProfilePic.noPic[lang]
+        }
         className="relative group cursor-pointer"
         onClick={() => setOpen(true)}
       >
@@ -169,11 +174,11 @@ const ProfilePictureUploader = () => {
         <div className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-sm group-hover:scale-105 transition-transform">
           <Pencil className="w-4 h-4 text-gray-700" />
         </div>
-      </div>
+      </button>
 
       {/* open the modal containing also the cropper*/}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-[700px]">
+        <DialogContent className="max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-semibold tracking-tight">
               {t.profilePicUploader.changeProfilePicture[lang]}

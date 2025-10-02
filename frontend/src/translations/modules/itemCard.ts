@@ -39,4 +39,22 @@ export const itemCard = {
     fi: "Yhteensä",
     en: "Total units",
   },
+  aria: {
+    labels: {
+      quantity: {
+        reduce: {
+          en: "Reduce quantity to {number}",
+          fi: "Vähennä määrää arvoon {number}",
+        },
+        increase: {
+          en: "Increase quantity to {number}",
+          fi: "Lisää määrää arvoon {number}",
+        },
+        enterQuantity: {
+          en: "Enter quantity. Current quantity {number}.",
+          fi: "Anna määrä. Nykyinen määrä {number}.",
+        },
+      },
+    },
+  },
 };

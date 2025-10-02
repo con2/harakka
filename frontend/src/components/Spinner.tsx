@@ -1,5 +1,7 @@
 import { LoaderCircle } from "lucide-react";
 import { ReactNode } from "react";
+import { t } from "@/translations";
+import { useLanguage } from "@/context/LanguageContext";
 
 type SpinnerProps = {
   children?: ReactNode;
@@ -7,7 +9,6 @@ type SpinnerProps = {
   padding?: string;
   containerClasses?: string;
   loaderClasses?: string;
-  text?: string;
 };
 
 function Spinner({
@@ -16,15 +17,14 @@ function Spinner({
   padding = "p-2",
   containerClasses,
   loaderClasses,
-  text,
 }: SpinnerProps) {
+  const { lang } = useLanguage();
   const CONTAINER_CLASSES = `flex justify-center items-center flex-col gap-1 ${height} ${padding} ${containerClasses}`;
   const LOADER_CLASSES = `animate-spin w-6 h-6 ${loaderClasses}`;
 
   return (
-    <div className={CONTAINER_CLASSES}>
-      <LoaderCircle className={LOADER_CLASSES} />
-      {text && <span>{text}</span>}
+    <div className={CONTAINER_CLASSES} aria-label={t.common.loading[lang]}>
+      <LoaderCircle aria-hidden className={LOADER_CLASSES} />
       {children}
     </div>
   );
