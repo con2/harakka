@@ -41,6 +41,12 @@ import {
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -330,24 +336,22 @@ const AdminItemsTable = () => {
           </div>
 
           {/* Filter by active status */}
-          <select
+          <Select
             aria-label={t.adminItemsTable.aria.labels.statusFilter[lang]}
             value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value as "all" | "active" | "inactive")
+            onValueChange={(value) =>
+              setStatusFilter(value as "all" | "inactive" | "active")
             }
-            className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
           >
-            <option value="all">
-              {t.adminItemsTable.filters.status.all[lang]}
-            </option>
-            <option value="active">
-              {t.adminItemsTable.filters.status.active[lang]}
-            </option>
-            <option value="inactive">
-              {t.adminItemsTable.filters.status.inactive[lang]}
-            </option>
-          </select>
+            <SelectValue></SelectValue>
+            <SelectContent>
+              {["all", "active", "inactive"].map((opt) => (
+                <SelectItem value={opt} key={`filter-active-${opt}`}>
+                  {opt}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Filter by tags */}
           <Popover>
