@@ -2,6 +2,7 @@ import Spinner from "@/components/Spinner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   cancelBooking,
+  clearCurrentBooking,
   deleteBookingItem,
   getBookingByID,
   getBookingItems,
@@ -51,16 +52,35 @@ function RequestDetailsPage() {
   ) as BookingWithDetails | null;
   const loading = useAppSelector(selectCurrentBookingLoading);
   const { page, limit } = useAppSelector(selectBookingPagination);
-  const { organizationId: activeOrgId } = useAppSelector(
-    selectActiveRoleContext,
-  );
+  const { organizationId: activeOrgId, organizationName: activeOrgName } =
+    useAppSelector(selectActiveRoleContext);
   const itemsWithLoadedImages = useAppSelector(selectItemsWithLoadedImages);
 
   useEffect(() => {
-    if (id) {
-      void dispatch(getBookingByID({ booking_id: id }));
-    }
-  }, [id, dispatch]);
+    const fetchBooking = async () => {
+      if (id) {
+        await dispatch(getBookingByID({ booking_id: id }));
+        if (booking && !loading) {
+          const { booked_by_org } = booking;
+          const isNotAuthorized = booked_by_org !== activeOrgId;
+          if (isNotAuthorized) {
+            toast.info(
+              t.requestDetailsPage.messages.redirectUnauthorized[lang].replace(
+                "{org_name}",
+                activeOrgName!,
+              ),
+            );
+            void navigate("/admin/requests");
+          }
+        }
+      }
+    };
+    void fetchBooking();
+
+    return () => {
+      void dispatch(clearCurrentBooking());
+    };
+  }, [id, dispatch, activeOrgId]); //eslint-disable-line
 
   // Group booking items by organization
   const groupBookingItemsByOrg = (
@@ -168,7 +188,7 @@ function RequestDetailsPage() {
             t.bookingDetailsPage.confirmations.removeAllItems.description[lang],
           confirmText:
             t.bookingDetailsPage.confirmations.removeAllItems.confirmText[lang],
-          onSuccess: () => void navigate("/admin/bookings"),
+          onSuccess: () => void navigate("/admin/requests"),
         }
       : {
           title: t.bookingDetailsPage.confirmations.removeItem.title[lang],
@@ -315,7 +335,7 @@ function RequestDetailsPage() {
             }),
           );
         }
-        void navigate("/requests");
+        void navigate("/admin/requests");
         return;
       }
 

@@ -25,4 +25,10 @@ export const requestDetailsPage = {
     fi: "Vuokra-aika:",
     en: "Rental period:",
   },
+  messages: {
+    redirectUnauthorized: {
+      en: "Showing requests of {org_name}",
+      fi: "Näytetään organisaation {org_name} pyynnöt",
+    },
+  },
 };
