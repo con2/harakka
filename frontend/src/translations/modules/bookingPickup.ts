@@ -38,5 +38,13 @@ export const bookingPickup = {
       fi: "Virheellinen varausnumero.",
       en: "Invalid booking ID.",
     },
+    multiLocation: {
+      fi: "Valitse tuotteet yhdestä sijainnista ennen noudon vahvistamista.",
+      en: "Select items from a single location before confirming pickup.",
+    },
+    beforeStartDate: {
+      fi: "Tuotteet voidaan merkitä noudetuiksi aikaisintaan aloituspäivänä.",
+      en: "Items can be marked as picked up on or after their start date.",
+    },
   },
 };

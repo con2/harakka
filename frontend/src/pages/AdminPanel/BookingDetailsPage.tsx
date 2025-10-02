@@ -33,6 +33,7 @@ import { formatBookingStatus } from "@/utils/format";
 import {
   fetchAllOrgLocations,
   selectOrgLocations,
+  selectOrgLocationsLoading,
 } from "@/store/slices/organizationLocationsSlice";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 import {
@@ -63,9 +64,10 @@ const BookingDetailsPage = () => {
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const orgLocations = useAppSelector(selectOrgLocations);
+  const orgLocationsLoading = useAppSelector(selectOrgLocationsLoading);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRole = useAppSelector(selectActiveRoleName);
-
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   // Fetch organization name if booking was made on behalf of an organization
   const organizationIds = booking?.booked_by_org ? [booking.booked_by_org] : [];
   const { organizationNames } = useOrganizationNames(organizationIds);
@@ -78,7 +80,6 @@ const BookingDetailsPage = () => {
     isAdmin;
 
   const hasItemsFromOtherOrgs = booking?.has_items_from_multiple_orgs ?? false;
-
   // Edit state management
   const [showEdit, setShowEdit] = useState(false);
   const [editFormItems, setEditFormItems] = useState<
@@ -108,10 +109,24 @@ const BookingDetailsPage = () => {
   };
 
   useEffect(() => {
-    if (orgLocations.length === 0)
-      void dispatch(fetchAllOrgLocations({ orgId: activeOrgId! }));
-  }, [orgLocations, activeOrgId, dispatch]);
+    if (!activeOrgId) return;
+    const missingForBooking = booking?.booking_items?.some(
+      (b) =>
+        b.provider_organization_id === activeOrgId &&
+        b.location_id &&
+        !orgLocations.some((l) => l.storage_location_id === b.location_id),
+    );
 
+    if (orgLocations.length === 0 || missingForBooking) {
+      void dispatch(
+        fetchAllOrgLocations({
+          orgId: activeOrgId,
+          pageSize: 20,
+          currentPage: 1,
+        }),
+      );
+    }
+  }, [booking, orgLocations, activeOrgId, dispatch]);
   // Computed booking item data
   const orgItems = useMemo(
     () =>
@@ -135,6 +150,45 @@ const BookingDetailsPage = () => {
   const hasReviewedBooking = orgItems.every(
     (item) => item.status !== "pending",
   );
+
+  const pickupScope = useMemo(() => {
+    if (selectedItemIds.length > 0) {
+      return orgItems.filter((i) => selectedItemIds.includes(String(i.id)));
+    }
+    return orgItems;
+  }, [orgItems, selectedItemIds]);
+
+  const pickupLocationId = useMemo(() => {
+    if (pickupScope.length === 0) return undefined;
+    const locationSet = new Set(pickupScope.map((i) => i.location_id));
+    return locationSet.size === 1 ? Array.from(locationSet)[0] : undefined;
+  }, [pickupScope]);
+
+  const pickupHasMixedLocations = useMemo(() => {
+    if (pickupScope.length === 0) return false;
+    const locationSet = new Set(pickupScope.map((i) => i.location_id));
+    return locationSet.size > 1;
+  }, [pickupScope]);
+
+  const pickupHasFutureStart = useMemo(() => {
+    const now = new Date();
+    return pickupScope.some(
+      (i) => i.status === "confirmed" && new Date(i.start_date) > now,
+    );
+  }, [pickupScope]);
+
+  const pickupDisabledReason = useMemo(() => {
+    if (pickupHasMixedLocations) {
+      return t.bookingPickup.errors.multiLocation[lang];
+    }
+    if (pickupHasFutureStart) {
+      return t.bookingPickup.errors.beforeStartDate[lang];
+    }
+    return undefined;
+  }, [pickupHasMixedLocations, pickupHasFutureStart, lang]);
+
+  const pickupBlockedForSelection =
+    pickupHasFutureStart || pickupHasMixedLocations || !pickupLocationId;
 
   // Initialize edit form when booking is loaded (only active items)
   useEffect(() => {
@@ -176,7 +230,6 @@ const BookingDetailsPage = () => {
   ]);
 
   // Track selected item IDs for bulk actions
-  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   // When booking changes, clear out any selected IDs that are no longer pending
   useEffect(() => {
     if (!booking) return;
@@ -394,13 +447,22 @@ const BookingDetailsPage = () => {
       accessorKey: "location",
       header: t.bookingDetailsPage.modal.bookingItems.columns.location[lang],
       cell: ({ row }) => {
-        const item = row.original;
-        const loc = orgLocations.find(
-          (l) => l.storage_location_id === item.location_id,
-        );
+        if (orgLocationsLoading) {
+          return t.bookingDetailsPage.modal.bookingItems.columns.loading[lang];
+        }
+
+        const locId = row.original.location_id;
+        const loc = orgLocations.find((l) => l.storage_location_id === locId);
+        const name =
+          loc?.storage_locations?.name ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—";
+
         return (
-          <span className={item.status === "cancelled" ? "opacity-50" : ""}>
-            {loc?.storage_locations?.name ?? ""}
+          <span
+            className={row.original.status === "cancelled" ? "opacity-50" : ""}
+          >
+            {name}
           </span>
         );
       },
@@ -862,6 +924,9 @@ const BookingDetailsPage = () => {
                 id={booking.id}
                 selectedItemIds={selectedItemIds}
                 onSuccess={refetchBooking}
+                location_id={pickupLocationId ?? ""}
+                disabled={pickupBlockedForSelection}
+                disabledReason={pickupDisabledReason}
               />
             </div>
           )}

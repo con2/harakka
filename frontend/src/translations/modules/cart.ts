@@ -57,25 +57,6 @@ export const cart = {
       en: "Clicking the button below is not a commitment. It's just a request — we'll review it and get back to you shortly.",
     },
   },
-  locations: {
-    differentLocations: {
-      fi: "Huomio: Tuotteesi sijaitsevat eri paikoissa",
-      en: "Notice: Your items are located in different places",
-    },
-    pickupInfo: {
-      fi: "Sinun tulee noutaa tuotteet seuraavista sijainneista:",
-      en: "You will need to pick up items from the following locations:",
-    },
-
-    itemCount: {
-      fi: "tuotetta",
-      en: "items",
-    },
-    itemCountSingular: {
-      fi: "tuote",
-      en: "item",
-    },
-  },
   item: {
     available: {
       fi: "Yhteensä saatavilla",

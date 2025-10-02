@@ -28,6 +28,7 @@ import { Input } from "../ui/input";
 import { itemsApi } from "@/api/services/items";
 import { cn } from "@/lib/utils";
 import { ImageSchemaType } from "@/store/utils/validate";
+import { extractCityFromLocationName } from "@/utils/locationValidation";
 
 interface ItemsCardProps {
   item: Item & {
@@ -294,7 +295,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
           >
             <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
             <span>
-              {item.location_details?.name || item.location_name || "Unknown"}
+              {extractCityFromLocationName(
+                item.location_details?.name || item.location_name || "",
+              ) || "Unknown"}
             </span>
           </div>
         )}

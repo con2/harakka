@@ -19,6 +19,10 @@ export const editLocationModal = {
         en: "Enter location name",
         fi: "Syötä sijainnin nimi",
       },
+      notVisibleToUsers: {
+        en: "Location name will not be visible to users",
+        fi: "Sijainti ei ole näkyvissä käyttäjille",
+      },
     },
     street: {
       label: {
@@ -103,8 +107,12 @@ export const editLocationModal = {
   },
   validation: {
     requiredFields: {
-      en: "Name, street, city, and postcode are required",
-      fi: "Nimi, katuosoite, kaupunki ja postinumero ovat pakollisia",
+      en: "Location name, street, city, and postcode are required",
+      fi: "Sijainnin nimi, katuosoite, kaupunki ja postinumero ovat pakollisia",
+    },
+    invalidCityName: {
+      en: "Please enter a valid city name (letters, spaces, and hyphens only)",
+      fi: "Syötä kelvollinen kaupungin nimi (vain kirjaimia, välilyöntejä ja yhdysviivoja)",
     },
   },
   buttons: {
