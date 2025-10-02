@@ -35,9 +35,14 @@ interface ItemsCardProps {
     images?: { main: ImageSchemaType };
   };
   preview?: boolean;
+  currentPage?: number;
 }
 
-const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
+const ItemCard: React.FC<ItemsCardProps> = ({
+  item,
+  preview = false,
+  currentPage,
+}) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const itemImages = useAppSelector(selectItemImages);
@@ -141,7 +146,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
   // Navigate to the item's detail page
   const handleItemClick = (itemId: string) => {
     void dispatch(getItemById(itemId)); // Fetch the item by ID when clicked
-    void navigate(`/storage/items/${itemId}`);
+    void navigate(`/storage/items/${itemId}`, {
+      state: { fromPage: currentPage },
+    });
   };
 
   const handleAddToCart = () => {

@@ -25,6 +25,7 @@ import {
 } from "@/store/slices/categoriesSlice";
 import { buildCategoryTree } from "@/store/utils/format";
 import CategoryTree from "@/components/Items/CategoryTree";
+import { fetchAllOrgLocations } from "@/store/slices/organizationLocationsSlice";
 
 interface NavigationState {
   preSelectedFilters?: {
@@ -64,6 +65,14 @@ const UserPanel = () => {
     // eslint-disable-next-line
   }, []);
 
+  // Shared expand/collapse state per filter list (max 5 visible by default)
+  type ExpandableSection =
+    | "itemTypes"
+    | "organizations"
+    | "locations"
+    | "tags"
+    | "categories";
+
   const [expanded, setExpanded] = useState<Record<ExpandableSection, boolean>>({
     itemTypes: false,
     organizations: false,
@@ -73,6 +82,12 @@ const UserPanel = () => {
   });
   const getVisible = <T,>(arr: T[], key: ExpandableSection) =>
     expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
+
+  // Fetch organization locations for all organizations to enable org-based location filtering
+  const orgLocations = useAppSelector(
+    (state) => state.orgLocations.orgLocations,
+  );
+  const [orgLocationsLoaded, setOrgLocationsLoaded] = useState(false);
 
   // Filter out organizations that shouldn't have items
   const filterableOrganizations = useMemo(() => {
@@ -91,16 +106,77 @@ const UserPanel = () => {
     "organizations",
   );
 
-  // Shared expand/collapse state per filter list (max 5 visible by default)
-  type ExpandableSection =
-    | "itemTypes"
-    | "organizations"
-    | "locations"
-    | "tags"
-    | "categories";
+  // Fetch org locations when organizations are loaded
+  useEffect(() => {
+    if (
+      organizations.length > 0 &&
+      !orgLocationsLoaded &&
+      filterableOrganizations.length > 0
+    ) {
+      // Fetch org locations for all organizations to map locations to orgs
+      filterableOrganizations.forEach((org) => {
+        void dispatch(
+          fetchAllOrgLocations({
+            orgId: org.id,
+            pageSize: 100,
+            currentPage: 1,
+          }),
+        );
+      });
+      setOrgLocationsLoaded(true);
+    }
+  }, [organizations, orgLocationsLoaded, filterableOrganizations, dispatch]);
 
   const toggleExpanded = (key: ExpandableSection) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const visibleTags = getVisible(tags, "tags");
+  const mappedCategories = buildCategoryTree(categories);
+  const visibleCategories = getVisible(mappedCategories, "categories");
+
+  // Expanded state for category nodes
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(),
+  );
+
+  // filter states
+  const [filters, setFilters] = useState<{
+    isActive: boolean;
+    itemsNumberAvailable: [number, number];
+    categories: string[];
+    tagIds: string[];
+    locationIds: string[];
+    orgIds?: string[];
+  }>(() => ({
+    isActive: true, // Is item active or not filter
+    itemsNumberAvailable: [0, 1000], // Increased max to 1000 to accommodate items with higher quantities
+    categories: navigationState?.preSelectedFilters?.categories || [],
+    tagIds: navigationState?.preSelectedFilters?.tagIds || [],
+    locationIds: [],
+    orgIds: navigationState?.preSelectedFilters?.orgIds || [],
+  }));
+
+  // Filter locations based on selected organizations
+  const filteredLocations = useMemo(() => {
+    // If no organizations are selected, show all locations
+    if (!filters.orgIds || filters.orgIds.length === 0) {
+      return locations;
+    }
+
+    // Get all storage_location_ids that belong to selected organizations
+    const orgLocationIds = new Set<string>();
+    orgLocations.forEach((orgLoc) => {
+      if (
+        filters.orgIds?.includes(orgLoc.organization_id) &&
+        orgLoc.storage_location_id
+      ) {
+        orgLocationIds.add(orgLoc.storage_location_id);
+      }
+    });
+
+    // Filter locations to only those that belong to selected organizations
+    return locations.filter((location) => orgLocationIds.has(location.id));
+  }, [locations, orgLocations, filters.orgIds]);
 
   // Group locations by city
   const cityLocationGroups = useMemo(() => {
@@ -109,7 +185,7 @@ const UserPanel = () => {
       { id: string; name: string; locationIds: string[] }
     >();
 
-    locations.forEach((location) => {
+    filteredLocations.forEach((location) => {
       const cityName = extractCityFromLocationName(location.name);
       if (cityMap.has(cityName)) {
         cityMap.get(cityName)!.locationIds.push(location.id);
@@ -123,75 +199,10 @@ const UserPanel = () => {
     });
 
     return Array.from(cityMap.values());
-  }, [locations]);
+  }, [filteredLocations]);
 
   // const visibleOrganizations = getVisible(organizations, "organizations");
   const visibleLocations = getVisible(cityLocationGroups, "locations");
-  const visibleTags = getVisible(tags, "tags");
-  const mappedCategories = buildCategoryTree(categories);
-  const visibleCategories = getVisible(mappedCategories, "categories");
-
-  // Expanded state for category nodes
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(),
-  );
-
-  // Build lookups to support path-exclusive selection (switch within a branch)
-  const parentById = useMemo(() => {
-    const m = new Map<string, string | null>();
-    categories.forEach((c) => m.set(c.id, c.parent_id));
-    return m;
-  }, [categories]);
-  const childrenById = useMemo(() => {
-    const m = new Map<string, string[]>();
-    categories.forEach((c) => {
-      if (c.parent_id) {
-        const arr = m.get(c.parent_id) || [];
-        arr.push(c.id);
-        m.set(c.parent_id, arr);
-      }
-    });
-    return m;
-  }, [categories]);
-  const collectAncestors = (id: string) => {
-    const res: string[] = [];
-    let p = parentById.get(id) || null;
-    const guard = new Set<string>();
-    while (p && !guard.has(p)) {
-      res.push(p);
-      guard.add(p);
-      p = parentById.get(p) || null;
-    }
-    return res;
-  };
-  const collectDescendants = (id: string) => {
-    const res: string[] = [];
-    const stack = [...(childrenById.get(id) || [])];
-    while (stack.length) {
-      const cur = stack.pop() as string;
-      res.push(cur);
-      const kids = childrenById.get(cur);
-      if (kids && kids.length) stack.push(...kids);
-    }
-    return res;
-  };
-
-  // filter states
-  const [filters, setFilters] = useState<{
-    isActive: boolean;
-    itemsNumberAvailable: [number, number];
-    categories: string[];
-    tagIds: string[];
-    locationIds: string[];
-    orgIds?: string[];
-  }>(() => ({
-    isActive: true, // Is item active or not filter
-    itemsNumberAvailable: [0, 100], // add a range for number of items
-    categories: navigationState?.preSelectedFilters?.categories || [],
-    tagIds: navigationState?.preSelectedFilters?.tagIds || [],
-    locationIds: [],
-    orgIds: navigationState?.preSelectedFilters?.orgIds || [],
-  }));
 
   // --- slider thumb state so the handle moves smoothly without refetching ---
   const [tempAvailableRange, setTempAvailableRange] = useState<
@@ -236,7 +247,7 @@ const UserPanel = () => {
     let count = 0;
     if (
       filters.itemsNumberAvailable[0] !== 0 ||
-      filters.itemsNumberAvailable[1] !== 100
+      filters.itemsNumberAvailable[1] !== 1000
     ) {
       count++;
     }
@@ -287,7 +298,7 @@ const UserPanel = () => {
                       onClick={() => {
                         setFilters({
                           isActive: true,
-                          itemsNumberAvailable: [0, 100],
+                          itemsNumberAvailable: [0, 1000],
                           categories: [],
                           tagIds: [],
                           locationIds: [],
@@ -327,21 +338,17 @@ const UserPanel = () => {
                 selectedIds={new Set(filters.categories)}
                 onToggleSelect={(id) => {
                   setFilters((prev) => {
-                    const next = new Set(prev.categories);
-                    if (next.has(id)) {
-                      // toggle off
-                      next.delete(id);
+                    // Single-select: if clicking the same category, deselect it; otherwise select the new one
+                    const isCurrentlySelected = prev.categories.includes(id);
+                    if (isCurrentlySelected) {
+                      // Deselect - clear category
+                      return { ...prev, categories: [] };
                     } else {
-                      // Switch within branch: deselect ancestors and descendants of id
-                      const toRemove = new Set<string>([
-                        ...collectAncestors(id),
-                        ...collectDescendants(id),
-                      ]);
-                      toRemove.forEach((x) => next.delete(x));
-                      next.add(id);
+                      // Select only this category (single selection)
+                      return { ...prev, categories: [id] };
                     }
-                    return { ...prev, categories: Array.from(next) };
                   });
+                  clearNavigationState();
                 }}
                 expandedIds={expandedCategories}
                 onToggleExpand={(id) => {
@@ -376,7 +383,7 @@ const UserPanel = () => {
               </label>
               <Slider
                 min={0}
-                max={100}
+                max={1000}
                 value={tempAvailableRange}
                 // update thumb position instantly
                 onValueChange={([min, max]) =>
@@ -564,7 +571,7 @@ const UserPanel = () => {
                     onClick={() => {
                       setFilters({
                         isActive: true,
-                        itemsNumberAvailable: [0, 100],
+                        itemsNumberAvailable: [0, 1000],
                         categories: [],
                         tagIds: [],
                         locationIds: [],
