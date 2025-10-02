@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
   NotAcceptableException,
 } from "@nestjs/common";
@@ -19,6 +20,8 @@ const GENERIC_ERROR_MESSAGES = {
 } as const;
 
 type GenericMessageKey = keyof typeof GENERIC_ERROR_MESSAGES;
+
+const logger = new Logger("SupabaseErrorHandler");
 
 function isProductionEnvironment(): boolean {
   return (process.env.NODE_ENV || "").toLowerCase() === "production";
@@ -77,6 +80,12 @@ export function handleSupabaseError(
 ): never {
   // Handle StorageError (has statusCode property)
   if ("statusCode" in error) {
+    logger.error({
+      context: "SupabaseStorageError",
+      statusCode: error.statusCode,
+      message: error.message,
+      details: error,
+    });
     switch (error.statusCode) {
       case "404":
       case 404:
@@ -113,6 +122,12 @@ export function handleSupabaseError(
   // https://www.postgresql.org/docs/current/errcodes-appendix.html
   // https://postgrest.org/en/stable/errors.html
   const pgError = error as PostgrestError;
+  logger.error({
+    context: "SupabasePostgrestError",
+    code: pgError.code,
+    message: pgError.message,
+    details: pgError,
+  });
   switch (pgError.code) {
     case "42P01": // undefined_table (e.g., missing view/table)
       throw new NotFoundException({
@@ -150,6 +165,14 @@ export function handleSupabaseError(
       throw new BadRequestException({
         success: false,
         message: getClientMessage(pgError.message, "badRequest"),
+        code: pgError.code,
+      });
+
+    case "42703": // undefined_column (likely schema drift)
+    case "42601": // syntax_error
+      throw new InternalServerErrorException({
+        success: false,
+        message: getClientMessage(pgError.message, "internal"),
         code: pgError.code,
       });
 
