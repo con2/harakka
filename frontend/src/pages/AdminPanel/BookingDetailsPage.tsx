@@ -67,7 +67,7 @@ const BookingDetailsPage = () => {
   const orgLocationsLoading = useAppSelector(selectOrgLocationsLoading);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRole = useAppSelector(selectActiveRoleName);
-
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   // Fetch organization name if booking was made on behalf of an organization
   const organizationIds = booking?.booked_by_org ? [booking.booked_by_org] : [];
   const { organizationNames } = useOrganizationNames(organizationIds);
@@ -151,6 +151,45 @@ const BookingDetailsPage = () => {
     (item) => item.status !== "pending",
   );
 
+  const pickupScope = useMemo(() => {
+    if (selectedItemIds.length > 0) {
+      return orgItems.filter((i) => selectedItemIds.includes(String(i.id)));
+    }
+    return orgItems;
+  }, [orgItems, selectedItemIds]);
+
+  const pickupLocationId = useMemo(() => {
+    if (pickupScope.length === 0) return undefined;
+    const locationSet = new Set(pickupScope.map((i) => i.location_id));
+    return locationSet.size === 1 ? Array.from(locationSet)[0] : undefined;
+  }, [pickupScope]);
+
+  const pickupHasMixedLocations = useMemo(() => {
+    if (pickupScope.length === 0) return false;
+    const locationSet = new Set(pickupScope.map((i) => i.location_id));
+    return locationSet.size > 1;
+  }, [pickupScope]);
+
+  const pickupHasFutureStart = useMemo(() => {
+    const now = new Date();
+    return pickupScope.some(
+      (i) => i.status === "confirmed" && new Date(i.start_date) > now,
+    );
+  }, [pickupScope]);
+
+  const pickupDisabledReason = useMemo(() => {
+    if (pickupHasMixedLocations) {
+      return t.bookingPickup.errors.multiLocation[lang];
+    }
+    if (pickupHasFutureStart) {
+      return t.bookingPickup.errors.beforeStartDate[lang];
+    }
+    return undefined;
+  }, [pickupHasMixedLocations, pickupHasFutureStart, lang]);
+
+  const pickupBlockedForSelection =
+    pickupHasFutureStart || pickupHasMixedLocations || !pickupLocationId;
+
   // Initialize edit form when booking is loaded (only active items)
   useEffect(() => {
     if (!booking?.booking_items) return;
@@ -191,7 +230,6 @@ const BookingDetailsPage = () => {
   ]);
 
   // Track selected item IDs for bulk actions
-  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   // When booking changes, clear out any selected IDs that are no longer pending
   useEffect(() => {
     if (!booking) return;
@@ -886,6 +924,9 @@ const BookingDetailsPage = () => {
                 id={booking.id}
                 selectedItemIds={selectedItemIds}
                 onSuccess={refetchBooking}
+                location_id={pickupLocationId ?? ""}
+                disabled={pickupBlockedForSelection}
+                disabledReason={pickupDisabledReason}
               />
             </div>
           )}

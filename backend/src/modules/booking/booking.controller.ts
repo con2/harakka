@@ -439,6 +439,16 @@ export class BookingController {
     const supabase = req.supabase;
     const { item_ids: itemIds, location_id, org_id } = body;
 
+    if (
+      !location_id ||
+      typeof location_id !== "string" ||
+      location_id.trim() === ""
+    ) {
+      throw new BadRequestException(
+        "'location_id' (UUID string) is required in body",
+      );
+    }
+
     // Org ID is either provided in the body (self_pickup) or the headers (admin pickup)
     const orgId = org_id ?? (req.headers["x-org-id"] as string);
     return this.bookingService.confirmPickup(

@@ -1617,21 +1617,45 @@ export class BookingService {
     location_id: string,
     itemIds?: string[],
   ) {
+    if (!location_id) {
+      throw new BadRequestException("location_id is required for pickup");
+    }
+    // Current timestamp in ISO for consistent comparisons
+    const nowIso = new Date().toISOString();
+
+    // If a specific list of items is provided, validate both status and start_date
     if (itemIds && itemIds.length > 0) {
       const selectQuery = supabase
         .from("booking_items")
-        .select("status")
+        .select("id, status, start_date")
         .eq("booking_id", bookingId)
         .eq("provider_organization_id", orgId)
+        .eq("location_id", location_id)
         .in("id", itemIds);
-      const { data: selectData, error } = await selectQuery;
 
+      const { data: selectData, error } = await selectQuery;
       if (error) handleSupabaseError(error);
+
+      if (!selectData || selectData.length !== itemIds.length) {
+        throw new BadRequestException(
+          "All selected items must belong to the provided location",
+        );
+      }
+
       const unconfirmed = selectData.filter((r) => r.status !== "confirmed");
       if (unconfirmed.length > 0)
         throw new BadRequestException(
-          `Cannot pick-up items which are not confirmed`,
+          `Cannot pick up items which are not confirmed`,
         );
+
+      const tooEarly = selectData.filter(
+        (r) => new Date(r.start_date).toISOString() > nowIso,
+      );
+      if (tooEarly.length > 0) {
+        throw new BadRequestException(
+          `Cannot pick up items before their start date`,
+        );
+      }
     }
 
     const updateQuery = supabase
@@ -1639,8 +1663,10 @@ export class BookingService {
       .update({ status: "picked_up" })
       .eq("booking_id", bookingId)
       .eq("provider_organization_id", orgId)
-      .eq("status", "confirmed");
-    if (location_id) updateQuery.eq("location_id", location_id);
+      .eq("status", "confirmed")
+      .eq("location_id", location_id)
+      // Guardrail: never allow pickup prior to start_date
+      .lte("start_date", nowIso);
     if (itemIds && itemIds.length > 0) updateQuery.in("id", itemIds);
     const { error: itemsUpdateError } = await updateQuery;
     if (itemsUpdateError) handleSupabaseError(itemsUpdateError);
