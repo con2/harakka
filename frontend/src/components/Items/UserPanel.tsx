@@ -154,7 +154,7 @@ const UserPanel = () => {
     orgIds?: string[];
   }>(() => ({
     isActive: true, // Is item active or not filter
-    itemsNumberAvailable: [0, 1000], // Increased max to 1000 to accommodate items with higher quantities
+    itemsNumberAvailable: [0, 300],
     categories: navigationState?.preSelectedFilters?.categories || [],
     tagIds: navigationState?.preSelectedFilters?.tagIds || [],
     locationIds: [],
@@ -252,7 +252,7 @@ const UserPanel = () => {
     let count = 0;
     if (
       filters.itemsNumberAvailable[0] !== 0 ||
-      filters.itemsNumberAvailable[1] !== 1000
+      filters.itemsNumberAvailable[1] !== 300
     ) {
       count++;
     }
@@ -307,7 +307,7 @@ const UserPanel = () => {
                       onClick={() => {
                         setFilters({
                           isActive: true,
-                          itemsNumberAvailable: [0, 1000],
+                          itemsNumberAvailable: [0, 300],
                           categories: [],
                           tagIds: [],
                           locationIds: [],
@@ -392,7 +392,7 @@ const UserPanel = () => {
               </label>
               <Slider
                 min={0}
-                max={1000}
+                max={300}
                 value={tempAvailableRange}
                 // update thumb position instantly
                 onValueChange={([min, max]) =>
@@ -595,7 +595,7 @@ const UserPanel = () => {
                     onClick={() => {
                       setFilters({
                         isActive: true,
-                        itemsNumberAvailable: [0, 1000],
+                        itemsNumberAvailable: [0, 300],
                         categories: [],
                         tagIds: [],
                         locationIds: [],
