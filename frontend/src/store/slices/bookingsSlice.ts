@@ -730,7 +730,7 @@ export const bookingsSlice = createSlice({
           state.orgBookings = action.payload.data as ExtendedBookingPreview[];
           state.bookings_pagination = action.payload.metadata;
         } else {
-          state.userBookings = [];
+          state.orgBookings = [];
         }
         state.loading = false;
       })
