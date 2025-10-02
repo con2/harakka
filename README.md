@@ -53,7 +53,7 @@ Comprehensive documentation is available in the `docs` directory:
 
 - [Database Schema](docs/developers/backend/database-schema.md) - Data structure
 - [API Reference](docs/developers/backend/api-reference.md) - API endpoints
-- [Supabase Setup](docs/developers/backend/supabase-setup.md) - Configuration
+- [Supabase (Branching & Setup)](docs/developers/Supabase.md) - Branching, setup, and workflow
 - [Security](docs/developers/backend/security.md) - Authentication and authorization
 
 ### Workflow Documentation
