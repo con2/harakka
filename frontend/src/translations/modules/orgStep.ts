@@ -39,10 +39,20 @@ export const orgStep = {
       fi: "tästä",
     },
   },
+  links: {
+    createLocation: {
+      en: "Create one to start adding items",
+      fi: "Luo yksi aloittaaksesi tuotteiden lisäämisen",
+    },
+  },
   info: {
     unfinishedItems: {
       en: "You have unfinished items",
       fi: "Sinulla on keskeneräisiä tuotteita",
+    },
+    noLocationsFound: {
+      en: "No locations found for this organization.",
+      fi: "Organisaatiolle ei löytynyt sijainteja.",
     },
   },
 };

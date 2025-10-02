@@ -20,8 +20,6 @@ import {
 import { setNextStep, setStepper } from "@/store/slices/uiSlice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import Spinner from "@/components/Spinner";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 
@@ -69,6 +67,23 @@ function OrgStep() {
           {t.orgStep.heading.location[lang]}
         </h2>
         <>
+          {items.length > 0 && (
+            <div className="bg-blue-50 justify-between rounded-xl flex items-center w-full p-4 border border-1 border-slate-300 mb-4 text-slate-700">
+              <div className="flex items-center gap-3">
+                <Info className="text-slate-600 self-center" />
+                <p className="text-sm font-medium leading-[1.1rem]">
+                  {t.orgStep.info.unfinishedItems[lang]}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="bg-slate-700 hover:bg-slate-600 hover:text-white hover:border-slate-600"
+                onClick={() => dispatch(setStepper(3))}
+              >
+                {t.orgStep.buttons.reviewItems[lang]}
+              </Button>
+            </div>
+          )}
           {/* Location Selection */}
           <div className="flex justify-between items-center">
             <div className="flex flex-wrap gap-2">
@@ -198,30 +213,6 @@ function OrgStep() {
           </div>
         </div>
       </div>
-
-      {/* Modal whilst item upload is loading */}
-      {itemsLoading && (
-        <Dialog open>
-          <DialogContent className="w-fit px-20">
-            <Spinner />
-            <p className="font-semibold">Processing items...</p>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {items.length > 0 && (
-        <div className="flex align-center gap-3 p-10 justify-between items-center">
-          <div className="flex gap-3 items-center">
-            <Info color="#3d3d3d" className="self-center" />
-            <p className="text-sm font-medium leading-[1.1rem]">
-              {t.orgStep.info.unfinishedItems[lang]}
-            </p>
-          </div>
-          <Button variant="outline" onClick={() => dispatch(setStepper(3))}>
-            {t.orgStep.buttons.reviewItems[lang]}
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
