@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   ConflictException,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { handleSupabaseError } from "./handleError.utils";
@@ -120,5 +122,72 @@ describe("handleSupabaseError client messaging", () => {
         code: "42703",
       });
     }
+  });
+
+  it("logs detailed error but emits override message in production", () => {
+    expect.assertions(4);
+    process.env.NODE_ENV = "production";
+    const loggerSpy = jest
+      .spyOn(Logger.prototype, "error")
+      .mockImplementation(() => undefined);
+
+    const error = {
+      code: "23503",
+      message: "violates foreign key constraint",
+    } as any;
+
+    try {
+      handleSupabaseError(error, {
+        messageOverrides: { badRequest: "Could not create booking-item" },
+        loggerContext: { route: "POST /bookings" },
+      });
+    } catch (caught) {
+      expect(caught).toBeInstanceOf(BadRequestException);
+      expect(caught.getStatus()).toBe(400);
+      expect(caught.getResponse()).toMatchObject({
+        message: "Could not create booking-item",
+        code: "23503",
+      });
+    }
+
+    expect(loggerSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: "SupabasePostgrestError",
+        code: "23503",
+        message: "violates foreign key constraint",
+        route: "POST /bookings",
+      }),
+    );
+
+    loggerSpy.mockRestore();
+  });
+
+  it("ignores override outside production to keep detailed messages", () => {
+    expect.assertions(4);
+    process.env.NODE_ENV = "development";
+    const loggerSpy = jest
+      .spyOn(Logger.prototype, "error")
+      .mockImplementation(() => undefined);
+
+    const error = {
+      code: "23503",
+      message: "violates foreign key constraint",
+    } as any;
+
+    try {
+      handleSupabaseError(error, {
+        messageOverrides: { badRequest: "Could not create booking-item" },
+      });
+    } catch (caught) {
+      expect(caught).toBeInstanceOf(BadRequestException);
+      expect(caught.getStatus()).toBe(400);
+      expect(caught.getResponse()).toMatchObject({
+        message: "violates foreign key constraint",
+        code: "23503",
+      });
+    }
+
+    expect(loggerSpy).toHaveBeenCalled();
+    loggerSpy.mockRestore();
   });
 });
