@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   PinIcon,
   Settings,
-  ShoppingBag,
   Users,
   Warehouse,
   Building2,
@@ -15,6 +14,8 @@ import {
 } from "lucide-react";
 import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import IncomingBookings from "@/assets/incoming_bookings.svg?react";
+import OutgoingBookings from "@/assets/outgoing_bookings.svg?react";
 
 const AdminPanel = () => {
   const { lang } = useLanguage();
@@ -41,7 +42,7 @@ const AdminPanel = () => {
           {isAnyTypeOfAdmin && (
             <SidebarLink
               to="/admin"
-              icon={<LayoutDashboard className="w-5 h-5" />}
+              icon={<LayoutDashboard aria-hidden className="w-5 h-5" />}
               label={t.adminPanel.navigation.dashboard[lang]}
               end={true}
               dataCy="admin-nav-dashboard"
@@ -51,7 +52,7 @@ const AdminPanel = () => {
           {hasAnyRole(["super_admin"]) && (
             <SidebarLink
               to="/admin/organizations"
-              icon={<Building2 className="w-5 h-5" />}
+              icon={<Building2 aria-hidden className="w-5 h-5" />}
               label={
                 t.adminPanel.navigation.organizations[lang] || "Organizations"
               }
@@ -63,9 +64,17 @@ const AdminPanel = () => {
           {hasAnyRole(["storage_manager", "tenant_admin"]) && (
             <SidebarLink
               to="/admin/bookings"
-              icon={<ShoppingBag className="w-5 h-5" />}
+              icon={<IncomingBookings aria-hidden className="w-6 h-5" />}
               label={t.adminPanel.navigation.bookings[lang]}
               dataCy="admin-nav-bookings"
+            />
+          )}
+          {hasAnyRole(["requester", "storage_manager", "tenant_admin"]) && (
+            <SidebarLink
+              to="/admin/requests"
+              icon={<OutgoingBookings aria-hidden className="w-6 h-5" />}
+              label={t.adminPanel.navigation.requests[lang]}
+              dataCy="admin-nav-bookings-out"
             />
           )}
 
@@ -74,7 +83,7 @@ const AdminPanel = () => {
           {hasAnyRole(["tenant_admin", "storage_manager"]) && (
             <SidebarLink
               to="/admin/items"
-              icon={<Warehouse className="w-5 h-5" />}
+              icon={<Warehouse aria-hidden className="w-5 h-5" />}
               label={t.adminPanel.navigation.items[lang]}
               dataCy="admin-nav-items"
             />
@@ -82,7 +91,7 @@ const AdminPanel = () => {
           {hasAnyRole(["tenant_admin", "storage_manager"]) && (
             <SidebarLink
               to="/admin/categories"
-              icon={<LayoutGrid className="w-5 h-5" />}
+              icon={<LayoutGrid aria-hidden className="w-5 h-5" />}
               label={t.adminPanel.navigation.categories[lang]}
               dataCy="admin-nav-tags"
             />
@@ -91,7 +100,7 @@ const AdminPanel = () => {
           {hasAnyRole(["superVera", "tenant_admin", "storage_manager"]) && (
             <SidebarLink
               to="/admin/tags"
-              icon={<PinIcon className="w-5 h-5" />}
+              icon={<PinIcon aria-hidden className="w-5 h-5" />}
               label={t.adminPanel.navigation.tags[lang]}
               dataCy="admin-nav-tags"
             />
@@ -100,7 +109,7 @@ const AdminPanel = () => {
           {hasAnyRole(["super_admin", "tenant_admin"]) && (
             <SidebarLink
               to="/admin/users"
-              icon={<Users className="w-5 h-5" />}
+              icon={<Users aria-hidden className="w-5 h-5" />}
               label={t.adminPanel.navigation.users[lang]}
               dataCy="admin-nav-users"
             />
@@ -109,7 +118,7 @@ const AdminPanel = () => {
           {hasRole("super_admin") && (
             <SidebarLink
               to="/admin/logs"
-              icon={<FileText className="w-5 h-5" />}
+              icon={<FileText aria-hidden className="w-5 h-5" />}
               label={t.adminPanel.navigation.logs[lang] || "Logs"}
               dataCy="admin-nav-logs"
             />
@@ -118,7 +127,7 @@ const AdminPanel = () => {
           {hasAnyRole(["tenant_admin", "storage_manager"]) && (
             <SidebarLink
               to="/admin/locations"
-              icon={<MapPin className="w-5 h-5" />}
+              icon={<MapPin aria-hidden className="w-5 h-5" />}
               label={t.adminPanel.navigation.locations[lang]}
               dataCy="admin-nav-locations"
             />
@@ -127,7 +136,7 @@ const AdminPanel = () => {
           {hasRole("user") && (
             <SidebarLink
               to="/profile"
-              icon={<Settings className="w-5 h-5" />}
+              icon={<Settings aria-hidden className="w-5 h-5" />}
               label={t.adminPanel.navigation.settings[lang]}
               dataCy="admin-nav-settings"
             />

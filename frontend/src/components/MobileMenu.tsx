@@ -2,14 +2,14 @@ import Logo from "@/assets/v8.5.svg?react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { useAppSelector } from "@/store/hooks";
-import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
+import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { t } from "@/translations";
 import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import { SheetContent } from "./ui/sheet";
+import { SheetContent, SheetDescription, SheetTitle } from "./ui/sheet";
 import { useLanguage } from "@/context/LanguageContext";
 
 type MobileMenuProps = {
@@ -17,20 +17,24 @@ type MobileMenuProps = {
 };
 
 function MobileMenu({ closeMenu }: MobileMenuProps) {
-  const activeOrg = useAppSelector(selectActiveOrganizationId);
+  const { roleName: activeRole, organizationId: activeOrgId } = useAppSelector(
+    selectActiveRoleContext,
+  );
   const { signOut, user } = useAuth();
   const isLoggedIn = !!user;
   const navigate = useNavigate();
   const { hasAnyRole, hasRole } = useRoles();
   const isAnyTypeOfAdmin = hasAnyRole([
+    "requester",
     "tenant_admin",
     "super_admin",
     "storage_manager",
   ]);
-  const isSuperAdmin = hasRole("super_admin", activeOrg!);
-  const isTenantAdmin = hasRole("tenant_admin", activeOrg!);
-  const isStorageManager = hasRole("storage_manager", activeOrg!);
-  const isGlobalUser = hasRole("user", activeOrg!);
+  const isSuperAdmin = activeRole === "super_admin";
+  const isTenantAdmin = activeRole === "tenant_admin";
+  const isStorageManager = activeRole === "storage_manager";
+  const isRequester = activeRole === "requester";
+  const isGlobalUser = hasRole("user", activeOrgId!);
 
   const { lang } = useLanguage();
 
@@ -56,6 +60,12 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
           className="w-40 mb-4 hover:cursor-pointer"
           onClick={() => handleNavigation("/")}
         />
+        <SheetTitle className="sr-only">
+          {t.mobileMenu.aria.title[lang]}
+        </SheetTitle>
+        <SheetDescription className="sr-only">
+          {t.mobileMenu.aria.description[lang]}
+        </SheetDescription>
 
         <div>
           {/* User Links */}
@@ -108,7 +118,7 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
                 {t.mobileMenu.headings.admin[lang]}
               </p>
             )}
-            {isAnyTypeOfAdmin && (
+            {isAnyTypeOfAdmin && !isRequester && (
               <>
                 <Button onClick={() => handleNavigation("/admin")}>
                   {t.adminPanel.navigation.dashboard[lang]}
@@ -150,8 +160,8 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
                 <ChevronRight />
               </Button>
             )}
-            {(isStorageManager || isTenantAdmin) && (
-              <Button onClick={() => handleNavigation("/my-bookings")}>
+            {(isStorageManager || isTenantAdmin || isRequester) && (
+              <Button onClick={() => handleNavigation("/admin/requests")}>
                 {t.mobileMenu.buttons.orgBookings[lang]}
                 <ChevronRight />
               </Button>

@@ -46,6 +46,10 @@ export const addItemForm = {
       fi: "Kokonaismäärä",
       en: "Total Quantity",
     },
+    placement: {
+      en: "Placement",
+      fi: "Sijoittelu",
+    },
   },
   buttons: {
     addItem: {
@@ -102,6 +106,30 @@ export const addItemForm = {
       en: "You have unfinished items. Upload or remove these to change organization",
       fi: "Sinulla on keskeneräisiä tuotteita. Lataa tai poista ne vaihtaaksesi organisaatiota",
     },
+    placementDescription: {
+      en: "Describe where in the storage the item can be found",
+      fi: "Kuvaile, mistä varastosta tuote löytyy",
+    },
+  },
+  formDescription: {
+    category: {
+      prompt: {
+        en: "Can't find a matching category?",
+        fi: "Etkö löydä sopivaa kategoriaa?",
+      },
+      createOne: {
+        en: "Create one here",
+        fi: "Luo uusi tästä",
+      },
+      then: {
+        en: "then",
+        fi: "sitten",
+      },
+      refresh: {
+        en: "refresh",
+        fi: "päivitä",
+      },
+    },
   },
   messages: {
     validation: {
@@ -124,6 +152,14 @@ export const addItemForm = {
       quantity: {
         en: "Quantity is required",
         fi: "Määrä on pakollinen",
+      },
+      category_id: {
+        en: "Category is required",
+        fi: "Kategoria vaaditaan",
+      },
+      placement_description: {
+        en: "A placement description is required",
+        fi: "Sijoittelun kuvaus on pakollinen",
       },
     },
     error: {

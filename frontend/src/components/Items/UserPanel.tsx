@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SlidersIcon } from "lucide-react";
@@ -12,6 +12,7 @@ import {
 } from "@/store/slices/locationsSlice";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { extractCityFromLocationName } from "@/utils/locationValidation";
 import { FilterValue } from "@/types";
 import {
   fetchAllOrganizations,
@@ -25,6 +26,14 @@ import {
 import { buildCategoryTree } from "@/store/utils/format";
 import CategoryTree from "@/components/Items/CategoryTree";
 
+interface NavigationState {
+  preSelectedFilters?: {
+    categories?: string[];
+    tagIds?: string[];
+    orgIds?: string[];
+  };
+}
+
 const UserPanel = () => {
   const tags = useAppSelector(selectAllTags);
   const categories = useAppSelector(selectCategories);
@@ -33,6 +42,9 @@ const UserPanel = () => {
   const { lang } = useLanguage();
   const filterRef = useRef<HTMLDivElement>(null); // Ref for the filter panel position
   const organizations = useAppSelector(selectOrganizations);
+  const routerLocation = useLocation();
+  const navigate = useNavigate();
+  const navigationState = routerLocation.state as NavigationState | null;
   const MAX_VISIBLE = 5;
 
   useEffect(() => {
@@ -90,8 +102,31 @@ const UserPanel = () => {
   const toggleExpanded = (key: ExpandableSection) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  // Group locations by city
+  const cityLocationGroups = useMemo(() => {
+    const cityMap = new Map<
+      string,
+      { id: string; name: string; locationIds: string[] }
+    >();
+
+    locations.forEach((location) => {
+      const cityName = extractCityFromLocationName(location.name);
+      if (cityMap.has(cityName)) {
+        cityMap.get(cityName)!.locationIds.push(location.id);
+      } else {
+        cityMap.set(cityName, {
+          id: cityName,
+          name: cityName,
+          locationIds: [location.id],
+        });
+      }
+    });
+
+    return Array.from(cityMap.values());
+  }, [locations]);
+
   // const visibleOrganizations = getVisible(organizations, "organizations");
-  const visibleLocations = getVisible(locations, "locations");
+  const visibleLocations = getVisible(cityLocationGroups, "locations");
   const visibleTags = getVisible(tags, "tags");
   const mappedCategories = buildCategoryTree(categories);
   const visibleCategories = getVisible(mappedCategories, "categories");
@@ -149,14 +184,14 @@ const UserPanel = () => {
     tagIds: string[];
     locationIds: string[];
     orgIds?: string[];
-  }>({
+  }>(() => ({
     isActive: true, // Is item active or not filter
     itemsNumberAvailable: [0, 100], // add a range for number of items
-    categories: [],
-    tagIds: [],
+    categories: navigationState?.preSelectedFilters?.categories || [],
+    tagIds: navigationState?.preSelectedFilters?.tagIds || [],
     locationIds: [],
-    orgIds: [],
-  });
+    orgIds: navigationState?.preSelectedFilters?.orgIds || [],
+  }));
 
   // --- slider thumb state so the handle moves smoothly without refetching ---
   const [tempAvailableRange, setTempAvailableRange] = useState<
@@ -168,12 +203,33 @@ const UserPanel = () => {
     setTempAvailableRange(filters.itemsNumberAvailable);
   }, [filters.itemsNumberAvailable]);
 
+  // Handle navigation state changes for pre-selected filters
+  useEffect(() => {
+    const currentNavState = routerLocation.state as NavigationState | null;
+    if (currentNavState?.preSelectedFilters) {
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        categories: currentNavState.preSelectedFilters?.categories || [],
+        tagIds: currentNavState.preSelectedFilters?.tagIds || [],
+        orgIds: currentNavState.preSelectedFilters?.orgIds || [],
+      }));
+    }
+  }, [routerLocation.state, routerLocation.pathname]);
+
+  const clearNavigationState = () => {
+    if (routerLocation.state) {
+      void navigate(routerLocation.pathname, { replace: true, state: null });
+    }
+  };
+
   // Handle filter change
   const handleFilterChange = (filterKey: string, value: FilterValue) => {
     setFilters((prevFilters) => ({
       ...prevFilters,
       [filterKey]: value,
     }));
+    // Clear navigation state when user manually changes filters
+    clearNavigationState();
   };
 
   const countActiveFilters = () => {
@@ -228,7 +284,7 @@ const UserPanel = () => {
                       variant="ghost"
                       size={"sm"}
                       className="text-xs px-1 bg-white text-highlight2 border-highlight2 hover:bg-highlight2 hover:text-white h-fit"
-                      onClick={() =>
+                      onClick={() => {
                         setFilters({
                           isActive: true,
                           itemsNumberAvailable: [0, 100],
@@ -236,8 +292,9 @@ const UserPanel = () => {
                           tagIds: [],
                           locationIds: [],
                           orgIds: [],
-                        })
-                      }
+                        });
+                        clearNavigationState();
+                      }}
                     >
                       {t.userPanel.filters.clearFilters[lang]}
                     </Button>
@@ -346,7 +403,10 @@ const UserPanel = () => {
               </label>
               <div className="flex flex-col gap-2">
                 {visibleLocations.map((location) => {
-                  const isSelected = filters.locationIds?.includes(location.id);
+                  // Check if any of this city's location IDs are selected
+                  const isSelected = location.locationIds.some((id: string) =>
+                    filters.locationIds?.includes(id),
+                  );
                   return (
                     <label
                       key={location.id}
@@ -362,9 +422,9 @@ const UserPanel = () => {
                         onChange={() => {
                           const updated = isSelected
                             ? filters.locationIds.filter(
-                                (id) => id !== location.id,
+                                (id) => !location.locationIds.includes(id),
                               )
-                            : [...filters.locationIds, location.id];
+                            : [...filters.locationIds, ...location.locationIds];
                           handleFilterChange("locationIds", updated);
                         }}
                         className="accent-secondary"
@@ -376,7 +436,7 @@ const UserPanel = () => {
                   );
                 })}
               </div>
-              {locations.length > MAX_VISIBLE && (
+              {cityLocationGroups.length > MAX_VISIBLE && (
                 <Button
                   variant="ghost"
                   className="text-left text-sm text-secondary"
@@ -501,7 +561,7 @@ const UserPanel = () => {
                   <Button
                     variant={"outline"}
                     size={"sm"}
-                    onClick={() =>
+                    onClick={() => {
                       setFilters({
                         isActive: true,
                         itemsNumberAvailable: [0, 100],
@@ -509,8 +569,9 @@ const UserPanel = () => {
                         tagIds: [],
                         locationIds: [],
                         orgIds: [],
-                      })
-                    }
+                      });
+                      clearNavigationState();
+                    }}
                   >
                     {t.userPanel.filters.clearFilters[lang]}
                   </Button>

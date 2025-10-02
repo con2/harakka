@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 
 // Auth
 import AuthCallback from "../components/Auth/AuthCallback";
@@ -18,8 +18,12 @@ import TagDetailsPage from "@/pages/AdminPanel/TagDetailsPage";
 import AddTag from "@/pages/AdminPanel/AddTag";
 import Logs from "@/pages/AdminPanel/Logs";
 import Organizations from "@/pages/AdminPanel/Organizations";
+import OrganizationDetailsPage from "@/pages/AdminPanel/OrganizationDetailsPage";
+import CreateOrganizationPage from "@/pages/AdminPanel/CreateOrganizationPage";
 import OrganizationLocations from "@/pages/AdminPanel/OrganizationLocations";
 import Categories from "@/pages/AdminPanel/Categories";
+import Requests from "@/pages/AdminPanel/Requests/Requests";
+import RequestDetailsPage from "@/pages/AdminPanel/Requests/RequestDetailsPage";
 
 // General
 import LandingPage from "@/pages/LandingPage";
@@ -35,6 +39,7 @@ import UserPanel from "../components/Items/UserPanel";
 import BookingConfirmation from "../components/BookingConfirmation";
 import { UserGuide } from "../components/UserGuidelines";
 import ContactForm from "../components/ContactForm";
+import Error from "@/pages/Error";
 
 // Layout
 import App from "../App";
@@ -50,6 +55,11 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+    errorElement: (
+      <App>
+        <Error />
+      </App>
+    ),
     children: [
       {
         index: true,
@@ -109,7 +119,12 @@ export const router = createBrowserRouter([
         path: "/admin",
         element: (
           <ProtectedRoute
-            allowedRoles={["storage_manager", "tenant_admin", "super_admin"]}
+            allowedRoles={[
+              "requester",
+              "storage_manager",
+              "tenant_admin",
+              "super_admin",
+            ]}
           >
             <AdminPanel />
           </ProtectedRoute>
@@ -159,6 +174,26 @@ export const router = createBrowserRouter([
                 allowedRoles={["storage_manager", "tenant_admin"]}
               >
                 <BookingList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "requests",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["requester", "storage_manager", "tenant_admin"]}
+              >
+                <Requests />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "requests/:id",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["requester", "storage_manager", "tenant_admin"]}
+              >
+                <RequestDetailsPage />
               </ProtectedRoute>
             ),
           },
@@ -215,6 +250,22 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute allowedRoles={["super_admin"]}>
                 <Organizations />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "organizations/create",
+            element: (
+              <ProtectedRoute allowedRoles={["super_admin"]}>
+                <CreateOrganizationPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "organizations/:id",
+            element: (
+              <ProtectedRoute allowedRoles={["super_admin"]}>
+                <OrganizationDetailsPage />
               </ProtectedRoute>
             ),
           },
@@ -320,7 +371,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "*",
-        element: <Navigate to="/" />,
+        element: <Error type="not-found" />,
       },
     ],
   },

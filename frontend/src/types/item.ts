@@ -12,7 +12,6 @@ import { ExtendedTag } from "@common/items/tag.types";
  * Item translations content
  */
 export interface ItemTranslation {
-  item_type: string;
   item_name: string;
   item_description: string;
 }
@@ -102,6 +101,7 @@ export type ManageItemViewRow = {
   location_id: string;
   location_name?: string;
   compartment_id: string | null;
+  placement_description: string;
 
   /* ─ Inventory fields to match Item interface ─ */
   available_quantity: number;
@@ -174,6 +174,8 @@ export interface ItemState {
     errors: Record<string, string[]>;
   };
   isEditingItem: boolean;
+  // Signature of the in-flight fetchOrderedItems request (JSON stringified args)
+  currentRequestSig?: string | null;
 }
 
 type ItemCreatable = Omit<

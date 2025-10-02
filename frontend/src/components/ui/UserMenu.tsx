@@ -1,5 +1,5 @@
 // UserMenuDropdown.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -7,7 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"; // adjust path to your project
+} from "@/components/ui/dropdown-menu";
 import {
   ArrowLeft,
   ArrowLeftRight,
@@ -45,6 +45,7 @@ export const UserMenu: React.FC = () => {
   const [selectGroup, setSelectGroup] = useState<
     "roles" | "links" | "languages"
   >("links");
+  const ref = useRef<null | HTMLDivElement>(null);
 
   const {
     organizationId: activeOrgId,
@@ -103,27 +104,28 @@ export const UserMenu: React.FC = () => {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild className="text-primary">
         <button className="gap-3 p-1 px-2 h-fit flex items-center">
           {avatarUrl && avatarUrl.trim() !== "" ? (
             <img
               src={avatarUrl}
               className="inline h-6 w-6 rounded-full"
-              alt="User avatar"
+              alt=""
             />
           ) : (
             <UserIcon className="inline h-6 w-6 rounded-full" />
           )}
-          <div className="flex flex-col text-start font-main flex-col-reverse">
+          <div className="flex flex-col text-start font-main flex-col">
+            <p className="text-md">{userName || email}</p>
             <p className="text-xs !font-[var(--main-font)]">
               {activeRoleName !== "user" &&
                 activeRoleName &&
                 activeOrgName &&
                 getOrgLabel(userName, activeRoleName, activeOrgName)}
             </p>
-            <p className="text-md">{userName || email}</p>
           </div>
           <ChevronDown
+            aria-hidden
             className={`w-3 h-3 transition-transform ${open ? "transform-[rotate(180deg)]" : "transform-[rotate(0deg)]"}`}
           />
         </button>
@@ -133,13 +135,18 @@ export const UserMenu: React.FC = () => {
         {selectGroup !== "links" && (
           <>
             <DropdownMenuItem
+              ref={ref}
+              id="usermenu-back"
               onSelect={(e) => {
                 e.preventDefault();
                 setSelectGroup("links");
               }}
               className="flex items-center gap-2"
             >
-              <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+              <ArrowLeft
+                aria-hidden
+                className="w-4 h-4 text-muted-foreground"
+              />
               {t.common.back[lang]}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -190,62 +197,76 @@ export const UserMenu: React.FC = () => {
           <>
             <DropdownMenuItem asChild>
               <Link
+                id="usermenu-my-profile"
                 to="/profile"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2"
               >
-                <UserRound className="w-4 h-4 text-muted-foreground" />
+                <UserRound
+                  aria-hidden
+                  className="w-4 h-4 text-muted-foreground"
+                />
                 {t.userMenu.links.myProfile[lang]}
               </Link>
             </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
               <Link
+                id="usermenu-my-bookings"
                 onClick={() => setOpen(false)}
                 to="/my-bookings"
                 className="flex items-center gap-2"
               >
-                <CalendarDays className="w-4 h-4 text-muted-foreground" />
-                {activeRoleName === "user"
-                  ? t.userMenu.links.myBookings[lang]
-                  : t.userMenu.links.orgBookings[lang]}
+                <CalendarDays
+                  aria-hidden
+                  className="w-4 h-4 text-muted-foreground"
+                />
+                {t.userMenu.links.myBookings[lang]}
               </Link>
             </DropdownMenuItem>
 
             {activeRoles.length > 1 && (
               <DropdownMenuItem
+                id="usermenu-change-org"
                 onSelect={(e) => {
                   e.preventDefault();
                   setSelectGroup("roles");
+                  ref.current?.focus();
                 }}
                 className="flex items-center gap-2"
               >
-                <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
+                <ArrowLeftRight
+                  aria-hidden
+                  className="w-4 h-4 text-muted-foreground"
+                />
                 {t.userMenu.links.changeOrg[lang]}
               </DropdownMenuItem>
             )}
 
             <DropdownMenuItem
+              id="usermenu-change-lang"
               onSelect={(e) => {
                 e.preventDefault();
                 setSelectGroup("languages");
+                ref.current?.focus();
               }}
               className="flex items-center gap-2"
             >
-              <Globe className="w-4 h-4 text-muted-foreground" />
+              <Globe aria-hidden className="w-4 h-4 text-muted-foreground" />
               {t.userMenu.links.changeLang[lang]}
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
 
             <DropdownMenuItem
+              id="usermenu-log-out"
               onSelect={() => {
                 void signOut();
                 void navigate("/");
               }}
               className="flex items-center gap-2"
             >
-              <LogOut className="w-4 h-4 text-muted-foreground" />
+              <LogOut aria-hidden className="w-4 h-4 text-muted-foreground" />
               {t.userMenu.links.logOut[lang]}
             </DropdownMenuItem>
           </>

@@ -7,6 +7,8 @@ export const ItemSchema = z
     fi_item_name: z.string().min(1).max(100),
     fi_item_description: z.string().min(1).max(250),
     quantity: z.coerce.number().int().min(1),
+    category_id: z.uuid(),
+    placement_description: z.string().min(1).max(200),
   })
   .strip();
 

@@ -17,6 +17,14 @@ import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { formatBookingStatus } from "@/utils/format";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 
 const MyBookingsPage = () => {
   const dispatch = useAppDispatch();
@@ -43,38 +51,23 @@ const MyBookingsPage = () => {
   const { activeContext } = useRoles();
 
   useEffect(() => {
+    const status = statusFilter === "all" ? undefined : statusFilter;
     void dispatch(
       getOwnBookings({
         page: currentPage + 1,
         limit: 10,
+        status,
+        search: searchQuery,
       }),
     );
-  }, [dispatch, currentPage, activeContext]);
+  }, [dispatch, currentPage, activeContext, statusFilter, searchQuery]);
 
   useEffect(() => {
     setCurrentPage(0);
   }, [searchQuery, statusFilter]);
 
-  const filteredBookings = useMemo(() => {
-    if (!bookings) return [];
-    return bookings.filter((b) => {
-      const booking = b as Record<string, unknown>;
-      const status = (booking.status as BookingStatus) ?? "pending";
-
-      if (statusFilter !== "all" && status !== statusFilter) return false;
-
-      if (searchQuery && searchQuery.length > 0) {
-        const num = (booking.booking_number as string) ?? "";
-        const created = (booking.created_at as string) ?? "";
-        const q = searchQuery.toLowerCase();
-        if (num.toLowerCase().includes(q)) return true;
-        if (created.toLowerCase().includes(q)) return true;
-        return false;
-      }
-
-      return true;
-    });
-  }, [bookings, searchQuery, statusFilter]);
+  // Server-side filtering is applied via getOwnBookings; use results as-is
+  const filteredBookings = bookings;
 
   const columns: ColumnDef<unknown, unknown>[] = useMemo(() => {
     const formatDate = (dateString?: string): string => {
@@ -94,10 +87,10 @@ const MyBookingsPage = () => {
           const original = row.original as Record<string, unknown>;
           return (
             <StatusBadge
-              status={formatBookingStatus(
+              status={
                 (original.status as BookingStatus) ??
-                  ("pending" as BookingStatus),
-              )}
+                ("pending" as BookingStatus)
+              }
             />
           );
         },
@@ -128,29 +121,39 @@ const MyBookingsPage = () => {
         <div className="mb-4">
           <h1 className="text-xl">{t.myBookings.headings[lang]}</h1>
         </div>
-        <div className="flex flex-wrap gap-4 items-center mb-4">
-          <input
+        <div className="flex relative flex-wrap gap-4 items-center mb-4">
+          <Search
+            aria-hidden
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
+          />
+          <Input
             type="text"
+            aria-placeholder={t.myBookings.aria.placeholders.search[lang]}
             placeholder={t.myBookings.filter.searchPlaceholder[lang]}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            className="w-full text-sm pl-10 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
           />
-          <select
+          <Select
             value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value as BookingStatus | "all")
+            aria-label={t.myBookings.aria.labels.filterByStatus[lang]}
+            onValueChange={(value) =>
+              setStatusFilter(value as BookingStatus | "all")
             }
-            className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
           >
-            {STATUS_OPTIONS.map((o) => (
-              <option key={`option-${o}`} value={o}>
-                {t.myBookings.status[o as keyof typeof t.myBookings.status]?.[
-                  lang
-                ] ?? o}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger>
+              {formatBookingStatus(statusFilter, true)}
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((o) => (
+                <SelectItem key={`option-${o}`} value={o}>
+                  {t.myBookings.status[o as keyof typeof t.myBookings.status]?.[
+                    lang
+                  ] ?? o}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {(searchQuery || statusFilter !== "all") && (
             <Button
               onClick={() => {

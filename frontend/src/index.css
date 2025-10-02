@@ -7,14 +7,14 @@
 
   --radius: 0.625rem;
 
-  --snow-white: #FFF;
-  --midnight-black: #0B0B0B;
-  --iridiscent-blue: #2f5D9E;
+  --snow-white: #fff;
+  --midnight-black: #0b0b0b;
+  --iridiscent-blue: #2f5d9e;
   --iridiscent-blue-light: #6394d9ff;
-  --emerald-green: #267C6F;
-  --emerald-green-light: #40B3A2;
-  --steel-gray: #7A7D7F;
-  --silver-gleam: #C4C9CC;
+  --emerald-green: #267c6f;
+  --emerald-green-light: #40b3a2;
+  --steel-gray: #7a7d7f;
+  --silver-gleam: #c4c9cc;
   --subtle-grey: oklch(0.97 0 0);
 
   --background: var(--snow-white);
@@ -35,7 +35,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: var(--iridiscent-blue)
+  --ring: var(--iridiscent-blue);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -76,8 +76,8 @@
 }
 
 @theme {
-  --main-font: var(--main-font);
-  --heading-font: var(--heading-font);
+  --font-main: var(--main-font);
+  --font-heading: var(--heading-font);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -116,6 +116,7 @@
   * {
     border: var(--border);
     outline: 50% solid var(--ring);
+    transition: outline 80ms;
   }
   body {
     background-color: var(--background);
@@ -152,6 +153,11 @@
   }
   label {
     margin-bottom: 0.25rem;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--iridiscent-blue);
+    outline-offset: 4px;
   }
 }
 

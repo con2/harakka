@@ -169,8 +169,11 @@ const TagList = () => {
           {/* Filters  and searc */}
           <div className="flex justify-between items-center mb-4">
             <div className="flex justify-start w-full gap-4">
-              <div className="relative w-full sm:max-w-md rounded-md bg-white">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+              <div className="relative w-full sm:max-w-xs rounded-md bg-white">
+                <Search
+                  aria-hidden
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
+                />
                 <Input
                   placeholder={t.tagList.filters.search[lang]}
                   value={searchTerm}
@@ -184,6 +187,7 @@ const TagList = () => {
                 />
                 {searchTerm && (
                   <button
+                    aria-label={t.tagList.aria.labels.clearSearch[lang]}
                     type="button"
                     onClick={() => setSearchTerm("")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
@@ -194,6 +198,7 @@ const TagList = () => {
               </div>
               <div className="flex gap-4 items-center">
                 <select
+                  aria-label={t.tagList.aria.labels.filterAssigned[lang]}
                   value={assignmentFilter}
                   onChange={(e) =>
                     setAssignmentFilter(e.target.value as TagAssignmentFilter)
@@ -234,7 +239,7 @@ const TagList = () => {
                   void navigate("/admin/tags/new");
                 }}
               >
-                <Plus className="mr-1" />
+                <Plus aria-hidden className="mr-1" />
                 {t.tagList.buttons.add[lang]}
               </Button>
             </div>
