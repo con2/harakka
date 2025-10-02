@@ -1,6 +1,6 @@
 import { common } from "./common";
 
-export const editLocationModal = {
+export const editLocationPage = {
   title: {
     en: "Edit Location",
     fi: "Muokkaa sijaintia",
@@ -20,8 +20,8 @@ export const editLocationModal = {
         fi: "Syötä sijainnin nimi",
       },
       notVisibleToUsers: {
-        en: "Location name will not be visible to users",
-        fi: "Sijainti ei ole näkyvissä käyttäjille",
+        en: "The users can only see the city name",
+        fi: "Käyttäjille näkyy vain kaupungin nimi",
       },
     },
     street: {
@@ -127,6 +127,16 @@ export const editLocationModal = {
     cancel: {
       en: common.cancel.en,
       fi: common.cancel.fi,
+    },
+    back: {
+      en: common.back.en,
+      fi: common.back.fi,
+    },
+  },
+  ariaLabels: {
+    backButton: {
+      en: "Go back to locations",
+      fi: "Palaa sijainteihin",
     },
   },
   messages: {

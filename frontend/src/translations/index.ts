@@ -25,7 +25,7 @@ import { common } from "./modules/common";
 import { contactForm } from "./modules/contactForm";
 import { currentUserRoles } from "./modules/currentUserRoles";
 import { deleteLocationButton } from "./modules/deleteLocationButton";
-import { editLocationModal } from "./modules/editLocationModal";
+import { editLocationPage } from "./modules/editLocationPage";
 import { error } from "./modules/error";
 import { footer } from "./modules/footer";
 import { itemCard } from "./modules/itemCard";
@@ -116,7 +116,7 @@ export const t = {
   contactForm,
   currentUserRoles,
   deleteLocationButton,
-  editLocationModal,
+  editLocationPage,
   error,
   footer,
   itemCard,
