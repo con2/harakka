@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Spinner from "@/components/Spinner";
 import { Separator } from "@/components/ui/separator";
+import { Link } from "react-router-dom";
 
 function OrgStep() {
   const { lang } = useLanguage();
@@ -124,6 +125,19 @@ function OrgStep() {
                   {t.orgStep.buttons.chooseLocation[lang]}
                 </Button>
               )}
+
+              {!locationLoading && orgLocations.length === 0 && (
+                <p>
+                  {t.orgStep.info.noLocationsFound[lang]}
+                  <br />
+                  <Link
+                    to="/admin/locations"
+                    className="underline underline-offset-3"
+                  >
+                    {t.orgStep.links.createLocation[lang]}
+                  </Link>
+                </p>
+              )}
             </div>
           </div>
         </>
@@ -139,7 +153,7 @@ function OrgStep() {
         <div className="gap-4 flex items-end flex-wrap items-start">
           <div className="flex flex-col flex-1">
             <Button
-              disabled={selectedLoc === undefined}
+              disabled={selectedLoc === undefined || orgLocations.length === 0}
               variant="outline"
               className="gap-2 py-8 px-8"
               onClick={() => dispatch(setNextStep())}
@@ -152,7 +166,7 @@ function OrgStep() {
             <Button
               variant="outline"
               className="gap-2 py-8 px-8"
-              disabled={selectedLoc === undefined}
+              disabled={selectedLoc === undefined || orgLocations.length === 0}
               onClick={(e) => {
                 e.preventDefault();
                 if (!itemsLoading)
