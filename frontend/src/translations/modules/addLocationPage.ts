@@ -1,6 +1,6 @@
 import { common } from "./common";
 
-export const addLocationModal = {
+export const addLocationPage = {
   title: {
     en: "Add New Location",
     fi: "Lisää uusi sijainti",
@@ -20,8 +20,8 @@ export const addLocationModal = {
         fi: "Syötä sijainnin nimi",
       },
       notVisibleToUsers: {
-        en: "Location name will not be visible to users",
-        fi: "Sijainti ei ole näkyvissä käyttäjille",
+        en: "Only the city name will be visible to users",
+        fi: "Käyttäjille näkyy vain kaupungin nimi",
       },
     },
     street: {
@@ -120,6 +120,10 @@ export const addLocationModal = {
       en: common.cancel.en,
       fi: common.cancel.fi,
     },
+    back: {
+      en: common.back.en,
+      fi: common.back.fi,
+    },
   },
   messages: {
     success: {
@@ -129,6 +133,12 @@ export const addLocationModal = {
     error: {
       en: "Failed to create location",
       fi: "Sijainnin luominen epäonnistui",
+    },
+  },
+  ariaLabels: {
+    backButton: {
+      en: common.back.en,
+      fi: common.back.fi,
     },
   },
   validation: {

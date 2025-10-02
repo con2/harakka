@@ -1,6 +1,6 @@
 import { addCategory } from "./modules/addCategory";
 import { addItemForm } from "./modules/addItemForm";
-import { addLocationModal } from "./modules/addLocationModal";
+import { addLocationPage } from "./modules/addLocationPage";
 import { addTag } from "./modules/addTag";
 import { adminDashboard } from "./modules/adminDashboard";
 import { adminItemsTable } from "./modules/adminItemsTable";
@@ -91,7 +91,7 @@ import { usersList } from "./modules/usersList";
 export const t = {
   addCategory,
   addItemForm,
-  addLocationModal,
+  addLocationPage,
   addTag,
   adminDashboard,
   adminItemsTable,
