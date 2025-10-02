@@ -274,7 +274,7 @@ export const bookingsApi = {
    */
   pickUpItems: async (
     bookingId: string,
-    location_id?: string,
+    location_id: string,
     org_id?: string,
     itemIds?: string[],
   ): Promise<Booking> => {
