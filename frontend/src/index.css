@@ -241,7 +241,8 @@ li:has(.custom-toast) {
   } */
 }
 
-.custom-toast::after {
+.custom-toast {
+  &::after {
   content: "";
   position: absolute;
   border-radius: 0.75rem;
@@ -256,6 +257,11 @@ li:has(.custom-toast) {
   transition: visibility 0s;
   border-bottom-left-radius: 130px;
   border-bottom-right-radius: 110px;
+  }
+
+  & button[data-action="true"]{
+    background-color: #4caf50 !important;
+  }
 }
 
 .custom-toast:has(.toast-confirm-card) {
