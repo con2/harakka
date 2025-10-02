@@ -1,4 +1,8 @@
-import { createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
+import {
+  createAsyncThunk,
+  createSelector,
+  createSlice,
+} from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { LogMessage } from "@/types";
 import { logsApi } from "@/api/services/logs";
@@ -93,11 +97,14 @@ const logsSlice = createSlice({
 // Selectors
 const selectLogsState = (state: RootState) => state.logs;
 export const selectAllLogs = (state: RootState) => state.logs.logs;
-export const selectLogsPagination = createSelector([selectLogsState], (logs) => ({
-  page: logs.page,
-  total: logs.total,
-  totalPages: logs.totalPages,
-}));
+export const selectLogsPagination = createSelector(
+  [selectLogsState],
+  (logs) => ({
+    page: logs.page,
+    total: logs.total,
+    totalPages: logs.totalPages,
+  }),
+);
 export const selectLogsLoading = (state: RootState) => state.logs.loading;
 export const selectLogsError = (state: RootState) => state.logs.error;
 export const selectLogsTotalCount = (state: RootState) => state.logs.total;
