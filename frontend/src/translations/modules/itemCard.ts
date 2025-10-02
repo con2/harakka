@@ -31,6 +31,10 @@ export const itemCard = {
     fi: "Valitse kelvollinen määrä",
     en: "Please select valid quantity",
   },
+  quantityUnchanged: {
+    fi: "Määrä on jo päivitetty",
+    en: "Quantity is already updated",
+  },
   notAvailable: {
     fi: "Ei saatavilla valitulle ajanjaksolle",
     en: "Not available for selected period",
@@ -56,5 +60,13 @@ export const itemCard = {
         },
       },
     },
+  },
+  updateQuantity: {
+    fi: "Päivitä määrä",
+    en: "Update Quantity",
+  },
+  updatedInCart: {
+    fi: "päivitetty koriin",
+    en: "updated in cart",
   },
 };
