@@ -45,6 +45,11 @@ const Footer = () => {
                   {t.footer.sections.about.links.termsOfUse[lang]}
                 </a>
               </li>
+              <li>
+                <a href="/dev-team">
+                  {t.footer.sections.about.links.devTeam[lang]}
+                </a>
+              </li>
             </ul>
           </div>
           <div className="flex flex-col flex-1">

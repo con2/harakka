@@ -38,6 +38,10 @@ export const footer = {
           fi: "Käyttöehdot",
           en: "Terms of Use",
         },
+        devTeam: {
+          fi: "Kehitystiimi",
+          en: "Dev Team",
+        },
       },
     },
     stayUpdated: {
