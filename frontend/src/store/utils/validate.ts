@@ -3,14 +3,16 @@ import { z } from "zod";
 const translationSchema = z.object({
   item_name: z
     .string({
-      required_error: "itemName",
+      required_error: "item_name",
     })
-    .min(1, "itemName"),
+    .min(1, "item_name")
+    .max(100, "item_name"),
   item_description: z
     .string({
-      required_error: "itemDescription",
+      required_error: "item_description",
     })
-    .min(1, "itemDescription"),
+    .min(1, "item_description")
+    .max(250, "item_description"),
 });
 
 const itemTranslationsSchema = z.object({
@@ -48,7 +50,9 @@ export type ImageSchemaType = {
 
 export const createItemDto = z.object({
   id: z.string().uuid(),
-  category_id: z.string().uuid({ message: "category_id" }),
+  category_id: z
+    .string({ message: "category_id" })
+    .uuid({ message: "category_id" }),
   location: z.object(
     {
       id: z.string().uuid({ message: "location" }),
@@ -70,7 +74,7 @@ export const createItemDto = z.object({
     details: z.array(imageSchema),
   }),
   placement_description: z
-    .string()
+    .string({ message: "placement_description" })
     .min(1, { message: "placement_description" })
     .max(200, { message: "placement_description" }),
 });
