@@ -96,12 +96,14 @@
   "devDependencies": {
     "@postgrestools/postgrestools": "^0.15.0",
     "@supabase/supabase-js": "^2.53.0",
+    "@types/react-csv": "^1.1.10",
     "concurrently": "^9.1.2",
     "env-cmd": "^10.1.0",
     "type-fest": "^4.41.0"
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.49.0",
+    "react-csv": "^2.2.2",
     "supabase": "^2.47.2"
   }
 }

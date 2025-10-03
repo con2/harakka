@@ -1,100 +1,172 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchAllAdminItems,
   selectAllItems,
   selectItemsError,
   selectItemsLoading,
-  selectItemsPagination,
 } from "@/store/slices/itemsSlice";
-import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import { ColumnDef } from "@tanstack/react-table";
 import { LoaderCircle } from "lucide-react";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Input } from "@/components/ui/input";
+import { CSVLink } from "react-csv";
+
+type FlattenedItem = Record<string, string>;
+
+const flattenValue = (
+  value: unknown,
+  prefix: string,
+  acc: FlattenedItem,
+): void => {
+  if (value === null || value === undefined) {
+    if (prefix) {
+      acc[prefix] = "";
+    }
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    if (!prefix) {
+      value.forEach((item, index) => {
+        flattenValue(item, `[${index}]`, acc);
+      });
+      return;
+    }
+
+    if (value.length === 0) {
+      acc[prefix] = "";
+      return;
+    }
+
+    const isPrimitiveArray = value.every(
+      (item) =>
+        item === null ||
+        item === undefined ||
+        ["string", "number", "boolean", "bigint"].includes(typeof item),
+    );
+
+    if (isPrimitiveArray) {
+      acc[prefix] = value
+        .map((item) =>
+          item === null || item === undefined ? "" : String(item),
+        )
+        .join(", ");
+      return;
+    }
+
+    value.forEach((item, index) => {
+      flattenValue(item, `${prefix}[${index}]`, acc);
+    });
+    return;
+  }
+
+  if (typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>);
+
+    if (entries.length === 0) {
+      if (prefix) {
+        acc[prefix] = "";
+      }
+      return;
+    }
+
+    entries.forEach(([key, nestedValue]) => {
+      const nextPrefix = prefix ? `${prefix}.${key}` : key;
+      flattenValue(nestedValue, nextPrefix, acc);
+    });
+    return;
+  }
+
+  if (prefix) {
+    acc[prefix] = String(value);
+  }
+};
+
+const flattenItem = (item: Record<string, unknown>): FlattenedItem => {
+  const acc: FlattenedItem = {};
+  flattenValue(item, "", acc);
+  return acc;
+};
 
 const Reports: React.FC = () => {
   const dispatch = useAppDispatch();
   const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
-  const { totalPages } = useAppSelector(selectItemsPagination);
 
-  // State for search and pagination
   const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
+  const [isFetching, setIsFetching] = useState(false);
 
-  // Fetch items when the component mounts or filters change
-  useEffect(() => {
-    void dispatch(
+  const handleFetchReport = async () => {
+    setIsFetching(true);
+    await dispatch(
       fetchAllAdminItems({
-        page: currentPage,
-        limit: ITEMS_PER_PAGE,
-        searchquery: debouncedSearchTerm,
+        page: 1,
+        limit: Number.MAX_SAFE_INTEGER,
+        searchquery: searchTerm || undefined,
       }),
     );
-  }, [dispatch, currentPage, debouncedSearchTerm]);
+    setIsFetching(false);
+  };
 
-  // Define columns for the report table
-  const columns: ColumnDef<any>[] = [
-    {
-      accessorKey: "id",
-      header: "ID",
-      cell: ({ row }) => row.original.id,
-    },
-    {
-      accessorKey: "name",
-      header: "Name",
-      cell: ({ row }) => row.original.name || "—",
-    },
-    {
-      accessorKey: "category",
-      header: "Category",
-      cell: ({ row }) => row.original.category || "—",
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => row.original.status || "—",
-    },
-  ];
+  const flattenedItems = useMemo(() => {
+    if (!items.length) {
+      return [];
+    }
+    return items.map((item) => flattenItem(item as Record<string, unknown>));
+  }, [items]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center p-8">
-        <LoaderCircle className="animate-spin" />
-      </div>
-    );
-  }
+  const csvHeaders = useMemo(() => {
+    const headerSet = new Set<string>();
+    flattenedItems.forEach((item) => {
+      Object.keys(item).forEach((key) => headerSet.add(key));
+    });
+    return Array.from(headerSet)
+      .sort((a, b) => a.localeCompare(b))
+      .map((key) => ({ label: key, key }));
+  }, [flattenedItems]);
 
-  if (error) {
-    return <div className="p-4 text-destructive">{error}</div>;
-  }
+  const hasData = flattenedItems.length > 0 && csvHeaders.length > 0;
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Items Report</h1>
 
-      {/* Search Input */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <Input
           placeholder="Search items..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full max-w-md"
         />
+        <button
+          onClick={handleFetchReport}
+          className="ml-4 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+          disabled={isFetching}
+        >
+          {isFetching ? "Fetching..." : "Fetch Report"}
+        </button>
       </div>
 
-      {/* Paginated Data Table */}
-      <PaginatedDataTable
-        columns={columns}
-        data={items}
-        pageIndex={currentPage - 1}
-        pageCount={totalPages}
-        onPageChange={(page) => setCurrentPage(page + 1)}
-      />
+      <div className="mt-4">
+        {loading ? (
+          <div className="flex justify-center p-8">
+            <LoaderCircle className="animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="p-4 text-destructive">{error}</div>
+        ) : hasData ? (
+          <CSVLink
+            data={flattenedItems}
+            headers={csvHeaders}
+            filename="items_report.csv"
+            className="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+          >
+            Download CSV
+          </CSVLink>
+        ) : (
+          <div className="p-4">No data available to download.</div>
+        )}
+      </div>
     </div>
   );
 };
