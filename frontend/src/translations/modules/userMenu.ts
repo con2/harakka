@@ -25,4 +25,10 @@ export const userMenu = {
       fi: "Organisaation varaukset",
     },
   },
+  alt: {
+    userAvatar: {
+      en: "User Avatar",
+      fi: "Käyttäjän avatar",
+    },
+  },
 };
