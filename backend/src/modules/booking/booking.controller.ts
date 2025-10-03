@@ -124,7 +124,49 @@ export class BookingController {
       pageNumber,
       limitNumber,
       userId,
-      activeOrgId,
+      status,
+      search,
+    );
+  }
+
+  /**
+   * Get bookings of an organization.
+   * Accessible by users and all admins within their organization.
+   * @param req - Authenticated request object
+   * @param page - Page number for pagination (default: 1)
+   * @param limit - Number of items per page (default: 10)
+   * @param status - Optional. status of entire booking
+   * @param searchquery - Optional. Searches booking_number, full_name and created_at for a match.
+   * @returns Paginated list of the user's bookings
+   */
+  @Get("org/:org_id")
+  @Roles(["requester", "storage_manager", "tenant_admin"], {
+    match: "any",
+    sameOrg: true,
+  })
+  async getOrgBookings(
+    @Param("org_id") org_id: string,
+    @Req()
+    req: AuthRequest,
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "10",
+    @Query("status") status?: BookingStatus | "all",
+    @Query("search") search?: string,
+  ) {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const activeRole = req.headers["x-role-name"] as string;
+    const userId = req.user.id;
+    if (!org_id || !activeRole) {
+      throw new BadRequestException("Organization context is required");
+    }
+
+    return this.bookingService.getOrgBookings(
+      req,
+      pageNumber,
+      limitNumber,
+      userId,
+      org_id,
       activeRole,
       status,
       search,
@@ -143,19 +185,21 @@ export class BookingController {
    */
   //TODO: limit to activeContext organization
   @Get("id/:id")
-  @Roles(["tenant_admin", "storage_manager"])
+  @Roles(["requester", "tenant_admin", "storage_manager"], {
+    match: "any",
+    sameOrg: true,
+  })
   async getBookingByID(
     @Req() req: AuthRequest,
     @Param("id") booking_id: string,
     @Query("page") page: string = "1",
     @Query("limit") limit: string = "10",
+    @Query("org_id") org_id?: string,
   ) {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const supabase = req.supabase;
-    const org_id = req.headers["x-org-id"] as string;
-    if (!org_id)
-      throw new BadRequestException("org_id query param is required");
+
     return this.bookingService.getBookingByID(
       supabase,
       booking_id,
