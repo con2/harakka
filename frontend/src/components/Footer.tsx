@@ -1,5 +1,6 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   // Translation
@@ -13,17 +14,19 @@ const Footer = () => {
             <h3>{t.footer.sections.shop.title[lang]}</h3>
             <ul className="text-left">
               <li>
-                <a href="/storage">
+                <Link to="/storage">
                   {t.footer.sections.shop.links.products[lang]}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/cart">{t.footer.sections.shop.links.cart[lang]}</a>
+                <Link to="/cart">
+                  {t.footer.sections.shop.links.cart[lang]}
+                </Link>
               </li>
               <li>
-                <a href="/contact-us">
+                <Link to="/contact-us">
                   {t.footer.sections.shop.links.contactUs[lang]}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -31,19 +34,19 @@ const Footer = () => {
             <h3>{t.footer.sections.about.title[lang]}</h3>
             <ul className="text-left">
               <li>
-                <a href="/how-it-works">
+                <Link to="/how-it-works">
                   {t.footer.sections.about.links.userGuides[lang]}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/privacy-policy">
+                <Link to="/privacy-policy">
                   {t.footer.sections.about.links.privacyPolicy[lang]}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/terms-of-use">
+                <Link to="/terms-of-use">
                   {t.footer.sections.about.links.termsOfUse[lang]}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -53,9 +56,9 @@ const Footer = () => {
               <p>{t.footer.sections.stayUpdated.description[lang]}</p>
               {/* TODO: Add link */}
               <p className="underline">
-                <a href="" target="_blank">
+                <Link to="" target="_blank">
                   {t.footer.sections.stayUpdated.newsletter[lang]}
-                </a>
+                </Link>
               </p>
             </div>
           </div>
