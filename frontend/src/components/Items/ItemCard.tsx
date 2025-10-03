@@ -254,13 +254,20 @@ const ItemCard: React.FC<ItemsCardProps> = ({
     (existingCartItem && existingCartItem.quantity === quantity);
 
   return (
-    <button
+    <div
+      role="button"
       aria-label={t.itemCard.aria.labels.viewDetails[lang].replace(
         "{item_name}",
         item.translations[lang].item_name,
       )}
       onClick={() => handleItemClick(item.id)}
-      className="hover:[&_h2]:text-muted-foreground"
+      className="hover:[&_h2]:text-muted-foreground cursor-pointer"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          handleItemClick(item.id);
+        }
+      }}
     >
       <Card
         data-cy="items-card"
@@ -480,7 +487,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({
           </Tooltip>
         </div>
       </Card>
-    </button>
+    </div>
   );
 };
 
