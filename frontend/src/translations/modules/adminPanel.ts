@@ -52,5 +52,9 @@ export const adminPanel = {
       fi: "Sijainti",
       en: "Locations",
     },
+    reports: {
+      fi: "Raportit",
+      en: "Reports",
+    },
   },
 };
