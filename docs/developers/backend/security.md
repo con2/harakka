@@ -543,16 +543,6 @@ async function bootstrap() {
 }
 ```
 
-### Environment CORS Configuration
-
-```bash
-# Development
-ALLOWED_ORIGINS=http://localhost:5180,http://localhost:3000
-
-# Production
-ALLOWED_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
-```
-
 ## Session Management
 
 ### Token Handling
