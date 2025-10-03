@@ -522,6 +522,7 @@ const AdminItemsTable = () => {
         originalSorting="quantity"
         highlight={redirectState?.highlight}
         rowProps={(row) => ({
+          style: { cursor: "pointer" },
           onClick: () =>
             handleRowClick(String((row.original as unknown as Item).id)),
         })}
