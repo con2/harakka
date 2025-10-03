@@ -13,6 +13,7 @@ This document outlines the current security architecture and implementation in t
 - [Input Validation](#input-validation)
 - [CORS Configuration](#cors-configuration)
 - [Session Management](#session-management)
+- [Database Security](#database-security)
 - [Error Handling](#error-handling)
 - [Environment Variables](#environment-variables)
 - [Security Headers](#security-headers)
@@ -392,47 +393,6 @@ export class ItemImagesController {
 
     return this.itemImagesService.uploadImage(file, uploadDto);
   }
-}
-```
-
-### Secure File Access
-
-```typescript
-// Generate time-limited signed URL for file access
-async getSignedInvoiceUrl(orderId: string, user: { id: string; role: string }): Promise<string> {
-  const supabase = this.supabaseService.getServiceClient();
-
-  // Check if user is authorized to access this invoice
-  const { data: order, error } = await supabase
-    .from("orders")
-    .select("id, user_id")
-    .eq("id", orderId)
-    .single();
-
-  if (!order || error) {
-    throw new BadRequestException("Order not found");
-  }
-
-  // Only owner or admin can see the PDF
-  const isOwner = order.user_id === user.id;
-  const isAdmin = user.role === "tenant_admin" || user.role === "super_admin";
-
-  if (!isOwner && !isAdmin) {
-    throw new BadRequestException("You are not authorized to access this invoice");
-  }
-
-  const filePath = `invoices/INV-${orderId}.pdf`;
-
-  // Create a signed URL valid for only 5 minutes
-  const { data, error: urlError } = await supabase.storage
-    .from("invoices")
-    .createSignedUrl(filePath, 60 * 5);
-
-  if (!data?.signedUrl || urlError) {
-    throw new BadRequestException("Failed to generate signed URL");
-  }
-
-  return data.signedUrl;
 }
 ```
 
@@ -843,7 +803,7 @@ Database-level audit triggers automatically log all changes to critical tables. 
 
 ## Security Best Practices Summary
 
-### ✅ **Current Security Measures**
+### **Current Security Measures**
 
 1. **Authentication**: Custom JWT middleware with Supabase Auth
 2. **Authorization**: Multi-tier role-based access control
@@ -854,7 +814,7 @@ Database-level audit triggers automatically log all changes to critical tables. 
 7. **Headers**: Helmet.js security headers
 8. **CORS**: Configurable origin restrictions
 
-### ⚠️ **Security Notes**
+### **Security Notes**
 
 - **RLS Policies**: Handled in Supabase - see [Database RLS Policies](../database/RLS-policies.md)
 - **Rate Limiting**: Configured per endpoint as needed
@@ -862,7 +822,7 @@ Database-level audit triggers automatically log all changes to critical tables. 
 - **Bot Protection**: ReCaptcha guard for sensitive endpoints
 - **Environment Separation**: Different security levels for dev/prod
 
-### 🔒 **Critical Security Points**
+### **Critical Security Points**
 
 1. **Never expose service role keys** in frontend code
 2. **Always validate file uploads** server-side
@@ -871,6 +831,10 @@ Database-level audit triggers automatically log all changes to critical tables. 
 5. **Keep JWT secrets secure** and rotate regularly
 6. **Validate role hierarchy** in multi-tenant contexts
 
+### Additional Note
+
+While certain validations and checks are also implemented on the frontend for improved user experience (e.g. preventing invalid actions before they reach the server), **the core security backbone is the backend and Supabase RLS policies**. This ensures that even if frontend checks are bypassed, data integrity and access control remain enforced at the server and database level.
+
 ---
 
-This security guide reflects the current implementation as of September 2025. For RLS policies and database-level security, refer to the [Database RLS Policies](../database/RLS-policies.md) documentation maintained separately.
+This security guide reflects the current implementation as of October 2025. For RLS policies and database-level security, refer to the [Database RLS Policies](../database/RLS-policies.md) documentation maintained separately.
