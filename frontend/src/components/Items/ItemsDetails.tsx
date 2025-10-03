@@ -83,7 +83,7 @@ const ItemsDetails: React.FC = () => {
   // Get the main image - no transformation needed
   const mainImage = useMemo(() => {
     // If user selected an image, use that
-    if (selectedImageUrl) return selectedImageUrl;
+    if (selectedImageUrl) return { image_url: selectedImageUrl };
 
     // First try to find a main image
     const mainImg = itemImagesForCurrentItem.find(
@@ -92,7 +92,7 @@ const ItemsDetails: React.FC = () => {
     const firstImg = itemImagesForCurrentItem[0];
 
     // Return image URL or placeholder
-    return mainImg || firstImg || imagePlaceholder;
+    return mainImg || firstImg || { image_url: imagePlaceholder };
   }, [itemImagesForCurrentItem, selectedImageUrl]);
 
   const handleAddToCart = () => {
@@ -261,7 +261,7 @@ const ItemsDetails: React.FC = () => {
               >
                 <div className="w-[90%] max-w-[420px] max-h-[80%] h-auto border rounded-lg shadow-lg bg-white flex justify-center items-center p-2">
                   <img
-                    src={(mainImage as ItemImage).image_url}
+                    src={selectedImageUrl || (mainImage as ItemImage).image_url}
                     alt={itemContent?.item_name || "Tuotteen kuva"}
                     className="object-contain w-[400px] h-[400px] max-w-full max-h-full cursor-pointer"
                   />
