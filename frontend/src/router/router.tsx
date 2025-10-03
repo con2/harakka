@@ -21,6 +21,8 @@ import Organizations from "@/pages/AdminPanel/Organizations";
 import OrganizationDetailsPage from "@/pages/AdminPanel/OrganizationDetailsPage";
 import CreateOrganizationPage from "@/pages/AdminPanel/CreateOrganizationPage";
 import OrganizationLocations from "@/pages/AdminPanel/OrganizationLocations";
+import AddLocationPage from "@/components/Admin/OrgManagement/AddLocationPage";
+import EditLocationPage from "@/components/Admin/OrgManagement/EditLocationPage";
 import Categories from "@/pages/AdminPanel/Categories";
 import Requests from "@/pages/AdminPanel/Requests/Requests";
 import RequestDetailsPage from "@/pages/AdminPanel/Requests/RequestDetailsPage";
@@ -286,6 +288,26 @@ export const router = createBrowserRouter([
                 allowedRoles={["tenant_admin", "storage_manager"]}
               >
                 <OrganizationLocations />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "locations/add",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
+                <AddLocationPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "locations/:id",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
+                <EditLocationPage />
               </ProtectedRoute>
             ),
           },
