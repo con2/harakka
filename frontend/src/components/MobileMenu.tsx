@@ -132,7 +132,13 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
             )}
             {(isTenantAdmin || isStorageManager) && (
               <Button onClick={() => handleNavigation("/admin/bookings")}>
-                {t.adminPanel.navigation.bookings[lang]}
+                {t.adminPanel.navigation.bookingsIn[lang]}
+                <ChevronRight />
+              </Button>
+            )}
+            {(isTenantAdmin || isStorageManager || isRequester) && (
+              <Button onClick={() => handleNavigation("/admin/requests")}>
+                {t.adminPanel.navigation.bookingsOut[lang]}
                 <ChevronRight />
               </Button>
             )}
