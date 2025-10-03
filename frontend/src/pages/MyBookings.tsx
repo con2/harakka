@@ -19,6 +19,12 @@ import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { formatBookingStatus } from "@/utils/format";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 
 const MyBookingsPage = () => {
   const dispatch = useAppDispatch();
@@ -81,10 +87,10 @@ const MyBookingsPage = () => {
           const original = row.original as Record<string, unknown>;
           return (
             <StatusBadge
-              status={formatBookingStatus(
+              status={
                 (original.status as BookingStatus) ??
-                  ("pending" as BookingStatus),
-              )}
+                ("pending" as BookingStatus)
+              }
             />
           );
         },
@@ -128,22 +134,26 @@ const MyBookingsPage = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full text-sm pl-10 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
           />
-          <select
+          <Select
             value={statusFilter}
             aria-label={t.myBookings.aria.labels.filterByStatus[lang]}
-            onChange={(e) =>
-              setStatusFilter(e.target.value as BookingStatus | "all")
+            onValueChange={(value) =>
+              setStatusFilter(value as BookingStatus | "all")
             }
-            className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
           >
-            {STATUS_OPTIONS.map((o) => (
-              <option key={`option-${o}`} value={o}>
-                {t.myBookings.status[o as keyof typeof t.myBookings.status]?.[
-                  lang
-                ] ?? o}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger>
+              {formatBookingStatus(statusFilter, true)}
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((o) => (
+                <SelectItem key={`option-${o}`} value={o}>
+                  {t.myBookings.status[o as keyof typeof t.myBookings.status]?.[
+                    lang
+                  ] ?? o}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {(searchQuery || statusFilter !== "all") && (
             <Button
               onClick={() => {

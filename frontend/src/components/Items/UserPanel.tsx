@@ -25,6 +25,8 @@ import {
 } from "@/store/slices/categoriesSlice";
 import { buildCategoryTree } from "@/store/utils/format";
 import CategoryTree from "@/components/Items/CategoryTree";
+import { orgLocationsApi } from "@/api/services/organizationLocations";
+import type { OrgLocationWithNames } from "@/types/organizationLocation";
 
 interface NavigationState {
   preSelectedFilters?: {
@@ -52,7 +54,7 @@ const UserPanel = () => {
     void dispatch(
       fetchFilteredTags({
         page: 1,
-        limit: 10,
+        limit: 50,
         sortOrder: "desc",
         sortBy: "popularity_rank",
       }),
@@ -64,6 +66,14 @@ const UserPanel = () => {
     // eslint-disable-next-line
   }, []);
 
+  // Shared expand/collapse state per filter list (max 5 visible by default)
+  type ExpandableSection =
+    | "itemTypes"
+    | "organizations"
+    | "locations"
+    | "tags"
+    | "categories";
+
   const [expanded, setExpanded] = useState<Record<ExpandableSection, boolean>>({
     itemTypes: false,
     organizations: false,
@@ -73,6 +83,9 @@ const UserPanel = () => {
   });
   const getVisible = <T,>(arr: T[], key: ExpandableSection) =>
     expanded[key] ? arr : arr.slice(0, MAX_VISIBLE);
+
+  // Local state for organization locations mapping (for filtering)
+  const [orgLocations, setOrgLocations] = useState<OrgLocationWithNames[]>([]);
 
   // Filter out organizations that shouldn't have items
   const filterableOrganizations = useMemo(() => {
@@ -91,16 +104,84 @@ const UserPanel = () => {
     "organizations",
   );
 
-  // Shared expand/collapse state per filter list (max 5 visible by default)
-  type ExpandableSection =
-    | "itemTypes"
-    | "organizations"
-    | "locations"
-    | "tags"
-    | "categories";
+  // Fetch org locations when organizations are loaded
+  useEffect(() => {
+    if (filterableOrganizations.length > 0 && orgLocations.length === 0) {
+      // Fetch org locations for all orgs locally
+      const fetchOrgLocations = async () => {
+        try {
+          const allOrgLocations: OrgLocationWithNames[] = [];
+
+          // Fetch locations for each organization
+          for (const org of filterableOrganizations) {
+            const response = await orgLocationsApi.getAllOrgLocs(
+              org.id,
+              100,
+              1,
+            );
+            allOrgLocations.push(...response.data);
+          }
+
+          setOrgLocations(allOrgLocations);
+        } catch (error) {
+          console.error("Failed to fetch org locations:", error);
+        }
+      };
+
+      void fetchOrgLocations();
+    }
+  }, [filterableOrganizations, orgLocations.length]);
 
   const toggleExpanded = (key: ExpandableSection) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const visibleTags = getVisible(tags, "tags");
+  const mappedCategories = buildCategoryTree(categories);
+  const visibleCategories = getVisible(mappedCategories, "categories");
+
+  // Expanded state for category nodes
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(),
+  );
+
+  // filter states
+  const [filters, setFilters] = useState<{
+    isActive: boolean;
+    itemsNumberAvailable: [number, number];
+    categories: string[];
+    tagIds: string[];
+    locationIds: string[];
+    orgIds?: string[];
+  }>(() => ({
+    isActive: true, // Is item active or not filter
+    itemsNumberAvailable: [0, 300],
+    categories: navigationState?.preSelectedFilters?.categories || [],
+    tagIds: navigationState?.preSelectedFilters?.tagIds || [],
+    locationIds: [],
+    orgIds: navigationState?.preSelectedFilters?.orgIds || [],
+  }));
+
+  // Filter locations based on selected organizations
+  const filteredLocations = useMemo(() => {
+    // If no organizations are selected, show all locations
+    if (!filters.orgIds || filters.orgIds.length === 0) {
+      return locations;
+    }
+
+    // Get all storage_location_ids that belong to selected organizations
+    const orgLocationIds = new Set<string>();
+    orgLocations.forEach((orgLoc) => {
+      if (
+        filters.orgIds?.includes(orgLoc.organization_id) &&
+        orgLoc.storage_location_id
+      ) {
+        orgLocationIds.add(orgLoc.storage_location_id);
+      }
+    });
+
+    // Filter locations to only those that belong to selected organizations
+    return locations.filter((location) => orgLocationIds.has(location.id));
+  }, [locations, orgLocations, filters.orgIds]);
 
   // Group locations by city
   const cityLocationGroups = useMemo(() => {
@@ -109,7 +190,7 @@ const UserPanel = () => {
       { id: string; name: string; locationIds: string[] }
     >();
 
-    locations.forEach((location) => {
+    filteredLocations.forEach((location) => {
       const cityName = extractCityFromLocationName(location.name);
       if (cityMap.has(cityName)) {
         cityMap.get(cityName)!.locationIds.push(location.id);
@@ -123,75 +204,10 @@ const UserPanel = () => {
     });
 
     return Array.from(cityMap.values());
-  }, [locations]);
+  }, [filteredLocations]);
 
   // const visibleOrganizations = getVisible(organizations, "organizations");
   const visibleLocations = getVisible(cityLocationGroups, "locations");
-  const visibleTags = getVisible(tags, "tags");
-  const mappedCategories = buildCategoryTree(categories);
-  const visibleCategories = getVisible(mappedCategories, "categories");
-
-  // Expanded state for category nodes
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(),
-  );
-
-  // Build lookups to support path-exclusive selection (switch within a branch)
-  const parentById = useMemo(() => {
-    const m = new Map<string, string | null>();
-    categories.forEach((c) => m.set(c.id, c.parent_id));
-    return m;
-  }, [categories]);
-  const childrenById = useMemo(() => {
-    const m = new Map<string, string[]>();
-    categories.forEach((c) => {
-      if (c.parent_id) {
-        const arr = m.get(c.parent_id) || [];
-        arr.push(c.id);
-        m.set(c.parent_id, arr);
-      }
-    });
-    return m;
-  }, [categories]);
-  const collectAncestors = (id: string) => {
-    const res: string[] = [];
-    let p = parentById.get(id) || null;
-    const guard = new Set<string>();
-    while (p && !guard.has(p)) {
-      res.push(p);
-      guard.add(p);
-      p = parentById.get(p) || null;
-    }
-    return res;
-  };
-  const collectDescendants = (id: string) => {
-    const res: string[] = [];
-    const stack = [...(childrenById.get(id) || [])];
-    while (stack.length) {
-      const cur = stack.pop() as string;
-      res.push(cur);
-      const kids = childrenById.get(cur);
-      if (kids && kids.length) stack.push(...kids);
-    }
-    return res;
-  };
-
-  // filter states
-  const [filters, setFilters] = useState<{
-    isActive: boolean;
-    itemsNumberAvailable: [number, number];
-    categories: string[];
-    tagIds: string[];
-    locationIds: string[];
-    orgIds?: string[];
-  }>(() => ({
-    isActive: true, // Is item active or not filter
-    itemsNumberAvailable: [0, 100], // add a range for number of items
-    categories: navigationState?.preSelectedFilters?.categories || [],
-    tagIds: navigationState?.preSelectedFilters?.tagIds || [],
-    locationIds: [],
-    orgIds: navigationState?.preSelectedFilters?.orgIds || [],
-  }));
 
   // --- slider thumb state so the handle moves smoothly without refetching ---
   const [tempAvailableRange, setTempAvailableRange] = useState<
@@ -236,13 +252,17 @@ const UserPanel = () => {
     let count = 0;
     if (
       filters.itemsNumberAvailable[0] !== 0 ||
-      filters.itemsNumberAvailable[1] !== 100
+      filters.itemsNumberAvailable[1] !== 300
     ) {
       count++;
     }
     count += filters.categories.length;
     count += filters.tagIds.length;
-    count += filters.locationIds.length;
+    const selectedCityGroups = cityLocationGroups.filter((cityGroup) =>
+      cityGroup.locationIds.some((id) => filters.locationIds.includes(id)),
+    );
+    count += selectedCityGroups.length;
+
     count += filters.orgIds?.length ?? 0;
     return count;
   };
@@ -287,7 +307,7 @@ const UserPanel = () => {
                       onClick={() => {
                         setFilters({
                           isActive: true,
-                          itemsNumberAvailable: [0, 100],
+                          itemsNumberAvailable: [0, 300],
                           categories: [],
                           tagIds: [],
                           locationIds: [],
@@ -327,21 +347,17 @@ const UserPanel = () => {
                 selectedIds={new Set(filters.categories)}
                 onToggleSelect={(id) => {
                   setFilters((prev) => {
-                    const next = new Set(prev.categories);
-                    if (next.has(id)) {
-                      // toggle off
-                      next.delete(id);
+                    // Single-select: if clicking the same category, deselect it; otherwise select the new one
+                    const isCurrentlySelected = prev.categories.includes(id);
+                    if (isCurrentlySelected) {
+                      // Deselect - clear category
+                      return { ...prev, categories: [] };
                     } else {
-                      // Switch within branch: deselect ancestors and descendants of id
-                      const toRemove = new Set<string>([
-                        ...collectAncestors(id),
-                        ...collectDescendants(id),
-                      ]);
-                      toRemove.forEach((x) => next.delete(x));
-                      next.add(id);
+                      // Select only this category (single selection)
+                      return { ...prev, categories: [id] };
                     }
-                    return { ...prev, categories: Array.from(next) };
                   });
+                  clearNavigationState();
                 }}
                 expandedIds={expandedCategories}
                 onToggleExpand={(id) => {
@@ -376,7 +392,7 @@ const UserPanel = () => {
               </label>
               <Slider
                 min={0}
-                max={100}
+                max={300}
                 value={tempAvailableRange}
                 // update thumb position instantly
                 onValueChange={([min, max]) =>
@@ -401,51 +417,66 @@ const UserPanel = () => {
               <label className="text-primary font-medium block mb-2">
                 {t.userPanel.locations.title[lang]}
               </label>
-              <div className="flex flex-col gap-2">
-                {visibleLocations.map((location) => {
-                  // Check if any of this city's location IDs are selected
-                  const isSelected = location.locationIds.some((id: string) =>
-                    filters.locationIds?.includes(id),
-                  );
-                  return (
-                    <label
-                      key={location.id}
-                      className={`flex items-center gap-2 text-sm cursor-pointer ${
-                        isSelected
-                          ? "text-secondary"
-                          : "text-slate-600 hover:text-secondary"
-                      }`}
+              {cityLocationGroups.length === 0 &&
+              filters.orgIds &&
+              filters.orgIds.length > 0 ? (
+                <p className="text-sm text-slate-500 italic">
+                  {lang === "en"
+                    ? "No locations found for selected organizations"
+                    : "Valituille organisaatioille ei löytynyt sijainteja"}
+                </p>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-2">
+                    {visibleLocations.map((location) => {
+                      // Check if any of this city's location IDs are selected
+                      const isSelected = location.locationIds.some(
+                        (id: string) => filters.locationIds?.includes(id),
+                      );
+                      return (
+                        <label
+                          key={location.id}
+                          className={`flex items-center gap-2 text-sm cursor-pointer ${
+                            isSelected
+                              ? "text-secondary"
+                              : "text-slate-600 hover:text-secondary"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              const updated = isSelected
+                                ? filters.locationIds.filter(
+                                    (id) => !location.locationIds.includes(id),
+                                  )
+                                : [
+                                    ...filters.locationIds,
+                                    ...location.locationIds,
+                                  ];
+                              handleFilterChange("locationIds", updated);
+                            }}
+                            className="accent-secondary"
+                          />
+                          <div className="flex items-center gap-1">
+                            <span>{location.name}</span>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {cityLocationGroups.length > MAX_VISIBLE && (
+                    <Button
+                      variant="ghost"
+                      className="text-left text-sm text-secondary"
+                      onClick={() => toggleExpanded("locations")}
                     >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => {
-                          const updated = isSelected
-                            ? filters.locationIds.filter(
-                                (id) => !location.locationIds.includes(id),
-                              )
-                            : [...filters.locationIds, ...location.locationIds];
-                          handleFilterChange("locationIds", updated);
-                        }}
-                        className="accent-secondary"
-                      />
-                      <div className="flex items-center gap-1">
-                        <span>{location.name}</span>
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-              {cityLocationGroups.length > MAX_VISIBLE && (
-                <Button
-                  variant="ghost"
-                  className="text-left text-sm text-secondary"
-                  onClick={() => toggleExpanded("locations")}
-                >
-                  {expanded.locations
-                    ? t.userPanel.categories.showLess[lang]
-                    : t.userPanel.categories.seeAll[lang]}
-                </Button>
+                      {expanded.locations
+                        ? t.userPanel.categories.showLess[lang]
+                        : t.userPanel.categories.seeAll[lang]}
+                    </Button>
+                  )}
+                </>
               )}
             </div>
 
@@ -564,7 +595,7 @@ const UserPanel = () => {
                     onClick={() => {
                       setFilters({
                         isActive: true,
-                        itemsNumberAvailable: [0, 100],
+                        itemsNumberAvailable: [0, 300],
                         categories: [],
                         tagIds: [],
                         locationIds: [],

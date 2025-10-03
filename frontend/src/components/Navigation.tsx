@@ -23,12 +23,14 @@ import { useState } from "react";
 import { Sheet, SheetTrigger } from "./ui/sheet";
 import MobileMenu from "./MobileMenu";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 
 export const Navigation = () => {
   // Auth State
   const { user, authLoading } = useAuth();
   const { hasAnyRole } = useRoles();
   const { lang } = useLanguage();
+  const { roleName: activeRole } = useAppSelector(selectActiveRoleContext);
 
   // Use auth context to determine login status
   const isLoggedIn = !!user;
@@ -38,7 +40,9 @@ export const Navigation = () => {
   const isTablet = width <= 1000;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const isRequester = activeRole === "requester";
   const isAnyTypeOfAdmin = hasAnyRole([
+    "requester",
     "tenant_admin",
     "super_admin",
     "storage_manager",
@@ -130,7 +134,7 @@ export const Navigation = () => {
 
           {isAnyTypeOfAdmin && (
             <Link
-              to="/admin"
+              to={isRequester ? "/admin/requests" : "/admin"}
               className="flex items-center gap-1 text-(--midnight-black)  p-1"
               data-cy="nav-admin"
             >
@@ -140,7 +144,6 @@ export const Navigation = () => {
         </div>
 
         <div className="flex gap-4 items-center">
-          {isLoggedIn && <Notifications userId={user.id} />}
           <Button
             variant="ghost"
             onClick={() => navigate("/cart")}
@@ -154,6 +157,7 @@ export const Navigation = () => {
               </Badge>
             )}
           </Button>
+          {isLoggedIn && <Notifications userId={user.id} />}
           {isLoggedIn && <UserMenu />}
           {!authLoading && !isLoggedIn && (
             <>
@@ -196,7 +200,7 @@ export const Navigation = () => {
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link
-                    to="/admin"
+                    to={isRequester ? "/admin/requests" : "/admin"}
                     className="flex items-center gap-1 text-(--midnight-black) text-base p-1"
                     data-cy="nav-admin"
                   >

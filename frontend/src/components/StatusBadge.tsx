@@ -61,7 +61,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
           {t.statusBadge.status.completed[lang]}
         </Badge>
       );
-    case "picked up": // Backend status value
+    case "picked_up": // Backend status value
       return (
         <Badge
           variant="outline"

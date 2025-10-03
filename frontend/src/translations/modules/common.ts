@@ -72,6 +72,18 @@ export const common = {
     fi: "Tila",
     en: "Status",
   },
+  startDate: {
+    en: "Start Date",
+    fi: "Aloituspäivämäärä",
+  },
+  endDate: {
+    en: "End Date",
+    fi: "Lopetuspäivämäärä",
+  },
+  date: {
+    en: "Date",
+    fi: "Päivämäärä",
+  },
   // Globally used roles
   roles: {
     role: {

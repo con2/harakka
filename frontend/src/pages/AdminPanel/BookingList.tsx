@@ -31,8 +31,14 @@ import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { useNavigate } from "react-router-dom";
 import { formatBookingStatus } from "@/utils/format";
 import { bookingsApi, OverdueBookingRow } from "@/api/services/bookings";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 
 const BookingList = () => {
   const dispatch = useAppDispatch();
@@ -222,11 +228,7 @@ const BookingList = () => {
         const status =
           row.original.org_status_for_active_org ??
           (row.original.status as string | undefined);
-        return (
-          <StatusBadge
-            status={formatBookingStatus(status as BookingStatus) ?? "unknown"}
-          />
-        );
+        return <StatusBadge status={(status as BookingStatus) ?? "unknown"} />;
       },
     },
     {
@@ -317,44 +319,6 @@ const BookingList = () => {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h1 className="text-xl">{t.bookingList.title[lang]}</h1>
-          <Button
-            onClick={() => {
-              if (scopeOverdue) {
-                setOverdueLoading(true);
-                bookingsApi
-                  .getOverdueBookings(currentPage, 10)
-                  .then((res) => {
-                    setOverdueRows(res.data as unknown as OverdueBookingRow[]);
-                    setOverduePageCount(res.metadata?.totalPages ?? 1);
-                  })
-                  .catch((err: unknown) => {
-                    const anyErr = err as {
-                      response?: { data?: { message?: string } };
-                    };
-                    const msg =
-                      anyErr?.response?.data?.message ||
-                      (err instanceof Error ? err.message : String(err));
-                    setOverdueError(msg);
-                  })
-                  .finally(() => setOverdueLoading(false));
-              } else {
-                void dispatch(
-                  getOrderedBookings({
-                    ordered_by: orderBy,
-                    ascending: getAscending(orderBy),
-                    page: currentPage,
-                    limit: 10,
-                    searchquery: debouncedSearchQuery,
-                    status_filter:
-                      statusFilter !== "all" ? statusFilter : undefined,
-                  }),
-                );
-              }
-            }}
-            className="bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
-          >
-            {t.bookingList.buttons.refresh[lang]}
-          </Button>
         </div>
         {/* Search and Filters */}
         <div className="flex flex-wrap gap-4 items-center justify-between">
@@ -372,24 +336,28 @@ const BookingList = () => {
               className={`w-full text-sm pl-10 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] ${scopeOverdue ? "opacity-50 cursor-not-allowed" : ""}`}
               disabled={scopeOverdue}
             />
-            <select
+            <Select
               aria-label={t.bookingList.aria.labels.filters.status[lang]}
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as BookingStatus)}
-              className={`select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] ${scopeOverdue ? "opacity-50 cursor-not-allowed" : ""}`}
+              onValueChange={(value) => setStatusFilter(value as BookingStatus)}
               disabled={scopeOverdue}
             >
-              {statusFilterOptions.map((option) => (
-                <option key={`option-${option}`} value={option}>
-                  {
-                    t.bookingList.filters.status[
-                      option as keyof typeof t.bookingList.filters.status
-                    ]?.[lang]
-                  }
-                </option>
-              ))}
-            </select>
-            {(searchQuery || statusFilter !== "all" || scopeOverdue) && (
+              <SelectTrigger>
+                {formatBookingStatus(statusFilter, true)}
+              </SelectTrigger>
+              <SelectContent>
+                {statusFilterOptions.map((option) => (
+                  <SelectItem key={`option-${option}`} value={option}>
+                    {
+                      t.bookingList.filters.status[
+                        option as keyof typeof t.bookingList.filters.status
+                      ]?.[lang]
+                    }
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(searchQuery || statusFilter !== "all") && (
               <Button
                 onClick={() => {
                   setSearchQuery("");
@@ -491,12 +459,10 @@ const BookingList = () => {
             pageIndex={currentPage - 1}
             pageCount={totalPages}
             onPageChange={(page) => handlePageChange(page + 1)}
-            rowProps={(row) => {
-              return {
-                style: { cursor: "pointer" },
-                onClick: () => navigate(`/admin/bookings/${row.original.id}`),
-              };
-            }}
+            rowProps={(row) => ({
+              style: { cursor: "pointer" },
+              onClick: () => navigate(`/admin/bookings/${row.original.id}`),
+            })}
           />
         )}
       </div>

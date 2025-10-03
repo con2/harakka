@@ -38,6 +38,7 @@ export enum BookingMailType {
   Deletion = "deletion",
   ItemsReturned = "itemsReturned",
   ItemsPickedUp = "itemsPickedUp",
+  PartlyConfirmed = "partlyConfirmed",
 }
 
 export interface BookingMailParams {

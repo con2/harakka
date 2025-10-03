@@ -31,6 +31,7 @@ export interface BookingType extends BaseEntity {
 export interface BookingsState {
   bookings: BookingPreview[];
   userBookings: ExtendedBookingPreview[];
+  orgBookings: ExtendedBookingPreview[];
   loading: boolean;
   error: string | null;
   errorContext: ErrorContext;

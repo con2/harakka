@@ -21,6 +21,7 @@ import { BookingWithDetails } from "@/types";
 import { BookingItemWithDetails } from "@/types/booking";
 import CalendarSend from "@/assets/calendar-send-icon.svg?react";
 import { formatDate } from "date-fns";
+import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 
 interface BookingItemDisplayProps {
   item: BookingItemWithDetails;
@@ -83,9 +84,12 @@ const BookingConfirmation: React.FC = () => {
   ) as BookingWithDetails | null;
   const isLoading = useAppSelector(selectBookingLoading);
   const userProfile = useAppSelector(selectSelectedUser);
+  const { roleName: activeRole } = useAppSelector(selectActiveRoleContext);
 
   // Add language support
   const { lang } = useLanguage();
+  const REQUESTER_ROLES = ["requester", "tenant_admin", "storage_manager"];
+  const BOOKED_BY_ORG = REQUESTER_ROLES.includes(activeRole!);
 
   function groupBookingItemsByOrg(
     booking: BookingWithDetails | null,
@@ -263,7 +267,9 @@ const BookingConfirmation: React.FC = () => {
 
           <div className="flex gap-4 justify-center">
             <Button
-              onClick={() => navigate("/my-bookings")}
+              onClick={() =>
+                navigate(BOOKED_BY_ORG ? "/admin/requests" : "/my-bookings")
+              }
               className="flex-1 bg-background text-secondary border-secondary border hover:bg-secondary hover:text-white"
             >
               {t.bookingConfirmation.buttons.viewBookings[lang]}

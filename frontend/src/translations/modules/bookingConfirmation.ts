@@ -80,8 +80,8 @@ export const bookingConfirmation = {
   },
   buttons: {
     viewBookings: {
-      fi: "Näytä tilaukseni",
-      en: "View My Bookings",
+      fi: "Näytä varaukset",
+      en: "View Bookings",
     },
     continueBrowsing: {
       fi: "Jatka selaamista",

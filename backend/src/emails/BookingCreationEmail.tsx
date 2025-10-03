@@ -146,7 +146,7 @@ const BookingCreationEmail = ({
 
         <Section style={{ textAlign: "center", marginTop: "30px" }}>
           <a
-            href="https://agreeable-grass-049dc8010.6.azurestaticapps.net/profile?tab=bookings"
+            href="https://agreeable-grass-049dc8010.6.azurestaticapps.net/my-bookings"
             style={{
               backgroundColor: "#2f5D9E",
               color: "#ffffff",

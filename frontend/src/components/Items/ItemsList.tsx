@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   selectAllItems,
@@ -9,7 +9,7 @@ import {
 } from "../../store/slices/itemsSlice";
 import ItemCard from "./ItemCard";
 import { Input } from "../ui/input";
-import { useOutletContext } from "react-router-dom";
+import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import TimeframeSelector from "../TimeframeSelector";
 import { LoaderCircle, Search, X } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
@@ -27,9 +27,31 @@ const ItemsList: React.FC = () => {
   const error = useAppSelector(selectItemsError);
   const pagination = useAppSelector(selectItemsPagination);
   const ITEMS_PER_PAGE = 10;
-  const [page, setPage] = useState(1);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // check if we have a page to restore from nav state
+  const stateFromPage = (location.state as { fromPage?: number } | null)
+    ?.fromPage;
+  const [page, setPage] = useState(stateFromPage || 1);
+
+  // Use a ref to track if we're currently restoring from navigation
+  // This prevents the baseSig useEffect from resetting the page
+  const isRestoringPageRef = useRef(!!stateFromPage);
+
+  // Track the initial baseSig so we can ignore the first change
+  const initialBaseSigRef = useRef<string | null>(null);
+
   // Translation
   const { lang } = useLanguage();
+
+  // Clear navigation state after initial restoration
+  useEffect(() => {
+    if (stateFromPage) {
+      void navigate(location.pathname, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Get all filters from the UserPanel
   const { isActive, categories, tagIds, locationIds, orgIds } = filters;
@@ -98,8 +120,21 @@ const ItemsList: React.FC = () => {
   }, [dispatch, requestSig]);
 
   // Reset pagination to first page when filters or search change
+  // don't reset if we're restoring from nav state
   useEffect(() => {
-    setPage(1);
+    // On first run, just save the initial baseSig
+    if (initialBaseSigRef.current === null) {
+      initialBaseSigRef.current = baseSig;
+      return;
+    }
+
+    // On subsequent runs, only reset page if we're not restoring
+    if (!isRestoringPageRef.current) {
+      setPage(1);
+    } else {
+      // If we were restoring, now we're done
+      isRestoringPageRef.current = false;
+    }
   }, [baseSig]);
 
   // Error handling
@@ -157,7 +192,9 @@ const ItemsList: React.FC = () => {
             <p className="col-span-full">{t.itemsList.noItemsFound[lang]}</p>
           ) : null
         ) : (
-          items.map((item) => <ItemCard key={item.id} item={item as Item} />)
+          items.map((item) => (
+            <ItemCard key={item.id} item={item as Item} currentPage={page} />
+          ))
         )}
       </div>
       {/* Pagination controls */}

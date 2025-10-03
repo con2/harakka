@@ -1,5 +1,7 @@
 # Migration Separation Documentation
 
+Note: With Supabase Branching enabled, migrations are applied by the Supabase GitHub integration when PRs change the `supabase/` folder. Do not run manual `supabase db push` for production. Use this document for context on separating auth/storage changes, but follow docs/developers/Supabase.md for the overall workflow.
+
 ## Overview
 
 Due to Supabase preview branch restrictions, we've separated auth and storage schema changes from public schema changes into dedicated migration files.
@@ -33,14 +35,7 @@ Due to Supabase preview branch restrictions, we've separated auth and storage sc
 
 ### For Production Deployment
 
-1. Apply all migration files including production-only ones
-2. Use production database credentials
-3. Migrations will be applied in chronological order by timestamp
-
-```bash
-# Apply all migrations to production
-npm run s:push
-```
+- Migrations are applied via GitHub when merging to `main`. Do not run `supabase db push`.
 
 ### Commands
 
@@ -52,13 +47,6 @@ npm run s:diff:linked:f -- --schema public
 
 # Test with preview branch
 supabase db reset --db-url $BRANCH_DB_URL
-```
-
-#### For Production Deployment
-
-```bash
-# Apply all migrations to production
-npm run s:push
 ```
 
 ## Best Practices

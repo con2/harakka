@@ -1,6 +1,6 @@
 import { addCategory } from "./modules/addCategory";
 import { addItemForm } from "./modules/addItemForm";
-import { addLocationModal } from "./modules/addLocationModal";
+import { addLocationPage } from "./modules/addLocationPage";
 import { addTag } from "./modules/addTag";
 import { adminDashboard } from "./modules/adminDashboard";
 import { adminItemsTable } from "./modules/adminItemsTable";
@@ -25,7 +25,7 @@ import { common } from "./modules/common";
 import { contactForm } from "./modules/contactForm";
 import { currentUserRoles } from "./modules/currentUserRoles";
 import { deleteLocationButton } from "./modules/deleteLocationButton";
-import { editLocationModal } from "./modules/editLocationModal";
+import { editLocationPage } from "./modules/editLocationPage";
 import { error } from "./modules/error";
 import { footer } from "./modules/footer";
 import { itemCard } from "./modules/itemCard";
@@ -62,6 +62,8 @@ import { pagination } from "./modules/pagination";
 import { passwordReset } from "./modules/passwordReset";
 import { privacyPolicy } from "./modules/privacyPolicy";
 import { profilePicUploader } from "./modules/profilePicUploader";
+import { requestDetailsPage } from "./modules/requestDetailsPage";
+import { requests } from "./modules/requests";
 import { roleManagement } from "./modules/roleManagement";
 import { rolesList } from "./modules/rolesList";
 import { statusBadge } from "./modules/statusBadge";
@@ -89,7 +91,7 @@ import { usersList } from "./modules/usersList";
 export const t = {
   addCategory,
   addItemForm,
-  addLocationModal,
+  addLocationPage,
   addTag,
   adminDashboard,
   adminItemsTable,
@@ -114,7 +116,7 @@ export const t = {
   contactForm,
   currentUserRoles,
   deleteLocationButton,
-  editLocationModal,
+  editLocationPage,
   error,
   footer,
   itemCard,
@@ -148,6 +150,8 @@ export const t = {
   passwordReset,
   privacyPolicy,
   profilePicUploader,
+  requests,
+  requestDetailsPage,
   roleManagement,
   rolesList,
   statusBadge,

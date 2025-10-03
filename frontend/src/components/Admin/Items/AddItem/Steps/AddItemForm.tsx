@@ -214,19 +214,15 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   }, [storage, form]);
 
   useEffect(() => {
-    if (tagSearch)
-      void dispatch(
-        fetchFilteredTags({ page: 1, limit: 20, search: tagSearch }),
-      );
-    else if (tags.length < 1)
-      void dispatch(
-        fetchFilteredTags({
-          page: 1,
-          limit: 20,
-          sortBy: "assigned_to",
-          sortOrder: "desc",
-        }),
-      );
+    void dispatch(
+      fetchFilteredTags({
+        page: 1,
+        limit: 20,
+        sortBy: "assigned_to",
+        sortOrder: "desc",
+        search: tagSearch,
+      }),
+    );
   }, [tagSearch, dispatch]);
 
   useEffect(() => {

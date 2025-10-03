@@ -31,6 +31,15 @@ export function getOrgLabel(
   return `${formatRoleName(roleName)} at ${orgName}`;
 }
 
-export function formatBookingStatus(status: BookingStatus) {
-  return status?.replace("_", " ");
+export function formatBookingStatus(
+  status: BookingStatus,
+  capitalize: boolean = false,
+) {
+  const formatted = status?.replace("_", " ");
+
+  if (capitalize && formatted) {
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }
+
+  return formatted;
 }
