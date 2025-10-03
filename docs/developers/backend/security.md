@@ -1,356 +1,324 @@
 # Security Guide
 
-This document outlines the security architecture and implementation in the Storage and Booking Application.
+This document outlines the current security architecture and implementation in the Storage and Booking Application.
 
 ## Table of Contents
 
 - [Authentication](#authentication)
 - [Authorization](#authorization)
-- [Database Security](#database-security)
+- [Middleware & Guards](#middleware--guards)
+- [Role-Based Access Control](#role-based-access-control)
 - [API Security](#api-security)
 - [File Storage Security](#file-storage-security)
+- [Input Validation](#input-validation)
+- [CORS Configuration](#cors-configuration)
 - [Session Management](#session-management)
+- [Error Handling](#error-handling)
 - [Environment Variables](#environment-variables)
-- [Secure Code Practices](#secure-code-practices)
 - [Security Headers](#security-headers)
 - [Audit Logging](#audit-logging)
 
 ## Authentication
 
-The application uses Supabase Auth for authentication, providing robust user identity verification.
+The application uses **Supabase Auth** with **custom JWT middleware** for authentication, replacing the previous guard-based approach.
 
-### Authentication Flow
+### Current Authentication Flow
 
-1. **Registration**: Users register through Supabase Auth
-2. **Login**: JWT token-based authentication
-3. **Token Management**: Secure handling of access and refresh tokens
+1. **Registration/Login**: Through Supabase Auth
+2. **JWT Token**: Custom JWT service generates tokens
+3. **Middleware**: Auth.middleware.ts validates requests
+4. **Multi-tenant**: Organization-based user roles
 
-### Implementation
+### Authentication Middleware
+
+**Location:** [`src/middleware/Auth.middleware.ts`](backend/src/middleware/Auth.middleware.ts)
 
 ```typescript
-// Backend authentication guard
 @Injectable()
-export class AuthGuard implements CanActivate {
-  constructor(private readonly supabaseService: SupabaseService) {}
+export class AuthMiddleware implements NestMiddleware {
+  constructor(
+    private readonly supabaseService: SupabaseService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization;
+  async use(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new UnauthorizedException("Invalid authentication credentials");
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        throw new UnauthorizedException("No valid authorization header");
+      }
+
+      const token = authHeader.split(" ")[1];
+
+      // Validate JWT token
+      const decoded = await this.jwtService.verifyToken(token);
+
+      // Get user data from Supabase
+      const supabase = this.supabaseService.createClient(token);
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        throw new UnauthorizedException("Invalid token");
+      }
+
+      // Attach user and supabase client to request
+      req.user = user;
+      req.supabase = supabase;
+
+      next();
+    } catch (error) {
+      throw new UnauthorizedException("Authentication failed");
     }
-
-    const token = authHeader.split(" ")[1];
-
-    // Validate JWT token with Supabase
-    const { data, error } = await this.supabaseService
-      .getServiceClient()
-      .auth.getUser(token);
-
-    if (error || !data.user) {
-      throw new UnauthorizedException("Invalid or expired token");
-    }
-
-    // Attach user to request for further use
-    request.user = data.user;
-    return true;
   }
 }
 ```
 
 ### Frontend Authentication
 
+For detailed frontend authentication implementation, see [Frontend API Integration](../frontend/api-integration.md). The frontend uses Supabase Auth hooks to manage authentication state and automatically includes JWT tokens in API requests.
+
 ```typescript
-// Hook for authentication state
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+// Basic frontend auth flow (simplified)
+const { user, authLoading } = useAuth();
 
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null);
-      setAuthLoading(false);
-    });
-
-    // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user || null);
-      setAuthLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  return { user, authLoading };
-}
+// API requests automatically include auth headers
+const response = await apiClient.get("/items", {
+  headers: { Authorization: `Bearer ${token}` },
+});
 ```
 
 ## Authorization
 
-The application implements a comprehensive role-based access control system with three primary user roles:
-
-- **User**: Standard access for booking and managing personal orders
-- **Admin**: Extended privileges for managing inventory and user accounts
-- **SuperVera**: System-wide administrative access with complete control
-
 ### Role Definitions
 
+The application now uses a **5-tier role hierarchy** with **multi-tenant organization support**:
+
+#### Role Hierarchy (Lowest to Highest Priority)
+
+| Role                | Priority | Description         |
+| ------------------- | -------- | ------------------- |
+| **user**            | 1        | Basic user access   |
+| **requester**       | 2        | Can create bookings |
+| **storage_manager** | 3        | Manage inventory    |
+| **tenant_admin**    | 4        | Organization admin  |
+| **super_admin**     | 5        | System-wide access  |
+
+#### Database Schema
+
 ```sql
-CREATE TABLE user_profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id),
-  role VARCHAR NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin', 'superVera')),
-  -- other fields
+-- Multi-tenant role system
+CREATE TABLE roles (
+  id UUID PRIMARY KEY,
+  name VARCHAR NOT NULL UNIQUE,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE user_organization_roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id),
+  organization_id UUID REFERENCES organizations(id),
+  role_id UUID REFERENCES roles(id),
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Constraint: Only one active role per user per organization
+  CONSTRAINT unique_active_role_per_user_org
+  UNIQUE (user_id, organization_id) WHERE is_active = true
 );
 ```
 
-### Role Check Functions
+## Middleware & Guards
 
-Our database implements three specific role check functions, exactly matching the ones in our project:
+### **Authentication Middleware** (Replaces AuthGuard)
 
-```sql
--- Check if the current user is superVera
-CREATE OR REPLACE FUNCTION is_super_vera()
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM user_profiles
-    WHERE id = auth.uid() AND role = 'superVera'
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Check if the current user is admin (but not superVera)
-CREATE OR REPLACE FUNCTION is_admin_only()
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM user_profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Check if user has elevated privileges (admin or superVera)
-CREATE OR REPLACE FUNCTION is_admin()
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM user_profiles
-    WHERE id = auth.uid() AND role IN ('admin', 'superVera')
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-```
-
-### Backend Authorization
+**Applied globally** to all routes except public endpoints:
 
 ```typescript
-// Role-based guard
+// In AppModule
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(AuthMiddleware)
+      .exclude(
+        // Public endpoints
+        { path: "auth/login", method: RequestMethod.POST },
+        { path: "auth/register", method: RequestMethod.POST },
+        { path: "/", method: RequestMethod.GET }, // Health check
+      )
+      .forRoutes({ path: "*", method: RequestMethod.ALL });
+  }
+}
+```
+
+### **Roles Guard**
+
+**Location:** [`src/guards/roles.guard.ts`](backend/src/guards/roles.guard.ts)
+
+```typescript
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(private reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>("roles", [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (!requiredRoles) {
+      return true; // No role requirement
+    }
+
+    const request = context.switchToHttp().getRequest<AuthRequest>();
+    const user = request.user;
+
+    if (!user) {
+      return false;
+    }
+
+    // Get user's roles for current organization
+    const userRoles = await this.getUserRoles(user.id, request.organizationId);
+
+    return requiredRoles.some((role) => userRoles.includes(role));
+  }
+}
+```
+
+### **ReCaptcha Guard**
+
+**Location:** [`src/guards/recaptcha.guard.ts`](backend/src/guards/recaptcha.guard.ts)
+
+```typescript
+@Injectable()
+export class RecaptchaGuard implements CanActivate {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
+    const recaptchaToken = request.body?.recaptchaToken;
 
-    if (!requiredRoles || requiredRoles.length === 0) {
-      return true;
+    if (!recaptchaToken) {
+      throw new BadRequestException("ReCaptcha token required");
     }
 
-    const { user } = request;
+    // Verify with Google ReCaptcha API
+    const isValid = await this.verifyRecaptcha(recaptchaToken);
 
-    // Get user profile with role
-    const { data: profile, error } = await this.supabaseService
-      .getServiceClient()
-      .from('user_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (error || !profile) {
-      throw new ForbiddenException('User profile not found');
+    if (!isValid) {
+      throw new UnauthorizedException("Invalid ReCaptcha");
     }
 
-    return requiredRoles.includes(profile.role);
+    return true;
   }
-}
-
-// Using the guard
-@Get('admin/users')
-@UseGuards(AuthGuard, RolesGuard)
-@Roles('admin', 'superVera')
-getAllUsers() {
-  // Only admins and superVera can access
 }
 ```
 
-### Frontend Authorization
+## Role-Based Access Control
+
+### **Roles Decorator**
+
+**Location:** [`src/decorators/roles.decorator.ts`](backend/src/decorators/roles.decorator.ts)
 
 ```typescript
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { user, authLoading } = useAuth();
-  const selectedUser = useAppSelector(selectSelectedUser);
-
-  if (authLoading || !selectedUser) {
-    return <LoadingSpinner />;
-  }
-
-  if (!allowedRoles.includes(selectedUser.role)) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-// Usage
-<Route
-  path="/admin"
-  element={
-    <ProtectedRoute allowedRoles={["tenant_admin", "superVera"]}>
-      <AdminPanel />
-    </ProtectedRoute>
-  }
-/>;
+export const Roles = (...roles: string[]) => SetMetadata("roles", roles);
 ```
 
-## Database Security
-
-The application implements comprehensive database security using Supabase's PostgreSQL features, with RLS policies enabled on all tables.
-
-### Row-Level Security (RLS)
-
-Our application enables RLS on all tables:
-
-```sql
--- Enable RLS on all tables
-ALTER TABLE storage_locations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE storage_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE storage_working_hours ENABLE ROW LEVEL SECURITY;
-ALTER TABLE storage_images ENABLE ROW LEVEL SECURITY;
-ALTER TABLE storage_item_images ENABLE ROW LEVEL SECURITY;
-ALTER TABLE storage_item_tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_addresses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE promotions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE saved_lists ENABLE ROW LEVEL SECURITY;
-ALTER TABLE saved_list_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
-```
-
-### Policy Categories
-
-Our RLS policies fall into four main categories:
-
-1. **Public Data Policies**: Allow anonymous users to view non-sensitive data
-
-```sql
--- Public can view active locations
-CREATE POLICY "Public read access for storage locations"
-ON storage_locations FOR SELECT
-USING (is_active = TRUE);
-
--- Public can view tags
-CREATE POLICY "Public read access for tags"
-ON tags FOR SELECT
-USING (TRUE);
-```
-
-2. **User-Specific Policies**: Restrict users to accessing only their own data
-
-```sql
--- Users can view their own orders
-CREATE POLICY "Users can view their own orders"
-ON orders FOR SELECT
-USING (
-  user_id = auth.uid() OR
-  user_id IN (
-    SELECT user_profiles.id
-    FROM user_profiles
-    WHERE user_profiles.id = auth.uid()
-  )
-);
-
--- Users can view their own addresses
-CREATE POLICY "Users can view their own addresses"
-ON user_addresses FOR SELECT
-USING (user_id = auth.uid());
-```
-
-3. **Admin-Only Policies**: Special permissions for the admin role
-
-```sql
--- Admins can modify regular user profiles but not other admins
-CREATE POLICY "Admins can modify regular user profiles"
-ON user_profiles FOR UPDATE
-USING (
-  is_admin_only() AND
-  role = 'user'
-);
-```
-
-4. **SuperVera Policies**: Complete control for system administrators
-
-```sql
--- SuperVera has full access to user_profiles including other admins
-CREATE POLICY "SuperVera has full access to user_profiles"
-ON user_profiles FOR ALL
-USING (is_super_vera());
-```
-
-### Query Security
-
-All database queries are parameterized to prevent SQL injection:
+### **Usage in Controllers**
 
 ```typescript
-// Safe query with parameterization
-const { data, error } = await supabase
-  .from("orders")
-  .select("*")
-  .eq("user_id", userId);
+// Example from storage-items.controller.ts
+@Controller("items")
+export class StorageItemsController {
+  // Public access - no authentication required
+  @Get()
+  async getAllItems() {
+    // Anyone can view items
+  }
+
+  // Authenticated users only - no specific role required
+  @Post()
+  @UseGuards(RolesGuard)
+  async createBookingRequest() {
+    // Any authenticated user can create booking requests
+  }
+
+  // Storage managers and above
+  @Post("create")
+  @UseGuards(RolesGuard)
+  @Roles("storage_manager", "tenant_admin", "super_admin")
+  async createItem() {
+    // Only storage managers and above can create items
+  }
+
+  // Tenant admins and above
+  @Delete(":id")
+  @UseGuards(RolesGuard)
+  @Roles("tenant_admin", "super_admin")
+  async deleteItem() {
+    // Only tenant admins and above can delete items
+  }
+
+  // Super admin only
+  @Get("admin/all-organizations")
+  @UseGuards(RolesGuard)
+  @Roles("super_admin")
+  async getAllOrganizationItems() {
+    // Only super admin can see items across all organizations
+  }
+}
+```
+
+### **Common Role Patterns**
+
+```typescript
+// User management - tenant admin within organization
+@Roles('tenant_admin')
+async manageOrganizationUsers() {}
+
+// Inventory management - storage manager and above
+@Roles('storage_manager', 'tenant_admin', 'super_admin')
+async manageInventory() {}
+
+// System administration - super admin only
+@Roles('super_admin')
+async systemAdministration() {}
+
+// Booking management - requester and above
+@Roles('requester', 'storage_manager', 'tenant_admin', 'super_admin')
+async manageBookings() {}
 ```
 
 ## API Security
 
-### Input Validation
+### **Input Validation with DTOs**
 
-All API endpoints use validation pipes to ensure input data integrity:
+All endpoints use validation DTOs to ensure data integrity:
 
 ```typescript
-@Post('storage-items')
-@UseGuards(AuthGuard, RolesGuard)
-@Roles('admin', 'superVera')
-async createItem(@Body() createItemDto: CreateItemDto) {
-  return this.itemsService.createItem(createItemDto);
-}
+// Example from booking/dto/create-booking.dto.ts
+export class CreateBookingDto {
+  @IsDateString()
+  @IsNotEmpty()
+  start_date: string;
 
-// DTO with validation
-export class CreateItemDto {
-  @IsUUID()
-  location_id: string;
+  @IsDateString()
+  @IsNotEmpty()
+  end_date: string;
 
-  @IsNumber()
-  @Min(0)
-  items_number_total: number;
+  @IsEnum(["pickup", "delivery"])
+  pickup_method: "pickup" | "delivery";
 
-  @IsNumber()
-  @Min(0)
-  price: number;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateBookingItemDto)
+  booking_items: CreateBookingItemDto[];
 
-  @IsObject()
-  translations: {
-    en: { item_name: string; item_description: string };
-    fi: { item_name: string; item_description: string };
-  };
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }
 ```
 
@@ -383,32 +351,49 @@ export class AuthController {
 }
 ```
 
-### CORS Configuration
-
-Proper CORS settings to restrict API access:
-
-```typescript
-// NestJS main.ts setup
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  // Get CORS settings from environment
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
-
-  // Set up CORS
-  app.enableCors({
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    credentials: true,
-  });
-
-  await app.listen(3000);
-}
-```
-
 ## File Storage Security
 
-The application secures file access through temporary signed URLs and strict access controls.
+### **Image Upload Security**
+
+**Location:** [`src/modules/item-images/`](backend/src/modules/item-images/)
+
+```typescript
+@Controller("item-images")
+export class ItemImagesController {
+  @Post("upload")
+  @UseGuards(RolesGuard)
+  @Roles("storage_manager", "tenant_admin", "super_admin")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB max
+      },
+      fileFilter: (req, file, callback) => {
+        // Only allow specific image types
+        if (!file.mimetype.match(/^image\/(jpeg|jpg|png|webp)$/)) {
+          return callback(
+            new BadRequestException("Only JPG, PNG, WebP images allowed"),
+            false,
+          );
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  async uploadImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() uploadDto: UploadImageDto,
+  ) {
+    // Additional server-side validation
+    const validation = await this.validateImage(file);
+    if (!validation.isValid) {
+      throw new BadRequestException(validation.error);
+    }
+
+    return this.itemImagesService.uploadImage(file, uploadDto);
+  }
+}
+```
 
 ### Secure File Access
 
@@ -430,7 +415,7 @@ async getSignedInvoiceUrl(orderId: string, user: { id: string; role: string }): 
 
   // Only owner or admin can see the PDF
   const isOwner = order.user_id === user.id;
-  const isAdmin = user.role === "tenant_admin" || user.role === "superVera";
+  const isAdmin = user.role === "tenant_admin" || user.role === "super_admin";
 
   if (!isOwner && !isAdmin) {
     throw new BadRequestException("You are not authorized to access this invoice");
@@ -451,286 +436,451 @@ async getSignedInvoiceUrl(orderId: string, user: { id: string; role: string }): 
 }
 ```
 
-### Secure File Upload
+## Input Validation
+
+### **Sanitization Utility**
+
+**Location:** [`src/utils/sanitize.util.ts`](backend/src/utils/sanitize.util.ts)
 
 ```typescript
-@Post('storage-items/:id/images')
-@UseGuards(AuthGuard, RolesGuard)
-@Roles('admin', 'superVera')
-@UseInterceptors(
-  FileInterceptor('image', {
-    limits: {
-      fileSize: 5 * 1024 * 1024, // 5MB
-    },
-    fileFilter: (req, file, callback) => {
-      if (!file.originalname.match(/\.(jpg|jpeg|png|webp)$/i)) {
-        return callback(new BadRequestException('Only image files are allowed'), false);
-      }
-      callback(null, true);
-    },
-  }),
-)
-async uploadItemImage(
-  @Param('id') itemId: string,
-  @UploadedFile() file: Express.Multer.File,
-  @Body() uploadDto: UploadItemImageDto,
-) {
-  return this.storageItemsService.uploadItemImage(itemId, file, uploadDto);
+export function sanitizeString(input: string): string {
+  return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "") // Remove scripts
+    .replace(/[<>]/g, "") // Remove HTML brackets
+    .trim();
 }
+
+export function sanitizeObject(obj: any): any {
+  if (typeof obj === "string") {
+    return sanitizeString(obj);
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeObject);
+  }
+
+  if (obj && typeof obj === "object") {
+    const sanitized: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      sanitized[key] = sanitizeObject(value);
+    }
+    return sanitized;
+  }
+
+  return obj;
+}
+```
+
+### **Image Validation Utility**
+
+**Location:** [`src/utils/validateImage.util.ts`](backend/src/utils/validateImage.util.ts)
+
+```typescript
+export interface ImageValidationResult {
+  isValid: boolean;
+  error?: string;
+  fileSize?: number;
+  dimensions?: { width: number; height: number };
+}
+
+export async function validateImage(
+  file: Express.Multer.File,
+): Promise<ImageValidationResult> {
+  try {
+    // File size check
+    if (file.size > 5 * 1024 * 1024) {
+      return { isValid: false, error: "File size exceeds 5MB limit" };
+    }
+
+    // MIME type check
+    if (!file.mimetype.match(/^image\/(jpeg|jpg|png|webp)$/)) {
+      return { isValid: false, error: "Invalid file format" };
+    }
+
+    // Additional checks (dimensions, etc.)
+    // ... validation logic
+
+    return { isValid: true, fileSize: file.size };
+  } catch (error) {
+    return { isValid: false, error: "File validation failed" };
+  }
+}
+```
+
+## CORS Configuration
+
+The application implements secure CORS settings to restrict API access to authorized origins:
+
+```typescript
+// NestJS main.ts setup
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Get CORS settings from environment
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
+
+  // Set up CORS with secure defaults
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Block unauthorized origins
+      callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
+    credentials: true, // Allow cookies/auth headers
+    maxAge: 86400, // Cache preflight for 24 hours
+  });
+
+  await app.listen(process.env.PORT || 3000);
+}
+```
+
+### Environment CORS Configuration
+
+```bash
+# Development
+ALLOWED_ORIGINS=http://localhost:5180,http://localhost:3000
+
+# Production
+ALLOWED_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
 ```
 
 ## Session Management
 
 ### Token Handling
 
-Secure token storage on the frontend:
+The application implements secure JWT token management with automatic refresh:
 
 ```typescript
-// Using memory for temporary token cache
-let cachedToken: string | null = null;
+// JWT Service - Location: src/modules/jwt/jwt.service.ts
+@Injectable()
+export class JwtService {
+  async generateToken(payload: JwtPayload): Promise<TokenPair> {
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: process.env.JWT_EXPIRATION || "15m",
+      secret: process.env.JWT_SECRET,
+    });
 
-export async function getAuthToken(): Promise<string | null> {
-  if (cachedToken) return cachedToken;
+    const refreshToken = this.jwtService.sign(
+      { sub: payload.sub, type: "refresh" },
+      {
+        expiresIn: process.env.JWT_REFRESH_EXPIRATION || "7d",
+        secret: process.env.JWT_REFRESH_SECRET,
+      },
+    );
 
-  // Get from session storage
-  const { data } = await supabase.auth.getSession();
-  cachedToken = data.session?.access_token || null;
-  return cachedToken;
-}
-
-// Token refresh logic
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === "TOKEN_REFRESHED") {
-    cachedToken = session?.access_token || null;
-  } else if (event === "SIGNED_OUT") {
-    cachedToken = null;
+    return { accessToken, refreshToken };
   }
-});
+
+  async verifyToken(token: string): Promise<JwtPayload> {
+    try {
+      return this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+    } catch (error) {
+      throw new UnauthorizedException("Invalid or expired token");
+    }
+  }
+
+  async refreshToken(refreshToken: string): Promise<TokenPair> {
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
+
+      if (payload.type !== "refresh") {
+        throw new UnauthorizedException("Invalid refresh token");
+      }
+
+      // Generate new token pair
+      return this.generateToken({
+        sub: payload.sub,
+        email: payload.email,
+        // ... other claims
+      });
+    } catch (error) {
+      throw new UnauthorizedException("Invalid refresh token");
+    }
+  }
+}
 ```
 
-## Environment Variables
+### Secure Token Storage (Frontend Integration)
 
-The application uses secure environment variable management:
-
-```bash
-# Supabase Configuration
-SUPABASE_PROJECT_ID= # Your Supabase project ID
-SUPABASE_ANON_KEY= # Your Supabase anon key
-SUPABASE_SERVICE_ROLE_KEY= # Your Supabase service role key
-SUPABASE_URL=https://${SUPABASE_PROJECT_ID}.supabase.co
-
-# Backend Configuration
-PORT=3000
-NODE_ENV=development
-ALLOWED_ORIGINS=http://localhost:5180
-
-# Frontend Configuration
-VITE_SUPABASE_URL=${SUPABASE_URL}
-VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-VITE_API_URL=http://localhost:3000
-
-# S3 Configuration
-SUPABASE_STORAGE_URL=https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/s3
-S3_REGION= # Your S3 region
-S3_BUCKET=item-images
-
-# Email Configuration
-EMAIL_FROM= # Your email address
-GMAIL_CLIENT_ID= # Your Gmail client ID
-GMAIL_CLIENT_SECRET= # Your Gmail client secret
-GMAIL_REFRESH_TOKEN= # Your Gmail refresh token
-```
-
-## Secure Code Practices
-
-### Error Handling Security
-
-The application implements secure error handling to prevent information leakage:
+For detailed frontend token management, see [Frontend API Integration](../frontend/api-integration.md). The frontend securely stores tokens and handles automatic refresh:
 
 ```typescript
-// Backend error filter
-@Catch()
-export class GlobalExceptionFilter implements ExceptionFilter {
-  catch(exception: any, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse();
+// Basic secure token handling (simplified)
+export class AuthService {
+  private accessToken: string | null = null;
+  private refreshToken: string | null = null;
 
-    // Get appropriate status code
+  // Store tokens securely (httpOnly cookies preferred)
+  storeTokens(tokens: TokenPair) {
+    this.accessToken = tokens.accessToken;
+    this.refreshToken = tokens.refreshToken;
+
+    // Store refresh token in httpOnly cookie
+    document.cookie = `refreshToken=${tokens.refreshToken}; HttpOnly; Secure; SameSite=Strict`;
+  }
+
+  // Automatic token refresh
+  async getValidToken(): Promise<string> {
+    if (this.isTokenExpired(this.accessToken)) {
+      await this.refreshAccessToken();
+    }
+    return this.accessToken;
+  }
+}
+```
+
+## Database Security
+
+The application implements comprehensive database security using Supabase's PostgreSQL features with Row-Level Security (RLS) policies enabled on all tables.
+
+For detailed information about database security policies and RLS implementation, see [Database RLS Policies](../database/RLS-policies.md).
+
+Key security features:
+
+- **Row-Level Security (RLS)** enabled on all tables
+- **Multi-tenant data isolation** through organization-based policies
+- **Role-based data access** with hierarchical permissions
+- **Audit logging** for all data modifications
+- **Parameterized queries** to prevent SQL injection
+
+## Error Handling
+
+### **Security-Focused Error Responses**
+
+```typescript
+// Global exception filter - Location: src/filters/all-exceptions.filter.ts
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+
+    // Determine status code
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    // Sanitize error messages for production
-    const message =
-      process.env.NODE_ENV === "production" &&
-      status === HttpStatus.INTERNAL_SERVER_ERROR
-        ? "Internal server error"
-        : exception.message;
+    // Sanitize error message for production
+    const message = this.getErrorMessage(exception, status);
 
-    // Log full error details server-side
-    console.error(exception);
+    // Log error for debugging (server-side only)
+    this.logError(exception, request);
 
-    // Return sanitized error to client
+    // Send sanitized response
     response.status(status).json({
       statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
       message,
+    });
+  }
+
+  private getErrorMessage(exception: unknown, status: number): string {
+    if (process.env.NODE_ENV === "production" && status === 500) {
+      return "Internal server error"; // Don't leak error details
+    }
+
+    if (exception instanceof HttpException) {
+      const response = exception.getResponse();
+      return typeof response === "string"
+        ? response
+        : (response as any).message;
+    }
+
+    return "Unknown error occurred";
+  }
+
+  private logError(exception: unknown, request: Request): void {
+    // Log full error details server-side for debugging
+    console.error("Exception occurred:", {
+      url: request.url,
+      method: request.method,
+      error: exception,
+      user: (request as any).user?.id,
       timestamp: new Date().toISOString(),
     });
   }
 }
 ```
 
+## Environment Variables
+
+### **Required Security Environment Variables**
+
+```bash
+# JWT Configuration
+JWT_SECRET=your-super-secure-jwt-secret-256-bits-minimum
+JWT_EXPIRATION=15m
+JWT_REFRESH_SECRET=different-secure-refresh-secret-256-bits
+JWT_REFRESH_EXPIRATION=7d
+
+# Supabase Configuration
+SUPABASE_PROJECT_ID=your-project-id
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_URL=https://your-project.supabase.co
+
+# API Security
+ALLOWED_ORIGINS=http://localhost:5180,https://yourdomain.com
+CORS_CREDENTIALS=true
+
+# ReCaptcha (Bot Protection)
+RECAPTCHA_SECRET_KEY=your-recaptcha-secret
+RECAPTCHA_SITE_KEY=your-recaptcha-site-key
+
+# Rate Limiting
+RATE_LIMIT_TTL=60
+RATE_LIMIT_MAX=100
+
+# File Upload Security
+MAX_FILE_SIZE=5242880  # 5MB in bytes
+ALLOWED_FILE_TYPES=image/jpeg,image/jpg,image/png,image/webp
+
+# Production Security
+NODE_ENV=production
+HTTPS_ONLY=true
+SECURE_COOKIES=true
+```
+
 ## Security Headers
 
-The application implements security headers for enhanced protection:
+### **Helmet Configuration**
 
 ```typescript
-// NestJS main.ts
+// In main.ts
 import helmet from "helmet";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Apply security headers
+  // Security headers
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", "trusted-cdn.com"],
-          styleSrc: ["'self'", "'unsafe-inline'", "trusted-cdn.com"],
-          imgSrc: ["'self'", "data:", "*.supabase.co", "trusted-cdn.com"],
-          connectSrc: [
-            "'self'",
-            process.env.SUPABASE_URL,
-            "api.yourdomain.com",
-          ],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+          imgSrc: ["'self'", "data:", "*.supabase.co"],
+          connectSrc: ["'self'", process.env.SUPABASE_URL],
           fontSrc: ["'self'", "fonts.googleapis.com", "fonts.gstatic.com"],
-          objectSrc: ["'none'"],
-          mediaSrc: ["'self'"],
-          frameSrc: ["'none'"],
         },
       },
-      crossOriginEmbedderPolicy: false,
+      crossOriginEmbedderPolicy: false, // Disable for Supabase compatibility
     }),
   );
 
-  // Other app setup...
-  await app.listen(3000);
+  await app.listen(process.env.PORT || 3000);
 }
 ```
 
 ## Audit Logging
 
-The application implements comprehensive audit logging for security monitoring:
+### **Logging Service**
 
-### Database-Level Audit
-
-```sql
--- Audit trigger function
-CREATE OR REPLACE FUNCTION audit_trigger_func()
-RETURNS TRIGGER AS $$
-DECLARE
-  current_user_id UUID;
-BEGIN
-  -- Get current user
-  current_user_id := public.get_request_user_id();
-
-  IF TG_OP = 'UPDATE' THEN
-    INSERT INTO audit_logs (
-      table_name, record_id, action, user_id, old_values, new_values
-    ) VALUES (
-      TG_TABLE_NAME::text, NEW.id, 'update', current_user_id, to_jsonb(OLD.*), to_jsonb(NEW.*)
-    );
-    RETURN NEW;
-  ELSIF TG_OP = 'INSERT' THEN
-    INSERT INTO audit_logs (
-      table_name, record_id, action, user_id, new_values
-    ) VALUES (
-      TG_TABLE_NAME::text, NEW.id, 'insert', current_user_id, to_jsonb(NEW.*)
-    );
-    RETURN NEW;
-  ELSIF TG_OP = 'DELETE' THEN
-    INSERT INTO audit_logs (
-      table_name, record_id, action, user_id, old_values
-    ) VALUES (
-      TG_TABLE_NAME::text, OLD.id, 'delete', current_user_id, to_jsonb(OLD.*)
-    );
-    RETURN OLD;
-  END IF;
-  RETURN NULL;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Applied to critical tables
-CREATE TRIGGER audit_orders_trigger
-AFTER INSERT OR UPDATE OR DELETE ON orders
-FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
-
-CREATE TRIGGER audit_order_items_trigger
-AFTER INSERT OR UPDATE OR DELETE ON order_items
-FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
-
-CREATE TRIGGER audit_storage_items_trigger
-AFTER INSERT OR UPDATE OR DELETE ON storage_items
-FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
-```
-
-### API-Level Audit Logging
+**Location:** [`src/modules/logs_module/logs.service.ts`](backend/src/modules/logs_module/logs.service.ts)
 
 ```typescript
-// Logging service
 @Injectable()
 export class LogsService {
   constructor(private readonly supabaseService: SupabaseService) {}
 
-  async logAction(
-    level: "info" | "warning" | "error",
-    message: string,
-    source: string,
-    metadata?: any,
+  async logSecurityEvent(
+    event:
+      | "login"
+      | "logout"
+      | "failed_auth"
+      | "role_change"
+      | "permission_denied",
     userId?: string,
+    metadata?: Record<string, any>,
   ): Promise<void> {
     const supabase = this.supabaseService.getServiceClient();
 
-    await supabase.from("system_logs").insert({
-      level,
-      message,
-      source,
-      metadata,
+    await supabase.from("audit_logs").insert({
+      event_type: "security",
+      event_action: event,
       user_id: userId,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        ip_address: metadata?.ip,
+        user_agent: metadata?.userAgent,
+        ...metadata,
+      },
     });
   }
-}
 
-// Usage in services
-@Injectable()
-export class OrdersService {
-  constructor(
-    private readonly supabaseService: SupabaseService,
-    private readonly logsService: LogsService,
-  ) {}
-
-  async updateOrderStatus(
-    orderId: string,
-    status: string,
+  async logDataAccess(
+    resource: string,
+    action: "create" | "read" | "update" | "delete",
     userId: string,
-  ): Promise<Order> {
-    // Update logic...
+    resourceId?: string,
+  ): Promise<void> {
+    // Log data access for compliance
+    const supabase = this.supabaseService.getServiceClient();
 
-    // Log the action
-    await this.logsService.logAction(
-      "info",
-      `Order ${orderId} status changed to ${status}`,
-      "OrdersService",
-      { orderId, newStatus: status },
-      userId,
-    );
-
-    return updatedOrder;
+    await supabase.from("audit_logs").insert({
+      event_type: "data_access",
+      event_action: `${action}_${resource}`,
+      user_id: userId,
+      resource_id: resourceId,
+      metadata: {
+        timestamp: new Date().toISOString(),
+      },
+    });
   }
 }
 ```
 
-By implementing these security measures, the application provides a robust security architecture that protects user data and system integrity at multiple levels.
+### Database-Level Audit
+
+Database-level audit triggers automatically log all changes to critical tables. For implementation details, see the existing audit trigger functions in the database schema.
+
+## Security Best Practices Summary
+
+### ✅ **Current Security Measures**
+
+1. **Authentication**: Custom JWT middleware with Supabase Auth
+2. **Authorization**: Multi-tier role-based access control
+3. **Input Validation**: DTOs with class-validator
+4. **File Security**: Type validation, size limits, sanitization
+5. **Error Handling**: Sanitized error responses in production
+6. **Audit Logging**: Comprehensive security event logging
+7. **Headers**: Helmet.js security headers
+8. **CORS**: Configurable origin restrictions
+
+### ⚠️ **Security Notes**
+
+- **RLS Policies**: Handled in Supabase - see [Database RLS Policies](../database/RLS-policies.md)
+- **Rate Limiting**: Configured per endpoint as needed
+- **Session Management**: JWT-based with configurable expiration
+- **Bot Protection**: ReCaptcha guard for sensitive endpoints
+- **Environment Separation**: Different security levels for dev/prod
+
+### 🔒 **Critical Security Points**
+
+1. **Never expose service role keys** in frontend code
+2. **Always validate file uploads** server-side
+3. **Use parameterized queries** to prevent SQL injection
+4. **Log security events** for compliance and monitoring
+5. **Keep JWT secrets secure** and rotate regularly
+6. **Validate role hierarchy** in multi-tenant contexts
+
+---
+
+This security guide reflects the current implementation as of September 2025. For RLS policies and database-level security, refer to the [Database RLS Policies](../database/RLS-policies.md) documentation maintained separately.
