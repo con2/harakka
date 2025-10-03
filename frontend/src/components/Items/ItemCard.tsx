@@ -5,15 +5,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useLanguage } from "@/context/LanguageContext";
-import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { addToCart } from "@/store/slices/cartSlice";
+import { addToCart, updateQuantity } from "@/store/slices/cartSlice";
 import { getItemById } from "@/store/slices/itemsSlice";
 import { t } from "@/translations";
 import { ItemTranslation } from "@/types";
 import { ItemImageAvailabilityInfo } from "@/types/storage";
-import { Clock, MapPin, Minus, Plus } from "lucide-react";
+import { MapPin, Minus, Plus } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -42,8 +41,12 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
   const dispatch = useAppDispatch();
   const itemImages = useAppSelector(selectItemImages);
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
-  const [quantity, setQuantity] = useState(0);
+
   const cartItems = useAppSelector((state) => state.cart.items);
+  const existingCartItem = cartItems.find(
+    (cartItem) => cartItem.item.id === item.id,
+  );
+  const [quantity, setQuantity] = useState(existingCartItem?.quantity || 0);
 
   const [availabilityInfo, setAvailabilityInfo] =
     useState<ItemImageAvailabilityInfo>({
@@ -55,7 +58,6 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
   const { getTranslation } = useTranslation<ItemTranslation>();
   const itemContent = getTranslation(item, "fi") as ItemTranslation | undefined;
   const { lang } = useLanguage();
-  const { formatDate } = useFormattedDate();
 
   // Enhanced image finding with memoization to prevent recalculation on every render
   const itemImagesForCurrentItem = useMemo(
@@ -144,32 +146,43 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
     void navigate(`/storage/items/${itemId}`);
   };
 
-  const handleAddToCart = () => {
+  const handleUpdateCart = () => {
     if (!item) return;
 
     const availability = availabilityInfo.availableQuantity;
 
-    const existingCartItem = cartItems.find(
-      (cartItem) => cartItem.item.id === item.id,
-    );
-    const currentQuantity = existingCartItem?.quantity ?? 0;
-
-    if (currentQuantity + quantity > availability) {
+    if (quantity > availability) {
       toast.warning(
         `${t.cart.toast.itemsExceedQuantity[lang]} ${availability}.`,
       );
       return;
     }
-    void dispatch(
-      addToCart({
-        item: item,
-        quantity: quantity,
-        startDate: startDate ? startDate : undefined,
-        endDate: endDate ? endDate : undefined,
-      }),
-    );
 
-    toast.success(`${itemContent?.item_name} ${t.itemCard.addedToCart[lang]}`);
+    if (existingCartItem) {
+      // Update quantity in the cart
+      void dispatch(
+        updateQuantity({
+          id: item.id,
+          quantity: quantity,
+        }),
+      );
+      toast.success(
+        `${itemContent?.item_name} ${t.itemCard.updatedInCart[lang]}`,
+      );
+    } else {
+      // Add item to the cart
+      void dispatch(
+        addToCart({
+          item: item,
+          quantity: quantity,
+          startDate: startDate ? startDate : undefined,
+          endDate: endDate ? endDate : undefined,
+        }),
+      );
+      toast.success(
+        `${itemContent?.item_name} ${t.itemCard.addedToCart[lang]}`,
+      );
+    }
   };
 
   // Update availability info based on dates selection
@@ -215,237 +228,238 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
     quantity > availabilityInfo.availableQuantity ||
     quantity <= 0 ||
     !isItemAvailableForTimeframe ||
-    availabilityInfo.isChecking;
+    availabilityInfo.isChecking ||
+    (existingCartItem && existingCartItem.quantity === quantity);
 
   return (
-    <Card
-      data-cy="items-card"
-      className={cn(
-        "w-full flex flex-col justify-between p-4 flex-[1_0_250px]",
-        preview && "shadow-none max-w-[350px]",
+    <button
+      aria-label={t.itemCard.aria.labels.viewDetails[lang].replace(
+        "{item_name}",
+        item.translations[lang].item_name,
       )}
+      onClick={() => handleItemClick(item.id)}
+      className="hover:[&_h2]:text-muted-foreground"
     >
-      {/* Image Section */}
-      <div
-        className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden border border-1-[var(--subtle-grey)] basis-[250px]"
-        data-cy="item-image-section"
+      <Card
+        data-cy="items-card"
+        className={cn(
+          "w-full h-full flex flex-col justify-between p-4 flex-[1_0_250px]",
+          preview && "shadow-none max-w-[350px]",
+        )}
       >
-        {isImageLoading && !loadFailed && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            <div className="w-8 h-8 border-4 border-gray-300 border-t-secondary rounded-full animate-spin"></div>
-          </div>
-        )}
-        <img
-          src={
-            item.images?.main?.url || currentImage.image_url || imagePlaceholder
-          }
-          alt={itemContent?.item_name || "Tuotteen kuva"}
-          className={cn(
-            "w-full h-full transition-opacity duration-300",
-            `object-${preview ? item.images?.main?.metadata?.object_fit : currentImage.object_fit}`,
-          )}
-          onLoad={() => {
-            if (imageLoadingTimeoutRef.current) {
-              clearTimeout(imageLoadingTimeoutRef.current);
-              imageLoadingTimeoutRef.current = null;
-            }
-            setIsImageLoading(false);
-            setLoadFailed(false);
-          }}
-          onError={(e) => {
-            // Prevent infinite loops by tracking which URLs have failed
-            if (currentImage.image_url) {
-              console.warn(`Failed to load image: ${currentImage.image_url}`);
-              failedImageUrlsRef.current.add(currentImage.image_url);
-            }
-
-            // Clear the timeout
-            if (imageLoadingTimeoutRef.current) {
-              clearTimeout(imageLoadingTimeoutRef.current);
-              imageLoadingTimeoutRef.current = null;
-            }
-
-            // Critical: remove the error handler before changing the source
-            e.currentTarget.onerror = null;
-
-            // Set to placeholder directly - only once
-            e.currentTarget.src = imagePlaceholder;
-            setIsImageLoading(false);
-            setLoadFailed(true);
-          }}
-          loading="lazy"
-        />
-      </div>
-
-      {/* Item Details */}
-      <div data-cy="item-details">
-        <h2
-          className="text-lg text-primary font-normal text-center mb-1"
-          data-cy="item-name"
-        >
-          {itemContent?.item_name
-            ? `${itemContent.item_name.charAt(0).toUpperCase()}${itemContent.item_name.slice(1)}`
-            : "Tuote"}
-        </h2>
-        {/* Display location name */}
-        {(item.location_details || item.location_name) && (
-          <div
-            className="flex items-center justify-center gap-1 text-xs text-muted-foreground"
-            data-cy="item-location"
-          >
-            <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-            <span>
-              {extractCityFromLocationName(
-                item.location_details?.name || item.location_name || "",
-              ) || "Unknown"}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Display selected booking timeframe if it exists */}
-      {startDate && endDate && !preview && (
+        {/* Image Section */}
         <div
-          className="bg-slate-100 p-2 rounded-md mb-1 flex flex-col items-center"
-          data-cy="item-timeframe"
+          className="h-40 bg-gray-200 flex items-center justify-center rounded relative overflow-hidden border border-1-[var(--subtle-grey)] basis-[250px]"
+          data-cy="item-image-section"
         >
-          <div className="flex items-center text-sm text-slate-400">
-            <Clock className="h-4 w-4 mr-1" />
-            <span className="font-medium text-xs">
-              {t.itemCard.timeframe[lang]}
-            </span>
-          </div>
-          <p className="text-xs font-medium m-0">
-            {formatDate(startDate, "d MMM yyyy")} -{" "}
-            {formatDate(endDate, "d MMM yyyy")}
-          </p>
-        </div>
-      )}
-
-      {/* Quantity Input */}
-      <div data-cy="item-quantity-section">
-        <div className="flex flex-col flex-wrap items-center space-y-2 justify-between">
-          <div className="flex items-center">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setQuantity(Math.max(0, quantity - 1))}
-              className="h-8 w-8 p-0"
-              aria-label={t.itemCard.aria.labels.quantity.reduce[lang].replace(
-                "{number}",
-                (quantity - 1).toString(),
-              )}
-              disabled={quantity <= 0}
-            >
-              <Minus aria-hidden />
-            </Button>
-            <Input
-              type="text"
-              aria-label={t.itemCard.aria.labels.quantity.enterQuantity[
-                lang
-              ].replace("{number}", quantity.toString())}
-              value={quantity}
-              onChange={(e) => {
-                const value = parseInt(e.target.value) || 0;
-                setQuantity(
-                  Math.min(
-                    availabilityInfo.availableQuantity,
-                    Math.max(0, value),
-                  ),
-                );
-              }}
-              className="w-11 h-8 mx-2 text-center"
-              min="0"
-              max={availabilityInfo.availableQuantity}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setQuantity(
-                  Math.min(availabilityInfo.availableQuantity, quantity + 1),
-                );
-              }}
-              className="h-8 w-8 p-0"
-              aria-label={t.itemCard.aria.labels.quantity.increase[
-                lang
-              ].replace("{number}", (quantity - 1).toString())}
-              disabled={quantity >= availabilityInfo.availableQuantity}
-            >
-              <Plus aria-hidden />
-            </Button>
-          </div>
-
-          <div className="flex items-center justify-end mb-3 mt-1">
-            {!preview && availabilityInfo.isChecking ? (
-              <p className="text-xs text-slate-400 italic m-0">
-                {t.itemCard.checkingAvailability[lang]}
-              </p>
-            ) : !preview && availabilityInfo.error ? (
-              <p className="text-xs text-red-500 italic m-0">
-                {t.itemCard.availabilityError[lang]}
-              </p>
-            ) : (
-              <p className="text-xs text-slate-400 italic m-0">
-                {!preview && startDate && endDate
-                  ? availabilityInfo.availableQuantity > 0
-                    ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
-                    : `${t.itemCard.notAvailable[lang]}`
-                  : `${t.itemCard.totalUnits[lang]}: ${item.quantity}`}
-              </p>
+          {isImageLoading && !loadFailed && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+              <div className="w-8 h-8 border-4 border-gray-300 border-t-secondary rounded-full animate-spin"></div>
+            </div>
+          )}
+          <img
+            src={
+              item.images?.main?.url ||
+              currentImage.image_url ||
+              imagePlaceholder
+            }
+            alt={itemContent?.item_name || "Tuotteen kuva"}
+            className={cn(
+              "w-full h-full transition-opacity duration-300",
+              `object-${preview ? item.images?.main?.metadata?.object_fit : currentImage.object_fit}`,
             )}
-          </div>
+            onLoad={() => {
+              if (imageLoadingTimeoutRef.current) {
+                clearTimeout(imageLoadingTimeoutRef.current);
+                imageLoadingTimeoutRef.current = null;
+              }
+              setIsImageLoading(false);
+              setLoadFailed(false);
+            }}
+            onError={(e) => {
+              // Prevent infinite loops by tracking which URLs have failed
+              if (currentImage.image_url) {
+                console.warn(`Failed to load image: ${currentImage.image_url}`);
+                failedImageUrlsRef.current.add(currentImage.image_url);
+              }
+
+              // Clear the timeout
+              if (imageLoadingTimeoutRef.current) {
+                clearTimeout(imageLoadingTimeoutRef.current);
+                imageLoadingTimeoutRef.current = null;
+              }
+
+              // Critical: remove the error handler before changing the source
+              e.currentTarget.onerror = null;
+
+              // Set to placeholder directly - only once
+              e.currentTarget.src = imagePlaceholder;
+              setIsImageLoading(false);
+              setLoadFailed(true);
+            }}
+            loading="lazy"
+          />
         </div>
 
-        {/* Add to Cart Button with Tooltip */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span
-              tabIndex={0}
-              className={
-                isAddToCartDisabled
-                  ? "inline-block w-full cursor-not-allowed"
-                  : "inline-block w-full"
-              }
+        {/* Item Details */}
+        <div data-cy="item-details">
+          <h2
+            className="text-lg text-primary font-normal text-center mb-1"
+            data-cy="item-name"
+          >
+            {itemContent?.item_name
+              ? `${itemContent.item_name.charAt(0).toUpperCase()}${itemContent.item_name.slice(1)}`
+              : "Tuote"}
+          </h2>
+          {/* Display location name */}
+          {(item.location_details || item.location_name) && (
+            <div
+              className="flex items-center justify-center gap-1 text-xs text-muted-foreground"
+              data-cy="item-location"
             >
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+              <span>
+                {extractCityFromLocationName(
+                  item.location_details?.name || item.location_name || "",
+                ) || "Unknown"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Quantity Input */}
+        <div data-cy="item-quantity-section">
+          <div className="flex flex-col flex-wrap items-center space-y-2 justify-between">
+            <div className="flex items-center">
               <Button
                 type="button"
-                onClick={!preview ? handleAddToCart : () => {}}
-                className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-white hover:bg-secondary"
-                disabled={isAddToCartDisabled}
-                style={{
-                  pointerEvents: isAddToCartDisabled ? "none" : "auto",
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setQuantity(Math.max(0, quantity - 1));
                 }}
-                data-cy="item-add-to-cart-btn"
+                className="h-8 w-8 p-0"
+                aria-label={t.itemCard.aria.labels.quantity.reduce[
+                  lang
+                ].replace("{number}", (quantity - 1).toString())}
+                disabled={quantity <= 0}
               >
-                {t.itemDetails.items.addToCart[lang]}
+                <Minus aria-hidden />
               </Button>
-            </span>
-          </TooltipTrigger>
-          {isAddToCartDisabled && (
-            <TooltipContent>
-              {!startDate || !endDate ? (
-                <p>{t.itemCard.selectDatesFirst[lang]}</p>
-              ) : (
-                <p>{t.itemCard.selectValidQuantity[lang]} </p>
-              )}
-            </TooltipContent>
-          )}
-        </Tooltip>
-      </div>
+              <Input
+                type="text"
+                aria-label={t.itemCard.aria.labels.quantity.enterQuantity[
+                  lang
+                ].replace("{number}", quantity.toString())}
+                value={quantity}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 0;
+                  setQuantity(
+                    Math.min(
+                      availabilityInfo.availableQuantity,
+                      Math.max(0, value),
+                    ),
+                  );
+                }}
+                className="w-16 h-8 mx-2 text-center"
+                min="0"
+                max={availabilityInfo.availableQuantity}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setQuantity(
+                    Math.min(availabilityInfo.availableQuantity, quantity + 1),
+                  );
+                }}
+                className="h-8 w-8 p-0"
+                aria-label={t.itemCard.aria.labels.quantity.increase[
+                  lang
+                ].replace("{number}", (quantity - 1).toString())}
+                disabled={quantity >= availabilityInfo.availableQuantity}
+              >
+                <Plus aria-hidden />
+              </Button>
+            </div>
 
-      {/* View Details Button */}
-      <Button
-        type="button"
-        onClick={!preview ? () => handleItemClick(item.id) : () => {}}
-        className="w-full bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
-        data-cy="item-view-details-btn"
-      >
-        {t.itemCard.viewDetails ? t.itemCard.viewDetails[lang] : "Katso tiedot"}
-      </Button>
-    </Card>
+            <div className="flex items-center justify-end mb-3 mt-1">
+              {!preview && availabilityInfo.isChecking ? (
+                <p className="text-xs text-slate-400 italic m-0">
+                  {t.itemCard.checkingAvailability[lang]}
+                </p>
+              ) : !preview && availabilityInfo.error ? (
+                <p className="text-xs text-red-500 italic m-0">
+                  {t.itemCard.availabilityError[lang]}
+                </p>
+              ) : (
+                <p className="text-xs text-slate-400 italic m-0">
+                  {!preview && startDate && endDate
+                    ? availabilityInfo.availableQuantity > 0
+                      ? `${t.itemCard.available[lang]}: ${availabilityInfo.availableQuantity}`
+                      : `${t.itemCard.notAvailable[lang]}`
+                    : `${t.itemCard.totalUnits[lang]}: ${item.quantity}`}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Add to Cart Button with Tooltip */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                tabIndex={0}
+                className={
+                  isAddToCartDisabled
+                    ? "inline-block w-full cursor-not-allowed"
+                    : "inline-block w-full"
+                }
+              >
+                <Button
+                  type="button"
+                  onClick={
+                    !preview
+                      ? (e) => {
+                          e.stopPropagation();
+                          handleUpdateCart();
+                        }
+                      : () => {}
+                  }
+                  className="w-full bg-background rounded-2xl text-secondary border-secondary border-1 hover:text-white hover:bg-secondary"
+                  disabled={isAddToCartDisabled}
+                  style={{
+                    pointerEvents: isAddToCartDisabled ? "none" : "auto",
+                  }}
+                  data-cy="item-add-to-cart-btn"
+                >
+                  {existingCartItem
+                    ? t.itemCard.updateQuantity[lang]
+                    : t.itemDetails.items.addToCart[lang]}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {isAddToCartDisabled && (
+              <TooltipContent>
+                {!startDate || !endDate ? (
+                  <p>{t.itemCard.selectDatesFirst[lang]}</p>
+                ) : quantity <= 0 ? (
+                  <p>{t.itemCard.selectValidQuantity[lang]}</p>
+                ) : existingCartItem &&
+                  existingCartItem.quantity === quantity ? (
+                  <p>{t.itemCard.quantityUnchanged[lang]}</p>
+                ) : (
+                  <p>{t.itemCard.selectValidQuantity[lang]}</p>
+                )}
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </div>
+      </Card>
+    </button>
   );
 };
 

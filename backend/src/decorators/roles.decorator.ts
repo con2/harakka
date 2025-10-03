@@ -97,7 +97,6 @@ export interface RolesMeta {
   /**
    * Enforce that the role(s) belong to the organisation referenced
    * in the request (`:organizationId` param or `x-org-id` header).
-   * Note: We dont have the organisationId set yet.
    */
   sameOrg?: boolean;
 }
