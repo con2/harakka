@@ -34,9 +34,29 @@ interface ItemsCardProps {
     images?: { main: ImageSchemaType };
   };
   preview?: boolean;
+  currentPage?: number;
 }
 
-const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
+// Utility function to sanitize image URLs
+function sanitizeImageUrl(url: string | undefined, fallback: string): string {
+  if (!url || typeof url !== "string") return fallback;
+  // Only allow http(s) URLs or relative (starting with / or .)
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("/") ||
+    url.startsWith(".")
+  ) {
+    return url;
+  }
+  return fallback;
+}
+
+const ItemCard: React.FC<ItemsCardProps> = ({
+  item,
+  preview = false,
+  currentPage,
+}) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const itemImages = useAppSelector(selectItemImages);
@@ -143,7 +163,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
   // Navigate to the item's detail page
   const handleItemClick = (itemId: string) => {
     void dispatch(getItemById(itemId)); // Fetch the item by ID when clicked
-    void navigate(`/storage/items/${itemId}`);
+    void navigate(`/storage/items/${itemId}`, {
+      state: { fromPage: currentPage },
+    });
   };
 
   const handleUpdateCart = () => {
@@ -258,11 +280,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
             </div>
           )}
           <img
-            src={
-              item.images?.main?.url ||
-              currentImage.image_url ||
-              imagePlaceholder
-            }
+            src={sanitizeImageUrl(
+              item.images?.main?.url || currentImage.image_url,
+              imagePlaceholder,
+            )}
             alt={itemContent?.item_name || "Tuotteen kuva"}
             className={cn(
               "w-full h-full transition-opacity duration-300",
