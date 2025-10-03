@@ -123,7 +123,10 @@ const Reports: React.FC = () => {
     if (!items.length) {
       return [];
     }
-    return items.map((item) => flattenItem(item as Record<string, unknown>));
+    return items.map((item, index) => ({
+      RowNumber: (index + 1).toString(), // Add a numeration column
+      ...flattenItem(item as Record<string, unknown>),
+    }));
   }, [items]);
 
   const csvHeaders = useMemo(() => {
@@ -131,9 +134,18 @@ const Reports: React.FC = () => {
     flattenedItems.forEach((item) => {
       Object.keys(item).forEach((key) => headerSet.add(key));
     });
-    return Array.from(headerSet)
-      .sort((a, b) => a.localeCompare(b))
-      .map((key) => ({ label: key, key }));
+
+    const headersArray = Array.from(headerSet).sort((a, b) =>
+      a.localeCompare(b),
+    );
+
+    // Ensure "RowNumber" is the first column
+    const reorderedHeaders = [
+      "RowNumber",
+      ...headersArray.filter((key) => key !== "RowNumber"),
+    ];
+
+    return reorderedHeaders.map((key) => ({ label: key, key }));
   }, [flattenedItems]);
 
   const hasData = flattenedItems.length > 0 && csvHeaders.length > 0;
