@@ -45,8 +45,7 @@ export function CategoryTree({
         const hasChildren = (node.subcategories?.length ?? 0) > 0;
         const isSelected = selectedIds.has(node.id);
         const hasChildSelected = hasAnyDescendantSelected(node);
-        const isOpen =
-          expandedIds.has(node.id) || isSelected || hasChildSelected;
+        const isOpen = expandedIds.has(node.id);
         const labelClass = isSelected
           ? "text-secondary font-semibold"
           : hasChildSelected
