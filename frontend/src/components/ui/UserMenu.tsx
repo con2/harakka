@@ -29,7 +29,7 @@ import { setRedirectUrl } from "@/store/slices/uiSlice";
 import { getOrgLabel } from "@/utils/format";
 import { t } from "@/translations";
 import { SUPPORTED_LANGUAGES } from "@/translations/SUPPORTED_LANGUAGES";
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 
 export const UserMenu: React.FC = () => {
   const {
@@ -110,7 +110,6 @@ export const UserMenu: React.FC = () => {
         <button className="gap-3 p-1 px-2 h-fit flex items-center">
           <Avatar>
             <AvatarImage
-              className="inline h-8 w-8 rounded-full"
               src={avatarUrl}
               alt={t.userMenu.alt.userAvatar[lang]}
             />
