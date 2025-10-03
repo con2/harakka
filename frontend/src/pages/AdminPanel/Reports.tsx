@@ -74,6 +74,17 @@ const flattenValue = (
 const flattenItem = (item: Record<string, unknown>): FlattenedItem => {
   const acc: FlattenedItem = {};
   flattenValue(item, "", acc);
+
+  // Rename specific keys
+  if (acc["translations.en.item_description"]) {
+    acc["en_item_description"] = acc["translations.en.item_description"];
+    delete acc["translations.en.item_description"];
+  }
+  if (acc["translations.fi.item_description"]) {
+    acc["fi_item_description"] = acc["translations.fi.item_description"];
+    delete acc["translations.fi.item_description"];
+  }
+
   return acc;
 };
 
@@ -130,20 +141,34 @@ const Reports: React.FC = () => {
   }, [items]);
 
   const csvHeaders = useMemo(() => {
+    // Define the desired column order
+    const desiredOrder = [
+      "RowNumber",
+      "en_item_name",
+      "en_item_description",
+      "fi_item_name",
+      "fi_item_description",
+      "quantity",
+      "available_quantity",
+      "category_en_name",
+      "category_fi_name",
+      "is_active",
+      "is_deleted",
+      "location_name",
+      "placement_description",
+      "id",
+      "created_at",
+      "updated_at",
+    ];
+
+    // Ensure only columns present in the flattened items are included
     const headerSet = new Set<string>();
     flattenedItems.forEach((item) => {
       Object.keys(item).forEach((key) => headerSet.add(key));
     });
 
-    const headersArray = Array.from(headerSet).sort((a, b) =>
-      a.localeCompare(b),
-    );
-
-    // Ensure "RowNumber" is the first column
-    const reorderedHeaders = [
-      "RowNumber",
-      ...headersArray.filter((key) => key !== "RowNumber"),
-    ];
+    // Filter and order headers based on the desired order
+    const reorderedHeaders = desiredOrder.filter((key) => headerSet.has(key));
 
     return reorderedHeaders.map((key) => ({ label: key, key }));
   }, [flattenedItems]);
