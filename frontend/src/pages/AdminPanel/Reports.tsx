@@ -37,24 +37,15 @@ const flattenValue = (
       return;
     }
 
-    const isPrimitiveArray = value.every(
-      (item) =>
-        item === null ||
-        item === undefined ||
-        ["string", "number", "boolean", "bigint"].includes(typeof item),
-    );
-
-    if (isPrimitiveArray) {
-      acc[prefix] = value
-        .map((item) =>
-          item === null || item === undefined ? "" : String(item),
-        )
-        .join(", ");
-      return;
-    }
-
     value.forEach((item, index) => {
-      flattenValue(item, `${prefix}[${index}]`, acc);
+      if (typeof item === "object" && item !== null) {
+        // Handle nested objects in arrays (e.g., tag_translations)
+        Object.entries(item).forEach(([key, nestedValue]) => {
+          flattenValue(nestedValue, `${prefix}[${index}].${key}`, acc);
+        });
+      } else {
+        flattenValue(item, `${prefix}[${index}]`, acc);
+      }
     });
     return;
   }
@@ -77,7 +68,8 @@ const flattenValue = (
   }
 
   if (prefix) {
-    acc[prefix] = String(value);
+    acc[prefix] =
+      typeof value === "object" ? JSON.stringify(value) : String(value);
   }
 };
 
