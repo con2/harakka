@@ -28,7 +28,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useOrganizationNames } from "@/hooks/useOrganizationNames";
 import { BookingPreviewWithOrgData } from "@common/bookings/booking.types";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { formatBookingStatus } from "@/utils/format";
 import { bookingsApi, OverdueBookingRow } from "@/api/services/bookings";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,7 @@ const BookingList = () => {
   const loading = useAppSelector(selectBookingLoading);
   const error = useAppSelector(selectBookingError);
   const navigate = useNavigate();
+  const location = useLocation();
   const { authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
@@ -54,7 +55,9 @@ const BookingList = () => {
   const { totalPages, page } = useAppSelector(selectBookingPagination);
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    (location.state as { page?: number })?.page ?? 1,
+  );
   const debouncedSearchQuery = useDebouncedValue(searchQuery);
   const { organizationId: activeOrgId } = useAppSelector(
     selectActiveRoleContext,
@@ -449,7 +452,9 @@ const BookingList = () => {
             rowProps={(row) => ({
               style: { cursor: "pointer" },
               onClick: () =>
-                navigate(`/admin/bookings/${row.original.booking_id}`),
+                navigate(`/admin/bookings/${row.original.booking_id}`, {
+                  state: { page: currentPage },
+                }),
             })}
           />
         ) : (
@@ -461,7 +466,10 @@ const BookingList = () => {
             onPageChange={(page) => handlePageChange(page + 1)}
             rowProps={(row) => ({
               style: { cursor: "pointer" },
-              onClick: () => navigate(`/admin/bookings/${row.original.id}`),
+              onClick: () =>
+                navigate(`/admin/bookings/${row.original.id}`, {
+                  state: { page: currentPage },
+                }),
             })}
           />
         )}

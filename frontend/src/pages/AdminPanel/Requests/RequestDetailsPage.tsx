@@ -15,7 +15,7 @@ import {
 } from "@/store/slices/bookingsSlice";
 import { BookingItemWithDetails, BookingWithDetails } from "@/types";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ function RequestDetailsPage() {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { lang } = useLanguage();
 
   const { user } = useAuth();
@@ -70,7 +71,10 @@ function RequestDetailsPage() {
                 activeOrgName!,
               ),
             );
-            void navigate("/admin/requests");
+            const pageState = (location.state as { page?: number })?.page;
+            void navigate("/admin/requests", {
+              state: pageState ? { page: pageState } : undefined,
+            });
           }
         }
       }
@@ -188,7 +192,12 @@ function RequestDetailsPage() {
             t.bookingDetailsPage.confirmations.removeAllItems.description[lang],
           confirmText:
             t.bookingDetailsPage.confirmations.removeAllItems.confirmText[lang],
-          onSuccess: () => void navigate("/admin/requests"),
+          onSuccess: () => {
+            const pageState = (location.state as { page?: number })?.page;
+            void navigate("/admin/requests", {
+              state: pageState ? { page: pageState } : undefined,
+            });
+          },
         }
       : {
           title: t.bookingDetailsPage.confirmations.removeItem.title[lang],
@@ -335,7 +344,10 @@ function RequestDetailsPage() {
             }),
           );
         }
-        void navigate("/admin/requests");
+        const pageState = (location.state as { page?: number })?.page;
+        void navigate("/admin/requests", {
+          state: pageState ? { page: pageState } : undefined,
+        });
         return;
       }
 
@@ -440,7 +452,12 @@ function RequestDetailsPage() {
   return (
     <div className="space-y-4 max-w-[900px]">
       <Button
-        onClick={() => navigate(-1)}
+        onClick={() => {
+          const pageState = (location.state as { page?: number })?.page;
+          void navigate("/admin/requests", {
+            state: pageState ? { page: pageState } : undefined,
+          });
+        }}
         className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
       >
         <ChevronLeft /> {t.common.back[lang]}
@@ -543,7 +560,12 @@ function RequestDetailsPage() {
                           toast.success(
                             t.myBookingsPage.edit.toast.emptyCancelled[lang],
                           );
-                          void navigate("/admin/requests");
+                          const pageState = (
+                            location.state as { page?: number }
+                          )?.page;
+                          void navigate("/admin/requests", {
+                            state: pageState ? { page: pageState } : undefined,
+                          });
                         }
                       } catch {
                         toast.error(
