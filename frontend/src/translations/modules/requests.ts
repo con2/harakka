@@ -1,16 +1,16 @@
 export const requests = {
   title: {
-    en: "Manage Requests",
-    fi: "Hallinnoi pyyntöjä",
+    en: "Manage Outgoing Bookings",
+    fi: "Hallinnoi lähteviä varauksia",
   },
   description: {
-    en: "Requests are bookings made on behalf of your organization, by a member of your org",
-    fi: "Pyynnöt ovat organisaatiosi jäsenen organisaatiosi puolesta tekemiä varauksia",
+    en: "Outgoing bookings are bookings made on behalf of your organization, by a member of your org",
+    fi: "Lähtevät varaukset ovat organisaatiosi jäsenen organisaatiosi puolesta tekemiä varauksia",
   },
   filters: {
     search: {
-      en: "Search requests",
-      fi: "Hae pyyntöjä",
+      en: "Search bookings",
+      fi: "Hae varauksia",
     },
   },
   table: {
