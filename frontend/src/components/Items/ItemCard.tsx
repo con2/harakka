@@ -96,36 +96,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
 
   // Set the image URL just once when it changes
   useEffect(() => {
-    const { image_url } = stableImage;
-    if (image_url && !failedImageUrlsRef.current.has(image_url)) {
-      // Clear any existing timeout
-      if (imageLoadingTimeoutRef.current) {
-        clearTimeout(imageLoadingTimeoutRef.current);
-      }
-
-      setCurrentImage(stableImage);
-      setIsImageLoading(true);
-      setLoadFailed(false);
-
-      // Set a timeout to prevent infinite loading
-      imageLoadingTimeoutRef.current = setTimeout(() => {
-        setIsImageLoading(false);
-        failedImageUrlsRef.current.add(stableImage.image_url); // Mark as failed due to timeout
-        console.warn(`Image loading timed out for ${stableImage.image_url}`);
-      }, 5000); // 5 seconds timeout
-    } else {
-      // If no URL or URL previously failed
-      setCurrentImage(stableImage);
-      setIsImageLoading(false);
-      setLoadFailed(true);
-    }
-
-    // Cleanup function to clear timeout
-    return () => {
-      if (imageLoadingTimeoutRef.current) {
-        clearTimeout(imageLoadingTimeoutRef.current);
-      }
-    };
+    setCurrentImage(stableImage);
   }, [stableImage]);
 
   // Fetch images only once per item
