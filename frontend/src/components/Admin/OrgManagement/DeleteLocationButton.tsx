@@ -14,12 +14,14 @@ interface DeleteLocationButtonProps {
   locationId: string;
   locationName?: string;
   organizationId: string;
+  onDeleteSuccess?: () => void;
 }
 
 const DeleteLocationButton = ({
   locationId,
   locationName = "this location",
   organizationId,
+  onDeleteSuccess,
 }: DeleteLocationButtonProps) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
@@ -46,7 +48,6 @@ const DeleteLocationButton = ({
           },
         );
 
-        // Refresh the organization locations list
         await dispatch(
           fetchAllOrgLocations({
             orgId: organizationId,
@@ -54,12 +55,16 @@ const DeleteLocationButton = ({
             currentPage: 1,
           }),
         );
+
+        if (onDeleteSuccess) {
+          onDeleteSuccess();
+        }
       },
     });
   };
 
   return (
-    <Button variant="outline" size="sm" onClick={handleDelete}>
+    <Button variant="destructive" size="sm" onClick={handleDelete}>
       <Trash2 className="h-3 w-3 mr-1" />
       {t.deleteLocationButton.buttons.delete[lang]}
     </Button>
