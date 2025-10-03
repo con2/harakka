@@ -5,6 +5,12 @@ export const categories = {
       fi: "Hallinnoi kategorioita",
     },
   },
+  info: {
+    depthLimit: {
+      en: "Categories can only be nested up to 5 levels deep.",
+      fi: "Kategoriat voidaan sijoittaa enintään viidelle tasolle.",
+    },
+  },
   placeholders: {
     search: {
       en: "Search categories",

@@ -1,5 +1,6 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
+import { SupabaseClient } from "@supabase/supabase-js";
 import {
   CreateParamsDto,
   DeleteParamsDto,
@@ -9,9 +10,29 @@ import {
 import { getPaginationMeta, getPaginationRange } from "@src/utils/pagination";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 
+const MAX_SUBCATEGORIES = 5;
+
 @Injectable()
 export class CategoriesService {
   constructor(private supabaseService: SupabaseService) {}
+
+  private async assertParentHasCapacity(
+    supabase: SupabaseClient,
+    parentId: string,
+  ) {
+    const { count, error } = await supabase
+      .from("categories")
+      .select("id", { count: "exact", head: true })
+      .eq("parent_id", parentId);
+
+    if (error) handleSupabaseError(error);
+
+    if ((count ?? 0) >= MAX_SUBCATEGORIES) {
+      throw new BadRequestException(
+        `Parent category already has the maximum of ${MAX_SUBCATEGORIES} subcategories.`,
+      );
+    }
+  }
 
   /**
    * Get All Categories
@@ -51,6 +72,10 @@ export class CategoriesService {
   async createCategory(params: CreateParamsDto) {
     const { supabase, newCategory } = params;
 
+    if (newCategory.parent_id) {
+      await this.assertParentHasCapacity(supabase, newCategory.parent_id);
+    }
+
     const result = await supabase
       .from("categories")
       .insert(newCategory)
@@ -68,6 +93,29 @@ export class CategoriesService {
    */
   async updateCategory(params: UpdateParamsDto) {
     const { supabase, updateCategory, id } = params;
+
+    const { data: existingCategory, error: existingCategoryError } =
+      await supabase
+        .from("categories")
+        .select("parent_id")
+        .eq("id", id)
+        .single();
+
+    if (existingCategoryError) handleSupabaseError(existingCategoryError);
+
+    const currentParentId = existingCategory?.parent_id ?? null;
+    const parentProvided = Object.prototype.hasOwnProperty.call(
+      updateCategory,
+      "parent_id",
+    );
+    const nextParentId = parentProvided
+      ? (updateCategory.parent_id ?? null)
+      : currentParentId;
+
+    const parentChanged = nextParentId !== currentParentId;
+    if (nextParentId && parentChanged) {
+      await this.assertParentHasCapacity(supabase, nextParentId);
+    }
 
     const result = await supabase
       .from("categories")

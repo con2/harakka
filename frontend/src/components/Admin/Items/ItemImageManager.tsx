@@ -341,9 +341,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
               </Label>
               <Select
                 value={imageType}
-                onValueChange={(val: "main" | "detail") =>
-                  setImageType(val)
-                }
+                onValueChange={(val: "main" | "detail") => setImageType(val)}
               >
                 <SelectTrigger>
                   <SelectValue
