@@ -20,8 +20,8 @@ export const addLocationPage = {
         fi: "Syötä sijainnin nimi",
       },
       notVisibleToUsers: {
-        en: "Only the city name will be visible to users",
-        fi: "Käyttäjille näkyy vain kaupungin nimi",
+        en: "Only the city name will be visible to users. Full address is shown after booking confirmation.",
+        fi: "Käyttäjille näkyy vain kaupungin nimi. Vahvistuksen jälkeen näytetään koko osoite.",
       },
     },
     street: {
