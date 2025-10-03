@@ -36,6 +36,21 @@ interface ItemsCardProps {
   preview?: boolean;
 }
 
+// Utility function to sanitize image URLs
+function sanitizeImageUrl(url: string | undefined, fallback: string): string {
+  if (!url || typeof url !== "string") return fallback;
+  // Only allow http(s) URLs or relative (starting with / or .)
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("/") ||
+    url.startsWith(".")
+  ) {
+    return url;
+  }
+  return fallback;
+}
+
 const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -259,9 +274,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
           )}
           <img
             src={
-              item.images?.main?.url ||
-              currentImage.image_url ||
+            sanitizeImageUrl(
+              item.images?.main?.url || currentImage.image_url,
               imagePlaceholder
+            )
             }
             alt={itemContent?.item_name || "Tuotteen kuva"}
             className={cn(
