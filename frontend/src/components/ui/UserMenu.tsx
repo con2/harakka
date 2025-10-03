@@ -29,6 +29,7 @@ import { setRedirectUrl } from "@/store/slices/uiSlice";
 import { getOrgLabel } from "@/utils/format";
 import { t } from "@/translations";
 import { SUPPORTED_LANGUAGES } from "@/translations/SUPPORTED_LANGUAGES";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 
 export const UserMenu: React.FC = () => {
   const {
@@ -107,15 +108,16 @@ export const UserMenu: React.FC = () => {
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
       <DropdownMenuTrigger asChild className="text-primary">
         <button className="gap-3 p-1 px-2 h-fit flex items-center">
-          {avatarUrl && avatarUrl.trim() !== "" ? (
-            <img
+          <Avatar>
+            <AvatarImage
+              className="inline h-8 w-8 rounded-full"
               src={avatarUrl}
-              className="inline h-6 w-6 rounded-full"
-              alt=""
+              alt={t.userMenu.alt.userAvatar[lang]}
             />
-          ) : (
-            <UserIcon className="inline h-6 w-6 rounded-full" />
-          )}
+            <AvatarFallback>
+              <UserIcon className="h-8 w-8 text-muted-foreground rounded-full" />
+            </AvatarFallback>
+          </Avatar>
           <div className="flex flex-col text-start font-main flex-col">
             <p className="text-md">{userName || email}</p>
             <p className="text-xs !font-[var(--main-font)]">
