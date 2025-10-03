@@ -65,7 +65,7 @@ const AdminPanel = () => {
             <SidebarLink
               to="/admin/bookings"
               icon={<IncomingBookings aria-hidden className="w-6 h-5" />}
-              label={t.adminPanel.navigation.bookings[lang]}
+              label={t.adminPanel.navigation.bookingsIn[lang]}
               dataCy="admin-nav-bookings"
             />
           )}
@@ -73,7 +73,7 @@ const AdminPanel = () => {
             <SidebarLink
               to="/admin/requests"
               icon={<OutgoingBookings aria-hidden className="w-6 h-5" />}
-              label={t.adminPanel.navigation.requests[lang]}
+              label={t.adminPanel.navigation.bookingsOut[lang]}
               dataCy="admin-nav-bookings-out"
             />
           )}

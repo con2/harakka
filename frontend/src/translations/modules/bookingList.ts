@@ -2,8 +2,8 @@ import { common } from "./common";
 
 export const bookingList = {
   title: {
-    fi: "Hallinnoi tilauksia",
-    en: "Manage Bookings",
+    fi: "Hallinnoi saapuvia varauksia",
+    en: "Manage Incoming Bookings",
   },
   filters: {
     search: {
