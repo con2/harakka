@@ -39,7 +39,6 @@ const flattenValue = (
 
     value.forEach((item, index) => {
       if (typeof item === "object" && item !== null) {
-        // Handle nested objects in arrays (e.g., tag_translations)
         Object.entries(item).forEach(([key, nestedValue]) => {
           flattenValue(nestedValue, `${prefix}[${index}].${key}`, acc);
         });
@@ -68,8 +67,7 @@ const flattenValue = (
   }
 
   if (prefix) {
-    acc[prefix] =
-      typeof value === "object" ? JSON.stringify(value) : String(value);
+    acc[prefix] = serializeValue(value);
   }
 };
 
@@ -77,6 +75,27 @@ const flattenItem = (item: Record<string, unknown>): FlattenedItem => {
   const acc: FlattenedItem = {};
   flattenValue(item, "", acc);
   return acc;
+};
+
+const serializeValue = (value: unknown): string => {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint"
+  ) {
+    return String(value);
+  }
+
+  if (typeof value === "symbol") {
+    return value.description ?? value.toString();
+  }
+
+  return JSON.stringify(value);
 };
 
 const Reports: React.FC = () => {
