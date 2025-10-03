@@ -73,6 +73,29 @@
 - **Structured logging and audit trails**
 - Automated reminder system
 
+## Infrastructure Modules
+
+### JWT Service (`jwt/`)
+
+- **Custom JWT token management with Supabase Auth**
+- Features: Token generation, verification, refresh token handling
+- Integration: Works with Auth middleware and Supabase Auth
+- Types: Custom JWT payload interfaces and token pair management
+
+### Supabase Integration (`supabase/`)
+
+- **Database and Auth client management**
+- Provides authenticated and service-role clients
+- Foundation for all database operations and RLS policies
+- Features: Client factory, connection management, error handling
+
+### Application Root (`app/`)
+
+- **Root module and health check**
+- Endpoint: `/` (health check)
+- Imports and orchestrates all feature modules
+- Basic application status and monitoring
+
 ## Security Layer
 
 ### Guards
