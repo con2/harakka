@@ -12,6 +12,7 @@ import {
   RoleName,
 } from "../decorators/roles.decorator";
 import { AuthRequest } from "../middleware/interfaces/auth-request.interface";
+import { ViewUserRolesWithDetails } from "@common/role.types";
 
 /**
  * RolesGuard
@@ -40,7 +41,6 @@ import { AuthRequest } from "../middleware/interfaces/auth-request.interface";
  * 3. Otherwise the caller must:
  *    - hold the required role(s) according to `match`,
  *    - optionally belong to the same organisation when `sameOrg` is `true`.
- * 4. Users with the `super_admin` role bypass all checks.
  *
  * @see Roles
  * @see Public
@@ -66,10 +66,18 @@ export class RolesGuard implements CanActivate {
 
     const { roles: required, match = "any", sameOrg } = meta;
     const req = context.switchToHttp().getRequest<AuthRequest>();
-    const userRoles = req.user?.app_metadata?.roles ?? [];
-
-    // Optional super_admin bypass
-    //if (userRoles.some((r) => r.role_name === "super_admin")) return true;
+    // Added to support testing with mock contexts
+    const requestRoles = req.userRoles as
+      | ViewUserRolesWithDetails[]
+      | undefined;
+    const metadataRoles = req.user?.app_metadata?.roles as
+      | ViewUserRolesWithDetails[]
+      | undefined;
+    const userRoles = Array.isArray(requestRoles)
+      ? requestRoles
+      : Array.isArray(metadataRoles)
+        ? metadataRoles
+        : [];
 
     //Allow "user" role to access/modify their own user resource
     if (
@@ -87,11 +95,10 @@ export class RolesGuard implements CanActivate {
 
     // Determine organisation context when sameOrg flag is set
     const orgCtx = sameOrg ? req.activeRoleContext?.organizationId : undefined;
-    const roleCtx = sameOrg ? req.activeRoleContext?.roleName : undefined;
-    // If sameOrg is required, but orgId or roleName is missing — forbid access
-    if (sameOrg && (!orgCtx || !roleCtx)) {
+    // If sameOrg is required, but orgId is missing — forbid access
+    if (sameOrg && !orgCtx) {
       throw new ForbiddenException(
-        "Organization context or role is missing (check request headers (Postman) or activeRoleContext (frontend)",
+        "Organization context is missing (check request headers or activeRoleContext)",
       );
     }
 

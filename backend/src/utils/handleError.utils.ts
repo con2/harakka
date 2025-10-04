@@ -3,11 +3,44 @@ import {
   ConflictException,
   ForbiddenException,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
   NotAcceptableException,
 } from "@nestjs/common";
 import { PostgrestError } from "@supabase/supabase-js";
 import { StorageError } from "@supabase/storage-js";
+
+const GENERIC_ERROR_MESSAGES = {
+  badRequest: "Invalid request.",
+  conflict: "Resource already exists.",
+  forbidden: "You do not have permission to perform this action.",
+  internal: "Unexpected server error. Please try again later.",
+  notAcceptable: "Request cannot be fulfilled.",
+  notFound: "Resource not found.",
+} as const;
+
+type GenericMessageKey = keyof typeof GENERIC_ERROR_MESSAGES;
+
+interface HandleSupabaseErrorOptions {
+  messageOverrides?: Partial<Record<GenericMessageKey, string>>;
+  loggerContext?: Record<string, unknown>;
+}
+
+const logger = new Logger("SupabaseErrorHandler");
+
+function isProductionEnvironment(): boolean {
+  return (process.env.NODE_ENV || "").toLowerCase() === "production";
+}
+
+function getClientMessage(
+  detailedMessage: string,
+  fallbackKey: GenericMessageKey,
+  overrideFallback?: string,
+): string {
+  const fallback = overrideFallback ?? GENERIC_ERROR_MESSAGES[fallbackKey];
+  const message = detailedMessage?.trim() ? detailedMessage : fallback;
+  return isProductionEnvironment() ? fallback : message;
+}
 
 /**
  * Maps a Supabase {@link PostgrestError} or {@link StorageError} to an appropriate NestJS `HttpException`
@@ -50,35 +83,60 @@ import { StorageError } from "@supabase/storage-js";
 
 export function handleSupabaseError(
   error: PostgrestError | StorageError,
+  options: HandleSupabaseErrorOptions = {},
 ): never {
+  const overrides = options.messageOverrides ?? {};
   // Handle StorageError (has statusCode property)
   if ("statusCode" in error) {
+    logger.error({
+      context: "SupabaseStorageError",
+      statusCode: error.statusCode,
+      message: error.message,
+      details: error,
+      ...(options.loggerContext ?? {}),
+    });
     switch (error.statusCode) {
       case "404":
       case 404:
         throw new NotFoundException({
           success: false,
-          message: error.message,
+          message: getClientMessage(
+            error.message,
+            "notFound",
+            overrides.notFound,
+          ),
           code: error.statusCode,
         });
       case "401":
       case 401:
         throw new ForbiddenException({
           success: false,
-          message: error.message,
+          message: getClientMessage(
+            error.message,
+            "forbidden",
+            overrides.forbidden,
+          ),
           code: error.statusCode,
         });
       case "400":
       case 400:
         throw new BadRequestException({
           success: false,
-          message: error.message,
+          message: getClientMessage(
+            error.message,
+            "badRequest",
+            overrides.badRequest,
+          ),
           code: error.statusCode,
         });
       default:
         throw new InternalServerErrorException({
           success: false,
-          message: error.message,
+          message: getClientMessage(
+            error.message,
+            "internal",
+            overrides.internal,
+          ),
           code: error.statusCode,
         });
     }
@@ -89,33 +147,55 @@ export function handleSupabaseError(
   // https://www.postgresql.org/docs/current/errcodes-appendix.html
   // https://postgrest.org/en/stable/errors.html
   const pgError = error as PostgrestError;
+  logger.error({
+    context: "SupabasePostgrestError",
+    code: pgError.code,
+    message: pgError.message,
+    details: pgError,
+    ...(options.loggerContext ?? {}),
+  });
   switch (pgError.code) {
     case "42P01": // undefined_table (e.g., missing view/table)
       throw new NotFoundException({
         success: false,
-        message:
+        message: getClientMessage(
           pgError.message ||
-          "Database object not found (did you run latest migrations?)",
+            "Database object not found (did you run latest migrations?)",
+          "notFound",
+          overrides.notFound,
+        ),
         code: pgError.code,
       });
     case "23505": // unique_violation
       throw new ConflictException({
         success: false,
-        message: pgError.message,
+        message: getClientMessage(
+          pgError.message,
+          "conflict",
+          overrides.conflict,
+        ),
         code: pgError.code,
       });
 
     case "23503": // foreign_key_violation
       throw new BadRequestException({
         success: false,
-        message: pgError.message,
+        message: getClientMessage(
+          pgError.message,
+          "badRequest",
+          overrides.badRequest,
+        ),
         code: pgError.code,
       });
 
     case "23502": // not_null_violation
       throw new BadRequestException({
         success: false,
-        message: pgError.message,
+        message: getClientMessage(
+          pgError.message,
+          "badRequest",
+          overrides.badRequest,
+        ),
         code: pgError.code,
       });
 
@@ -123,28 +203,56 @@ export function handleSupabaseError(
     case "PGRST100": // PostgREST invalid input
       throw new BadRequestException({
         success: false,
-        message: pgError.message,
+        message: getClientMessage(
+          pgError.message,
+          "badRequest",
+          overrides.badRequest,
+        ),
+        code: pgError.code,
+      });
+
+    case "42703": // undefined_column (likely schema drift)
+    case "42601": // syntax_error
+      throw new InternalServerErrorException({
+        success: false,
+        message: getClientMessage(
+          pgError.message,
+          "internal",
+          overrides.internal,
+        ),
         code: pgError.code,
       });
 
     case "PGRST202": // Function or resource not found in schema cache (HTTP 404)
       throw new NotFoundException({
         success: false,
-        message: pgError.message,
+        message: getClientMessage(
+          pgError.message,
+          "notFound",
+          overrides.notFound,
+        ),
         code: pgError.code,
       });
 
     case "404": // Some clients surface string "404"
       throw new NotFoundException({
         success: false,
-        message: pgError.message,
+        message: getClientMessage(
+          pgError.message,
+          "notFound",
+          overrides.notFound,
+        ),
         code: pgError.code,
       });
 
     case "PGRST116": // Singular response expected exactly one row (HTTP 406)
       throw new NotAcceptableException({
         success: false,
-        message: pgError.message,
+        message: getClientMessage(
+          pgError.message,
+          "notAcceptable",
+          overrides.notAcceptable,
+        ),
         code: pgError.code,
       });
 
@@ -152,7 +260,11 @@ export function handleSupabaseError(
     case "PGRST128": // PostgREST permission denied
       throw new ForbiddenException({
         success: false,
-        message: pgError.message,
+        message: getClientMessage(
+          pgError.message,
+          "forbidden",
+          overrides.forbidden,
+        ),
         code: pgError.code,
       });
 
@@ -160,7 +272,11 @@ export function handleSupabaseError(
       // Fallback – treat anything else as an internal server error
       throw new InternalServerErrorException({
         success: false,
-        message: pgError.message,
+        message: getClientMessage(
+          pgError.message,
+          "internal",
+          overrides.internal,
+        ),
         code: pgError.code,
       });
   }

@@ -74,8 +74,13 @@ describe("getUniqueLocationIDs", () => {
 });
 
 describe("dayDiffFromToday", () => {
-  const testDate = new Date();
-  const todaysDate = new Date();
+  let testDate: Date;
+  let todaysDate: Date;
+
+  beforeEach(() => {
+    todaysDate = new Date();
+    testDate = new Date(todaysDate);
+  });
 
   it("5 days before today should return -5", () => {
     const expected = -5;
