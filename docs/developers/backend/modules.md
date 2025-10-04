@@ -108,7 +108,7 @@
 - **`Auth.middleware.ts`** - Authentication preprocessing
 - Request sanitization and validation
 
-## 🔍 Module Dependencies
+## Module Dependencies
 
 ```mermaid
 graph TD
