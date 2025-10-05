@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   fetchAllAdminItems,
   selectAllItems,
@@ -10,6 +11,7 @@ import { LoaderCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CSVLink } from "react-csv";
 import { itemsApi } from "@/api/services/items";
+import { t } from "@/translations";
 
 type FlattenedItem = Record<string, string>;
 
@@ -116,12 +118,15 @@ const Reports: React.FC = () => {
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
 
+  const { lang } = useLanguage();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isFetching, setIsFetching] = useState(false);
   const [availabilityData, setAvailabilityData] = useState<
     Record<string, number>
   >({});
 
+  // Define allColumns as readonly
   const allColumns = [
     "RowNumber",
     "en_item_name",
@@ -138,23 +143,32 @@ const Reports: React.FC = () => {
     "id",
     "created_at",
     "updated_at",
-  ];
+  ] as const;
 
-  const [selectedColumns, setSelectedColumns] = useState<string[]>(() => {
+  type ColumnKey = (typeof allColumns)[number];
+
+  const [selectedColumns, setSelectedColumns] = useState<ColumnKey[]>(() => {
     // Retrieve saved columns from local storage or use all columns by default
     const savedColumns = localStorage.getItem("selectedColumns");
-    return savedColumns ? JSON.parse(savedColumns) : allColumns;
+    return savedColumns
+      ? (JSON.parse(savedColumns) as ColumnKey[])
+      : [...allColumns]; // Convert readonly array to mutable array
   });
 
-  const handleColumnToggle = (column: string) => {
+  const handleColumnToggle = (column: ColumnKey) => {
     setSelectedColumns((prev) => {
       const updatedColumns = prev.includes(column)
         ? prev.filter((col) => col !== column)
         : [...prev, column];
 
+      // Ensure the order matches allColumns
+      const orderedColumns = allColumns.filter((col) =>
+        updatedColumns.includes(col),
+      );
+
       // Save updated columns to local storage
-      localStorage.setItem("selectedColumns", JSON.stringify(updatedColumns));
-      return updatedColumns;
+      localStorage.setItem("selectedColumns", JSON.stringify(orderedColumns));
+      return orderedColumns;
     });
   };
 
@@ -213,18 +227,21 @@ const Reports: React.FC = () => {
   }, [items, availabilityData]);
 
   const csvHeaders = useMemo(() => {
-    return selectedColumns.map((key) => ({ label: key, key }));
-  }, [selectedColumns]);
+    return selectedColumns.map((key) => ({
+      label: t.reports.columns[key][lang], // Use translated column names
+      key,
+    }));
+  }, [selectedColumns, lang]);
 
   const hasData = flattenedItems.length > 0 && csvHeaders.length > 0;
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Items Report</h1>
+      <h1 className="text-2xl font-bold">{t.reports.title[lang]}</h1>
 
       <div className="flex items-center justify-between">
         <Input
-          placeholder="Search items..."
+          placeholder={t.reports.searchPlaceholder[lang]}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full max-w-md"
@@ -234,12 +251,16 @@ const Reports: React.FC = () => {
           className="ml-4 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
           disabled={isFetching}
         >
-          {isFetching ? "Fetching..." : "Fetch Report"}
+          {isFetching
+            ? t.reports.fetchingButton[lang]
+            : t.reports.fetchButton[lang]}
         </button>
       </div>
 
       <div className="mt-4">
-        <h2 className="text-lg font-semibold">Select Columns</h2>
+        <h2 className="text-lg font-semibold">
+          {t.reports.selectColumns[lang]}
+        </h2>
         <div className="grid grid-cols-2 gap-2">
           {allColumns.map((column) => (
             <label key={column} className="flex items-center space-x-2">
@@ -248,7 +269,7 @@ const Reports: React.FC = () => {
                 checked={selectedColumns.includes(column)}
                 onChange={() => handleColumnToggle(column)}
               />
-              <span>{column}</span>
+              <span>{t.reports.columns[column][lang]}</span>
             </label>
           ))}
         </div>
@@ -268,10 +289,10 @@ const Reports: React.FC = () => {
             filename="items_report.csv"
             className="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
           >
-            Download CSV
+            {t.reports.downloadCSV[lang]}
           </CSVLink>
         ) : (
-          <div className="p-4">No data available to download.</div>
+          <div className="p-4">{t.reports.noData[lang]}</div>
         )}
       </div>
     </div>
