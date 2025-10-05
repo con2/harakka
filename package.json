@@ -103,6 +103,7 @@
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.49.0",
+    "prop-types": "^15.8.1",
     "react-csv": "^2.2.2",
     "supabase": "^2.47.2"
   }

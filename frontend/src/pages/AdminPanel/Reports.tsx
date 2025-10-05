@@ -9,6 +9,7 @@ import {
 import { LoaderCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CSVLink } from "react-csv";
+import { itemsApi } from "@/api/services/items";
 
 type FlattenedItem = Record<string, string>;
 
@@ -117,17 +118,49 @@ const Reports: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isFetching, setIsFetching] = useState(false);
+  const [availabilityData, setAvailabilityData] = useState<
+    Record<string, number>
+  >({});
 
   const handleFetchReport = async () => {
     setIsFetching(true);
-    await dispatch(
-      fetchAllAdminItems({
-        page: 1,
-        limit: Number.MAX_SAFE_INTEGER,
-        searchquery: searchTerm || undefined,
-      }),
-    );
-    setIsFetching(false);
+
+    try {
+      // 1. Fetch all admin items and wait for the state to update
+      const adminItemsResponse = await dispatch(
+        fetchAllAdminItems({
+          page: 1,
+          limit: Number.MAX_SAFE_INTEGER,
+          searchquery: searchTerm || undefined,
+        }),
+      ).unwrap();
+
+      // 2. Collect item IDs from the updated items state
+      const itemIds = adminItemsResponse.data
+        ? adminItemsResponse.data.map((item) => item.id)
+        : [];
+
+      // 3. Fetch availability data for the collected item IDs
+      const now = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
+      const availabilityResponse = await itemsApi.getAvailabilityOverview({
+        startDate: now,
+        endDate: now,
+        itemIds,
+      });
+
+      // 4. Update availability data state
+      if (availabilityResponse.data) {
+        const availabilityMap: Record<string, number> = {};
+        availabilityResponse.data.forEach((item) => {
+          availabilityMap[item.item_id] = item.availableQuantity;
+        });
+        setAvailabilityData(availabilityMap);
+      }
+    } catch (err) {
+      console.error("Failed to fetch report data", err);
+    } finally {
+      setIsFetching(false);
+    }
   };
 
   const flattenedItems = useMemo(() => {
@@ -137,8 +170,9 @@ const Reports: React.FC = () => {
     return items.map((item, index) => ({
       RowNumber: (index + 1).toString(), // Add a numeration column
       ...flattenItem(item as Record<string, unknown>),
+      available_quantity: availabilityData[item.id]?.toString() || "0", // Use fetched availability data
     }));
-  }, [items]);
+  }, [items, availabilityData]);
 
   const csvHeaders = useMemo(() => {
     // Define the desired column order
@@ -153,7 +187,6 @@ const Reports: React.FC = () => {
       "category_en_name",
       "category_fi_name",
       "is_active",
-      "is_deleted",
       "location_name",
       "placement_description",
       "id",
