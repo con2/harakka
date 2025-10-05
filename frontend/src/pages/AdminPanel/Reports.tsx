@@ -122,6 +122,42 @@ const Reports: React.FC = () => {
     Record<string, number>
   >({});
 
+  const allColumns = [
+    "RowNumber",
+    "en_item_name",
+    "en_item_description",
+    "fi_item_name",
+    "fi_item_description",
+    "quantity",
+    "available_quantity",
+    "category_en_name",
+    "category_fi_name",
+    "is_active",
+    "location_name",
+    "placement_description",
+    "id",
+    "created_at",
+    "updated_at",
+  ];
+
+  const [selectedColumns, setSelectedColumns] = useState<string[]>(() => {
+    // Retrieve saved columns from local storage or use all columns by default
+    const savedColumns = localStorage.getItem("selectedColumns");
+    return savedColumns ? JSON.parse(savedColumns) : allColumns;
+  });
+
+  const handleColumnToggle = (column: string) => {
+    setSelectedColumns((prev) => {
+      const updatedColumns = prev.includes(column)
+        ? prev.filter((col) => col !== column)
+        : [...prev, column];
+
+      // Save updated columns to local storage
+      localStorage.setItem("selectedColumns", JSON.stringify(updatedColumns));
+      return updatedColumns;
+    });
+  };
+
   const handleFetchReport = async () => {
     setIsFetching(true);
 
@@ -146,6 +182,8 @@ const Reports: React.FC = () => {
         startDate: now,
         endDate: now,
         itemIds,
+        page: 1,
+        limit: Number.MAX_SAFE_INTEGER,
       });
 
       // 4. Update availability data state
@@ -170,41 +208,13 @@ const Reports: React.FC = () => {
     return items.map((item, index) => ({
       RowNumber: (index + 1).toString(), // Add a numeration column
       ...flattenItem(item as Record<string, unknown>),
-      available_quantity: availabilityData[item.id]?.toString() || "0", // Use fetched availability data
+      available_quantity: availabilityData[item.id]?.toString(), // use fetched availability data
     }));
   }, [items, availabilityData]);
 
   const csvHeaders = useMemo(() => {
-    // Define the desired column order
-    const desiredOrder = [
-      "RowNumber",
-      "en_item_name",
-      "en_item_description",
-      "fi_item_name",
-      "fi_item_description",
-      "quantity",
-      "available_quantity",
-      "category_en_name",
-      "category_fi_name",
-      "is_active",
-      "location_name",
-      "placement_description",
-      "id",
-      "created_at",
-      "updated_at",
-    ];
-
-    // Ensure only columns present in the flattened items are included
-    const headerSet = new Set<string>();
-    flattenedItems.forEach((item) => {
-      Object.keys(item).forEach((key) => headerSet.add(key));
-    });
-
-    // Filter and order headers based on the desired order
-    const reorderedHeaders = desiredOrder.filter((key) => headerSet.has(key));
-
-    return reorderedHeaders.map((key) => ({ label: key, key }));
-  }, [flattenedItems]);
+    return selectedColumns.map((key) => ({ label: key, key }));
+  }, [selectedColumns]);
 
   const hasData = flattenedItems.length > 0 && csvHeaders.length > 0;
 
@@ -226,6 +236,22 @@ const Reports: React.FC = () => {
         >
           {isFetching ? "Fetching..." : "Fetch Report"}
         </button>
+      </div>
+
+      <div className="mt-4">
+        <h2 className="text-lg font-semibold">Select Columns</h2>
+        <div className="grid grid-cols-2 gap-2">
+          {allColumns.map((column) => (
+            <label key={column} className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={selectedColumns.includes(column)}
+                onChange={() => handleColumnToggle(column)}
+              />
+              <span>{column}</span>
+            </label>
+          ))}
+        </div>
       </div>
 
       <div className="mt-4">
