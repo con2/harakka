@@ -24,7 +24,7 @@ const flattenValue = (
 ): void => {
   if (value === null || value === undefined) {
     if (prefix) {
-      acc[prefix] = "";
+      acc[prefix] = "N/A"; // Replace empty values with "N/A"
     }
     return;
   }
@@ -38,7 +38,7 @@ const flattenValue = (
     }
 
     if (value.length === 0) {
-      acc[prefix] = "";
+      acc[prefix] = "N/A"; // Replace empty values with "N/A"
       return;
     }
 
@@ -59,7 +59,7 @@ const flattenValue = (
 
     if (entries.length === 0) {
       if (prefix) {
-        acc[prefix] = "";
+        acc[prefix] = "N/A"; // Replace empty values with "N/A"
       }
       return;
     }
