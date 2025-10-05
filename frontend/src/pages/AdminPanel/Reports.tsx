@@ -9,9 +9,11 @@ import {
 } from "@/store/slices/itemsSlice";
 import { LoaderCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { CSVLink } from "react-csv";
 import { itemsApi } from "@/api/services/items";
 import { t } from "@/translations";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type FlattenedItem = Record<string, string>;
 
@@ -237,37 +239,45 @@ const Reports: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">{t.reports.title[lang]}</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-xl">{t.reports.title[lang]}</h1>
+      </div>
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
+        <div className="flex gap-4 items-center">
+          {/* Search Input */}
+          <div className="relative w-full sm:max-w-xs bg-white rounded-md">
+            <Input
+              placeholder={t.reports.searchPlaceholder[lang]}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-9 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
+            />
+          </div>
 
-      <div className="flex items-center justify-between">
-        <Input
-          placeholder={t.reports.searchPlaceholder[lang]}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full max-w-md"
-        />
-        <button
-          onClick={handleFetchReport}
-          className="ml-4 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-          disabled={isFetching}
-        >
-          {isFetching
-            ? t.reports.fetchingButton[lang]
-            : t.reports.fetchButton[lang]}
-        </button>
+          {/* Fetch Report Button */}
+          <Button
+            onClick={handleFetchReport}
+            variant="outline"
+            disabled={isFetching}
+          >
+            {isFetching
+              ? t.reports.fetchingButton[lang]
+              : t.reports.fetchButton[lang]}
+          </Button>
+        </div>
       </div>
 
       <div className="mt-4">
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-lg font-semibold text-secondary">
           {t.reports.selectColumns[lang]}
         </h2>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-4">
           {allColumns.map((column) => (
             <label key={column} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={selectedColumns.includes(column)}
-                onChange={() => handleColumnToggle(column)}
+                onCheckedChange={() => handleColumnToggle(column)}
+                className="mr-2 h-4 w-4 border border-secondary bg-white text-white data-[state=checked]:bg-secondary data-[state=checked]:text-white relative z-10"
               />
               <span>{t.reports.columns[column][lang]}</span>
             </label>
@@ -278,21 +288,22 @@ const Reports: React.FC = () => {
       <div className="mt-4">
         {loading ? (
           <div className="flex justify-center p-8">
-            <LoaderCircle className="animate-spin" />
+            <LoaderCircle className="animate-spin text-primary" />
           </div>
         ) : error ? (
           <div className="p-4 text-destructive">{error}</div>
         ) : hasData ? (
-          <CSVLink
-            data={flattenedItems}
-            headers={csvHeaders}
-            filename="items_report.csv"
-            className="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
-          >
-            {t.reports.downloadCSV[lang]}
-          </CSVLink>
+          <Button variant="default" disabled={isFetching}>
+            <CSVLink
+              data={flattenedItems}
+              headers={csvHeaders}
+              filename="items_report.csv"
+            >
+              {t.reports.downloadCSV[lang]}
+            </CSVLink>
+          </Button>
         ) : (
-          <div className="p-4">{t.reports.noData[lang]}</div>
+          <div className="p-4 text-muted">{t.reports.noData[lang]}</div>
         )}
       </div>
     </div>
