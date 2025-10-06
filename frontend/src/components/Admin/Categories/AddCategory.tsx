@@ -101,7 +101,6 @@ function AddCategory() {
   };
 
   const onInvalidSubmit: SubmitErrorHandler<Category> = (errors) => {
-    console.log(errors);
     if (errors.translations) {
       toast.error(t.addCategory.messages.validation.translations?.[lang]);
     } else {
