@@ -78,16 +78,18 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
               <ChevronRight />
             </Button>
             <Button onClick={() => handleNavigation("/cart")}>
-              {t.mobileMenu.buttons.cart[lang]} <ChevronRight />
+              {t.mobileMenu.buttons.cart[lang]}
+              <ChevronRight />
             </Button>
+            {isLoggedIn && (
+              <Button onClick={() => handleNavigation("/my-bookings")}>
+                {t.mobileMenu.buttons.myBookings[lang]} <ChevronRight />
+              </Button>
+            )}
             {isGlobalUser && (
               <>
                 <Button onClick={() => handleNavigation("/how-it-works")}>
                   {t.mobileMenu.buttons.guide[lang]}
-                  <ChevronRight />
-                </Button>
-                <Button onClick={() => handleNavigation("/my-bookings")}>
-                  {t.mobileMenu.buttons.myBookings[lang]}
                   <ChevronRight />
                 </Button>
                 <Button onClick={() => handleNavigation("/organizations")}>
@@ -132,7 +134,13 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
             )}
             {(isTenantAdmin || isStorageManager) && (
               <Button onClick={() => handleNavigation("/admin/bookings")}>
-                {t.adminPanel.navigation.bookings[lang]}
+                {t.adminPanel.navigation.bookingsIn[lang]}
+                <ChevronRight />
+              </Button>
+            )}
+            {(isTenantAdmin || isStorageManager || isRequester) && (
+              <Button onClick={() => handleNavigation("/admin/requests")}>
+                {t.adminPanel.navigation.bookingsOut[lang]}
                 <ChevronRight />
               </Button>
             )}
@@ -157,12 +165,6 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
             {isSuperAdmin && (
               <Button onClick={() => handleNavigation("/admin/logs")}>
                 {t.adminPanel.navigation.logs[lang]}
-                <ChevronRight />
-              </Button>
-            )}
-            {(isStorageManager || isTenantAdmin || isRequester) && (
-              <Button onClick={() => handleNavigation("/admin/requests")}>
-                {t.mobileMenu.buttons.orgBookings[lang]}
                 <ChevronRight />
               </Button>
             )}
