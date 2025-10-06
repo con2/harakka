@@ -72,13 +72,21 @@ export const NotificationMobile: React.FC<Props> = ({
       {/* Notification Panel */}
       <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
         <SheetContent side="top" hideClose className="w-[90vw] sm:max-w-sm p-0">
+          {/* Header */}
           <div className="p-3 border-b flex items-center justify-between gap-2 flex-wrap">
             {/* Notifications title (SheetTitle for accessibility) */}
             <div className="flex flex-col min-w-0">
-              <SheetTitle className="text-base font-medium truncate">
+              <Button
+                variant="ghost"
+                onClick={() => setPanelOpen(false)}
+                className="text-base font-medium p-0 h-auto text-left justify-start hover:underline"
+              >
+                {t.navigation.notifications.label?.[lang] || "Close"}
+              </Button>
+              {/* Visually hidden description to satisfy Dialog a11y */}
+              <SheetTitle className="sr-only">
                 {t.navigation.notifications.label[lang]}
               </SheetTitle>
-              {/* Visually hidden description to satisfy Dialog a11y */}
               <SheetDescription className="sr-only">
                 View and manage your notifications.
               </SheetDescription>
