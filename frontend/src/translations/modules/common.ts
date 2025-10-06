@@ -72,6 +72,18 @@ export const common = {
     fi: "Tila",
     en: "Status",
   },
+  startDate: {
+    en: "Start Date",
+    fi: "Aloituspäivämäärä",
+  },
+  endDate: {
+    en: "End Date",
+    fi: "Lopetuspäivämäärä",
+  },
+  date: {
+    en: "Date",
+    fi: "Päivämäärä",
+  },
   // Globally used roles
   roles: {
     role: {
@@ -171,6 +183,24 @@ export const common = {
     yourOrg: {
       en: "your organization",
       fi: "sinun organisaatiosi",
+    },
+  },
+  filters: {
+    sortOrder: {
+      en: "Sort Order",
+      fi: "Lajittelujärjestys",
+    },
+    sortBy: {
+      en: "Sort By",
+      fi: "Lajitteluperuste",
+    },
+    ascending: {
+      en: "Ascending",
+      fi: "Nouseva",
+    },
+    descending: {
+      en: "Descending",
+      fi: "Laskeva",
     },
   },
 };

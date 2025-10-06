@@ -14,16 +14,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { cn } from "@/lib/utils";
 
-// type Translation = {
-//   en: string;
-//   fi: string;
-// };
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -115,7 +111,7 @@ export function PaginatedDataTable<TData, TValue>({
   return (
     <div className="space-y-2">
       <div className="rounded-md border-none overflow-x-auto max-w-full">
-        <Table className="w-full min-w-[600px]">
+        <Table className="w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -149,14 +145,21 @@ export function PaginatedDataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
+                const props = rowProps?.(row) ?? {};
+
                 return (
                   <TableRow
                     key={row.id}
                     role={hasOnClick(row) ? "button" : "row"}
-                    className={`h-10 hover:cursor-pointer ${highlight?.includes(row.index) ? "bg-green-50" : ""}`}
+                    className={cn(
+                      "h-10",
+                      highlight?.includes(row.index) && "bg-green-50",
+                      props.className,
+                    )}
+                    style={props.style}
                     data-state={row.getIsSelected() && "selected"}
                     data-higlighted={highlight?.includes(row.index)}
-                    {...(rowProps?.(row) ?? {})}
+                    {...props}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="truncate">

@@ -12,7 +12,6 @@ import {
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { LoaderCircle, Calendar, Package } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
@@ -21,6 +20,7 @@ import { BookingWithDetails } from "@/types";
 import { BookingItemWithDetails } from "@/types/booking";
 import CalendarSend from "@/assets/calendar-send-icon.svg?react";
 import { formatDate } from "date-fns";
+import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 
 interface BookingItemDisplayProps {
   item: BookingItemWithDetails;
@@ -83,9 +83,12 @@ const BookingConfirmation: React.FC = () => {
   ) as BookingWithDetails | null;
   const isLoading = useAppSelector(selectBookingLoading);
   const userProfile = useAppSelector(selectSelectedUser);
+  const { roleName: activeRole } = useAppSelector(selectActiveRoleContext);
 
   // Add language support
   const { lang } = useLanguage();
+  const REQUESTER_ROLES = ["requester", "tenant_admin", "storage_manager"];
+  const BOOKED_BY_ORG = REQUESTER_ROLES.includes(activeRole!);
 
   function groupBookingItemsByOrg(
     booking: BookingWithDetails | null,
@@ -129,7 +132,7 @@ const BookingConfirmation: React.FC = () => {
   return (
     <div className="container mx-auto p-8 max-w-2xl">
       <Card className="overflow-hidden">
-        <CardHeader className="text-center space-y-2">
+        <CardHeader className="text-center space-y-2 mb-6">
           <div className="flex items-center gap-4 justify-center">
             <CalendarSend className="w-30 h-30 *:stroke-blue-400" />
           </div>
@@ -259,11 +262,11 @@ const BookingConfirmation: React.FC = () => {
             </div>
           )}
 
-          <Separator className="my-6" />
-
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center mt-8">
             <Button
-              onClick={() => navigate("/my-bookings")}
+              onClick={() =>
+                navigate(BOOKED_BY_ORG ? "/admin/requests" : "/my-bookings")
+              }
               className="flex-1 bg-background text-secondary border-secondary border hover:bg-secondary hover:text-white"
             >
               {t.bookingConfirmation.buttons.viewBookings[lang]}

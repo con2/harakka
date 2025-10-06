@@ -6,15 +6,17 @@ import {
   LayoutDashboard,
   PinIcon,
   Settings,
-  ShoppingBag,
   Users,
   Warehouse,
   Building2,
   MapPin,
   LayoutGrid,
+  BarChart2,
 } from "lucide-react";
 import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import IncomingBookings from "@/assets/incoming_bookings.svg?react";
+import OutgoingBookings from "@/assets/outgoing_bookings.svg?react";
 
 const AdminPanel = () => {
   const { lang } = useLanguage();
@@ -63,9 +65,17 @@ const AdminPanel = () => {
           {hasAnyRole(["storage_manager", "tenant_admin"]) && (
             <SidebarLink
               to="/admin/bookings"
-              icon={<ShoppingBag aria-hidden className="w-6 h-5" />}
-              label={t.adminPanel.navigation.bookings[lang]}
+              icon={<IncomingBookings aria-hidden className="w-6 h-5" />}
+              label={t.adminPanel.navigation.bookingsIn[lang]}
               dataCy="admin-nav-bookings"
+            />
+          )}
+          {hasAnyRole(["requester", "storage_manager", "tenant_admin"]) && (
+            <SidebarLink
+              to="/admin/requests"
+              icon={<OutgoingBookings aria-hidden className="w-6 h-5" />}
+              label={t.adminPanel.navigation.bookingsOut[lang]}
+              dataCy="admin-nav-bookings-out"
             />
           )}
 
@@ -121,6 +131,15 @@ const AdminPanel = () => {
               icon={<MapPin aria-hidden className="w-5 h-5" />}
               label={t.adminPanel.navigation.locations[lang]}
               dataCy="admin-nav-locations"
+            />
+          )}
+
+          {hasAnyRole(["tenant_admin", "storage_manager"]) && (
+            <SidebarLink
+              to="/admin/reports"
+              icon={<BarChart2 aria-hidden className="w-5 h-5" />}
+              label={t.adminPanel.navigation.reports[lang]}
+              dataCy="admin-nav-reports"
             />
           )}
 

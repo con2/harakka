@@ -56,6 +56,10 @@ export const addItemForm = {
       en: "Go to summary",
       fi: "Siirry yhteenvetoon",
     },
+    loadMoreTags: {
+      en: "more",
+      fi: "lisää",
+    },
   },
   headings: {
     itemDetails: {

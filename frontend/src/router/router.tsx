@@ -21,7 +21,11 @@ import Organizations from "@/pages/AdminPanel/Organizations";
 import OrganizationDetailsPage from "@/pages/AdminPanel/OrganizationDetailsPage";
 import CreateOrganizationPage from "@/pages/AdminPanel/CreateOrganizationPage";
 import OrganizationLocations from "@/pages/AdminPanel/OrganizationLocations";
+import AddLocationPage from "@/components/Admin/OrgManagement/AddLocationPage";
+import EditLocationPage from "@/components/Admin/OrgManagement/EditLocationPage";
 import Categories from "@/pages/AdminPanel/Categories";
+import Requests from "@/pages/AdminPanel/Requests/Requests";
+import RequestDetailsPage from "@/pages/AdminPanel/Requests/RequestDetailsPage";
 
 // General
 import LandingPage from "@/pages/LandingPage";
@@ -48,6 +52,7 @@ import OrganizationsList from "../components/Organization/OrganizationsList";
 import ItemDetailsPage from "@/pages/AdminPanel/ItemDetailsPage";
 import AddCategory from "@/components/Admin/Categories/AddCategory";
 import MyBookings from "@/pages/MyBookings";
+import Reports from "@/pages/AdminPanel/Reports";
 
 export const router = createBrowserRouter([
   {
@@ -117,7 +122,12 @@ export const router = createBrowserRouter([
         path: "/admin",
         element: (
           <ProtectedRoute
-            allowedRoles={["storage_manager", "tenant_admin", "super_admin"]}
+            allowedRoles={[
+              "requester",
+              "storage_manager",
+              "tenant_admin",
+              "super_admin",
+            ]}
           >
             <AdminPanel />
           </ProtectedRoute>
@@ -167,6 +177,26 @@ export const router = createBrowserRouter([
                 allowedRoles={["storage_manager", "tenant_admin"]}
               >
                 <BookingList />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "requests",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["requester", "storage_manager", "tenant_admin"]}
+              >
+                <Requests />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "requests/:id",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["requester", "storage_manager", "tenant_admin"]}
+              >
+                <RequestDetailsPage />
               </ProtectedRoute>
             ),
           },
@@ -263,6 +293,26 @@ export const router = createBrowserRouter([
             ),
           },
           {
+            path: "locations/add",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
+                <AddLocationPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "locations/:id",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
+                <EditLocationPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
             path: "categories",
             element: (
               <ProtectedRoute
@@ -279,6 +329,16 @@ export const router = createBrowserRouter([
                 allowedRoles={["tenant_admin", "storage_manager"]}
               >
                 <AddCategory />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "reports",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
+                <Reports />
               </ProtectedRoute>
             ),
           },

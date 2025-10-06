@@ -24,12 +24,11 @@ import { toastConfirm } from "@/components/ui/toastConfirm";
 import {
   getItemImages,
   selectItemsWithLoadedImages,
-  makeSelectItemImages,
 } from "@/store/slices/itemImagesSlice";
 import { BookingItemWithDetails } from "@/types";
 import InlineTimeframePicker from "@/components/InlineTimeframeSelector";
 import { DataTable } from "@/components/ui/data-table";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
 import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
@@ -39,6 +38,9 @@ import {
   updateQuantity,
   fetchItemsAvailability,
 } from "@/utils/quantityHelpers";
+import { ItemImage } from "@/components/ItemImage";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileTable from "@/components/ui/MobileTable";
 
 const MyBookingsPage = () => {
   const { id } = useParams();
@@ -51,7 +53,7 @@ const MyBookingsPage = () => {
   const { formatDate } = useFormattedDate();
   const [loading, setLoading] = useState(true);
   const itemsWithLoadedImages = useAppSelector(selectItemsWithLoadedImages);
-
+  const { isMobile } = useIsMobile();
   // Find the extended booking with orgs data from userBookings
   const extendedBooking = useMemo(() => {
     if (!booking?.id || !userBookings.length) return null;
@@ -175,50 +177,27 @@ const MyBookingsPage = () => {
     );
   }, [globalStartDate, globalEndDate, editFormItems]);
 
-  // ItemImage selector using itemImagesSlice
-  const ItemImage = ({
-    itemId,
-    itemName,
-  }: {
-    itemId: string;
-    itemName?: string;
-  }) => {
-    const selectItemImages = useMemo(() => makeSelectItemImages(), []);
-    const images = useAppSelector((s) => selectItemImages(s, itemId));
-    const first = images?.[0]?.image_url;
-
-    return (
-      <div className="h-8 w-8 rounded-md ring-1 ring-gray-200 overflow-hidden bg-gray-100 flex items-center justify-center">
-        {first ? (
-          <img
-            src={first}
-            alt={itemName ?? ""}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <span className="text-xs font-medium text-gray-600">
-            {(itemName ?? "").slice(0, 2).toUpperCase()}
-          </span>
-        )}
-      </div>
-    );
-  };
-
   /**
    * Columns for booking items data table
    */
   const bookingColumns: ColumnDef<BookingItemWithDetails>[] = [
-    {
-      accessorKey: "image",
-      header: "",
-      cell: ({ row }) => (
-        <ItemImage
-          itemId={row.original.item_id}
-          itemName={row.original.storage_items.translations[lang]?.item_name}
-        />
-      ),
-      size: 60,
-    },
+    ...(isMobile
+      ? []
+      : [
+          {
+            accessorKey: "image",
+            header: "",
+            cell: ({ row }: { row: Row<BookingItemWithDetails> }) => (
+              <ItemImage
+                itemId={row.original.item_id}
+                itemName={
+                  row.original.storage_items.translations[lang]?.item_name
+                }
+              />
+            ),
+            size: 60,
+          },
+        ]),
     {
       accessorKey: "item_name",
       header: t.myBookingsPage.columns.item[lang],
@@ -258,7 +237,7 @@ const MyBookingsPage = () => {
         }
 
         return (
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center w-fit justify-self-end md:justify-self-start">
             <div className="flex items-center">
               <Button
                 variant="outline"
@@ -325,105 +304,118 @@ const MyBookingsPage = () => {
         );
       },
     },
-    {
-      accessorKey: "self_pickup",
-      header: booking?.booking_items?.some((item) => item.self_pickup)
-        ? t.myBookingsPage.columns.selfPickup[lang]
-        : "",
-      cell: ({ row }) => {
-        const item = row.original;
+    ...(allItemsPending
+      ? []
+      : [
+          {
+            accessorKey: "self_pickup",
+            header: booking?.booking_items?.some((item) => item.self_pickup)
+              ? t.myBookingsPage.columns.selfPickup[lang]
+              : "",
+            cell: ({ row }: { row: Row<BookingItemWithDetails> }) => {
+              const item = row.original;
 
-        if (!item.self_pickup) {
-          return null;
-        }
+              if (!item.self_pickup) {
+                return null;
+              }
 
-        // find the corresponding org and location from extendedBooking
-        const org = extendedBooking?.orgs?.find(
-          (o) => o.id === item.provider_organization_id,
-        );
-        const location = org?.locations?.find((l) => l.id === item.location_id);
+              // find the corresponding org and location from extendedBooking
+              const org = extendedBooking?.orgs?.find(
+                (o) => o.id === item.provider_organization_id,
+              );
+              const location = org?.locations?.find(
+                (l) => l.id === item.location_id,
+              );
 
-        if (!location?.self_pickup) return null;
+              if (!location?.self_pickup) return null;
 
-        const isBeforeStart = new Date(item.start_date) > new Date();
-        const pickupDisabledReason = isBeforeStart
-          ? t.bookingPickup.errors.beforeStartDate[lang]
-          : undefined;
+              const isBeforeStart = new Date(item.start_date) > new Date();
+              const pickupDisabledReason = isBeforeStart
+                ? t.bookingPickup.errors.beforeStartDate[lang]
+                : undefined;
 
-        return (
-          <div className="flex gap-1">
-            {/* Show pickup button if item status is confirmed */}
-            {item.status === "confirmed" && booking?.id && (
-              <BookingPickupButton
-                onSuccess={refetchBookings}
-                location_id={item.location_id}
-                id={booking.id}
-                className="gap-1 h-8 text-xs"
-                org_id={item.provider_organization_id}
-                disabled={isBeforeStart}
-                disabledReason={pickupDisabledReason}
-              >
-                {t.myBookingsPage.buttons.pickedUp[lang]}
-              </BookingPickupButton>
-            )}
-            {/* Show return button if item is already picked up */}
-            {item.status === "picked_up" && booking?.id && (
-              <BookingReturnButton
-                onSuccess={refetchBookings}
-                location_id={item.location_id}
-                id={booking.id}
-                org_id={item.provider_organization_id}
-              >
-                {t.myBookingsPage.buttons.return[lang]}
-              </BookingReturnButton>
-            )}
-          </div>
-        );
-      },
-      size: 40,
-    },
-    {
-      id: "actions",
-      header:
-        showEdit && allItemsPending
-          ? t.myBookingsPage.columns.actions[lang]
-          : "",
-      cell: ({ row }) => {
-        const item = row.original;
-        if (!showEdit || !allItemsPending) {
-          return null;
-        }
+              return (
+                <div className="flex gap-1 justify-end md:justify-start">
+                  {/* Show pickup button if item status is confirmed */}
+                  {item.status === "confirmed" && booking?.id && (
+                    <BookingPickupButton
+                      onSuccess={refetchBookings}
+                      location_id={item.location_id}
+                      id={booking.id}
+                      className="gap-1 h-8 text-xs justify-end md:justify-center"
+                      org_id={item.provider_organization_id}
+                      disabled={isBeforeStart}
+                      disabledReason={pickupDisabledReason}
+                    >
+                      {t.myBookingsPage.buttons.pickedUp[lang]}
+                    </BookingPickupButton>
+                  )}
+                  {/* Show return button if item is already picked up */}
+                  {item.status === "picked_up" && booking?.id && (
+                    <BookingReturnButton
+                      onSuccess={refetchBookings}
+                      location_id={item.location_id}
+                      id={booking.id}
+                      className="justify-end md:justify-center"
+                      org_id={item.provider_organization_id}
+                    >
+                      {t.myBookingsPage.buttons.return[lang]}
+                    </BookingReturnButton>
+                  )}
+                </div>
+              );
+            },
+            size: 40,
+          },
+        ]),
+    ...(allItemsPending && showEdit
+      ? [
+          {
+            id: "actions",
+            header:
+              showEdit && allItemsPending
+                ? t.myBookingsPage.columns.actions[lang]
+                : "",
+            cell: ({ row }: { row: Row<BookingItemWithDetails> }) => {
+              const item = row.original;
+              if (!showEdit || !allItemsPending) {
+                return null;
+              }
 
-        const isMarkedForRemoval = itemsMarkedForRemoval.has(String(item.id));
+              const isMarkedForRemoval = itemsMarkedForRemoval.has(
+                String(item.id),
+              );
 
-        return (
-          <div className="flex justify-center gap-1">
-            {!isMarkedForRemoval ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => markItemForRemoval(item)}
-                className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 rounded-md"
-                aria-label="mark item for removal"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => undoItemRemoval(item)}
-                className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-50 transition-colors duration-200 rounded-md"
-                aria-label="undo item removal"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        );
-      },
-      size: 60,
-    },
+              return (
+                <div className="flex justify-end md:justify-center gap-1">
+                  {!isMarkedForRemoval ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => markItemForRemoval(item)}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 rounded-md"
+                      aria-label="mark item for removal"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => undoItemRemoval(item)}
+                      className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-50 transition-colors duration-200 rounded-md"
+                      aria-label="undo item removal"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              );
+            },
+            size: 60,
+          },
+        ]
+      : []),
   ];
 
   const isFormValid = editFormItems
@@ -647,22 +639,43 @@ const MyBookingsPage = () => {
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 m-10 gap-20 box-shadow-lg rounded-lg min-h-[250px] bg-white">
-      <div className="w-full bg-slate-50 p-4 rounded-lg mb-10 min-h-[250px]">
-        <div className="mb-4">
-          <Button
-            onClick={() => navigate(-1)}
-            className="text-secondary px-4 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t.myBookingsPage.buttons.back[lang]}
-          </Button>
-        </div>
-
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-xl text-primary font-semibold pt-2">
-            {t.myBookingsPage.bookingDetails.title[lang]}{" "}
-            {booking.booking_number}
-          </h2>
+      <div className="mb-4 flex justify-between gap-2 flex-wrap">
+        <Button
+          onClick={() => navigate(-1)}
+          className="text-secondary px-4 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {t.myBookingsPage.buttons.back[lang]}
+        </Button>
+        <div className="flex gap-2">
+          {/* Edit/Save Buttons */}
+          {booking.status === "pending" && allItemsPending && (
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  if (showEdit) {
+                    // Clear marked items when canceling edit
+                    setItemsMarkedForRemoval(new Set());
+                  }
+                  setShowEdit((s) => !s);
+                }}
+                variant="outline"
+              >
+                {showEdit
+                  ? t.myBookingsPage.edit.buttons.cancel[lang]
+                  : t.myBookingsPage.buttons.edit[lang]}
+              </Button>
+              {showEdit && (
+                <Button
+                  onClick={handleSubmitEdit}
+                  disabled={!isFormValid || !hasChangesToSave}
+                  variant={"secondary"}
+                >
+                  {t.myBookingsPage.edit.buttons.saveChanges[lang]}
+                </Button>
+              )}
+            </div>
+          )}
           {/* Cancel booking button */}
           {booking.status === "pending" && allItemsPending && !showEdit && (
             <Button
@@ -705,20 +718,32 @@ const MyBookingsPage = () => {
             </Button>
           )}
         </div>
+      </div>
+
+      <div className="w-full bg-slate-50 p-4 rounded-lg mb-10 min-h-[250px]">
+        <div className="mb-2 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl text-primary text-start font-semibold pt-2">
+              {`${t.myBookingsPage.bookingDetails.title[lang]}
+              ${booking.booking_number}`}
+            </h2>
+            <div className="flex gap-2"></div>
+          </div>
+        </div>
 
         <div className="space-y-4">
           {/* Booking details */}
-          <div className="grid grid-cols-2 gap-4 mb-2">
-            <div>
-              <h3 className="font-semibold text-md mb-1">
-                {t.myBookingsPage.bookingDetails.customerInfo[lang]}
-              </h3>
-              <p className="text-sm text-grey-500">
-                {booking?.full_name ?? ""}
-              </p>
-              <p className="text-sm text-gray-500">{booking?.email}</p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 my-8">
+            {/* Booking Dates and Date Picker */}
 
+            <div className="mb-4">
+              <h3 className="font-semibold text-md mb-1">
+                {t.myBookingsPage.headings.bookingDates[lang]}
+              </h3>
+              <div>
+                <div className="text-sm">{timeframeDisplay}</div>
+              </div>
+            </div>
             <div>
               <h3 className="font-semibold text-md mb-1">
                 {t.myBookingsPage.bookingDetails.bookingInfo[lang]}
@@ -732,35 +757,22 @@ const MyBookingsPage = () => {
                 {formatDate(booking.created_at, "d MMM yyyy")}
               </p>
             </div>
+            {showEdit && allItemsPending && (
+              <InlineTimeframePicker
+                startDate={globalStartDate ? new Date(globalStartDate) : null}
+                endDate={globalEndDate ? new Date(globalEndDate) : null}
+                onChange={(type, date) => {
+                  if (type === "start") {
+                    setGlobalStartDate(date ? date.toISOString() : null);
+                    return;
+                  }
+                  _setGlobalEndDate(date ? date.toISOString() : null);
+                }}
+              />
+            )}
           </div>
 
           <div>
-            {/* Booking Dates and Date Picker */}
-            <div className="mb-4">
-              <h3 className="font-semibold text-md mb-2">
-                {t.myBookingsPage.headings.bookingDates[lang]}
-              </h3>
-              <div>
-                {showEdit && allItemsPending ? (
-                  <InlineTimeframePicker
-                    startDate={
-                      globalStartDate ? new Date(globalStartDate) : null
-                    }
-                    endDate={globalEndDate ? new Date(globalEndDate) : null}
-                    onChange={(type, date) => {
-                      if (type === "start") {
-                        setGlobalStartDate(date ? date.toISOString() : null);
-                        return;
-                      }
-                      _setGlobalEndDate(date ? date.toISOString() : null);
-                    }}
-                  />
-                ) : (
-                  <div className="text-sm">{timeframeDisplay}</div>
-                )}
-              </div>
-            </div>
-
             {/* Booking Items */}
             {loading || _loadingAvailability ? (
               <Spinner containerClasses="py-8" />
@@ -770,50 +782,26 @@ const MyBookingsPage = () => {
                 {groupedBookingItems.map((orgGroup, index) => (
                   <div
                     key={orgGroup.orgName || `org-${index}`}
-                    className="mb-4"
+                    className="mb-8"
                   >
-                    <h4 className="text-md font-medium mb-2 text-gray-700 border-b pb-1">
+                    <h4 className="text-md font-medium md:mb-2 mb-0 text-gray-700 pb-1">
                       {orgGroup.orgName || "Unknown Organization"}{" "}
                       {t.myBookingsPage.bookingDetails.orgItems[lang]} (
                       {orgGroup.items.length})
                     </h4>
-                    <div className="border rounded-md overflow-hidden">
+                    {isMobile ? (
+                      <MobileTable
+                        columns={bookingColumns}
+                        data={orgGroup.items}
+                      />
+                    ) : (
                       <DataTable
                         columns={bookingColumns}
                         data={orgGroup.items}
                       />
-                    </div>
+                    )}
                   </div>
                 ))}
-              </div>
-            )}
-
-            {/* Edit Buttons */}
-            {booking.status === "pending" && allItemsPending && (
-              <div className="flex gap-2 mt-4">
-                <Button
-                  onClick={() => {
-                    if (showEdit) {
-                      // Clear marked items when canceling edit
-                      setItemsMarkedForRemoval(new Set());
-                    }
-                    setShowEdit((s) => !s);
-                  }}
-                  variant="outline"
-                >
-                  {showEdit
-                    ? t.myBookingsPage.edit.buttons.cancel[lang]
-                    : t.myBookingsPage.buttons.edit[lang]}
-                </Button>
-                {showEdit && (
-                  <Button
-                    onClick={handleSubmitEdit}
-                    disabled={!isFormValid || !hasChangesToSave}
-                    variant={"secondary"}
-                  >
-                    {t.myBookingsPage.edit.buttons.saveChanges[lang]}
-                  </Button>
-                )}
               </div>
             )}
           </div>

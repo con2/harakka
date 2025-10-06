@@ -41,11 +41,11 @@
     "deploy": "echo 'Add deployment scripts here'",
     "generate:types:local": "npx supabase gen types typescript --local > common/supabase.types.ts",
     "generate:types": "npx supabase gen types typescript --project-id rcbddkhvysexkvgqpcud > common/supabase.types.ts",
-    "s:link": "env-cmd -f supabase-local.env npx supabase link",
+    "s:login": "npx supabase login",
+    "s:link": "env-cmd -f .env.supabase.local npx supabase link",
     "s:link:prod": "npx @dotenvx/dotenvx run -f supabase/.env.production -- npx supabase link --project-ref rcbddkhvysexkvgqpcud",
     "s:link:dev": "npx @dotenvx/dotenvx run -f supabase/.env.preview -- npx supabase link --project-ref kpqrzaisoyxqillzpbms",
     "s:start": "env-cmd -f .env.supabase.local npx supabase start",
-    "s:start:infisical": "infisical run --env=dev -- npx supabase start",
     "s:stop": "env-cmd -f .env.supabase.local npx supabase stop",
     "s:local:diff": "env-cmd -f .env.supabase.local npx supabase db diff --schema public",
     "s:diff:linked": "env-cmd -f .env.supabase.local npx supabase db diff --schema public --linked",
@@ -53,17 +53,11 @@
     "s:dump": "npx supabase db dump -f supabase/schema.sql",
     "s:restart": "env-cmd -f .env.supabase.local npx supabase stop && env-cmd -f .env.supabase.local npx supabase start",
     "s:reset": "env-cmd -f .env.supabase.local npx supabase db reset",
-    "s:reset:infisical": "infisical run --env=dev -- npx supabase db reset",
     "s:pull": "npx supabase db pull --schema public",
-    "s:config:push:prod": "npx @dotenvx/dotenvx run -f supabase/.env.production -- npx supabase config push",
-    "s:db:push:prod": "npx @dotenvx/dotenvx run -f supabase/.env.production -- npx supabase db push",
-    "s:db:push:preview": "npx @dotenvx/dotenvx run -f supabase/.env.preview -- npx supabase db push",
-    "s:config:push:preview": "npx @dotenvx/dotenvx run -f supabase/.env.preview -- npx supabase config push",
     "s:secrets:upload": "npx supabase secrets set --env-file supabase/.env.keys",
     "s:status": "npx supabase status",
     "s:studio": "npx supabase studio",
     "s:migration:new": "npx supabase migration new",
-    "s:migration:up": "npx supabase migration up",
     "s:functions:serve": "npx supabase functions serve",
     "s:functions:deploy": "npx supabase functions deploy",
     "s:seed:main": "npx @dotenvx/dotenvx run -f .env.local -- npx supabase db dump --data-only -s auth,public -f supabase/seed.sql",
@@ -102,12 +96,15 @@
   "devDependencies": {
     "@postgrestools/postgrestools": "^0.15.0",
     "@supabase/supabase-js": "^2.53.0",
+    "@types/react-csv": "^1.1.10",
     "concurrently": "^9.1.2",
     "env-cmd": "^10.1.0",
     "type-fest": "^4.41.0"
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.49.0",
+    "prop-types": "^15.8.1",
+    "react-csv": "^2.2.2",
     "supabase": "^2.47.2"
   }
 }
