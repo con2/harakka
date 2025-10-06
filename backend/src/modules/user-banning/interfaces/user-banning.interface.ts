@@ -7,15 +7,6 @@ type BanType =
 type UserBanHistoryRow =
   Database["public"]["Tables"]["user_ban_history"]["Row"];
 
-export interface BanForRoleDto {
-  userId: string;
-  organizationId: string;
-  roleId: string;
-  banReason: string;
-  isPermanent?: boolean;
-  notes?: string;
-}
-
 export interface BanForOrgDto {
   userId: string;
   organizationId: string;
@@ -34,8 +25,8 @@ export interface BanForAppDto {
 export interface UnbanDto {
   userId: string;
   banType: BanType;
-  organizationId?: string; // Required for banForOrg
-  roleId?: string; // Required for banForRole
+  organizationId?: string; // Required for banForOrg / legacy banForRole
+  roleId?: string; // Legacy support for banForRole
   notes?: string;
 }
 
@@ -56,12 +47,6 @@ export interface UserBanStatusCheck {
   bannedFromOrganizations: Array<{
     organizationId: string;
     organizationName: string | null;
-  }>;
-  bannedFromRoles: Array<{
-    organizationId: string;
-    organizationName: string | null;
-    roleId: string;
-    roleName: string | null;
   }>;
   banReason: string | null;
   latestBanType: string | null;

@@ -3,7 +3,6 @@ import { RootState } from "../store";
 import { extractErrorMessage } from "@/store/utils/errorHandlers";
 import { userBanningApi } from "../../api/services/userBanning";
 import {
-  BanForRoleRequest,
   BanForOrgRequest,
   BanForAppRequest,
   UnbanRequest,
@@ -20,19 +19,6 @@ const initialState: UserBanningState = {
 };
 
 // Async thunks
-export const banUserForRole = createAsyncThunk(
-  "userBanning/banForRole",
-  async (data: BanForRoleRequest, { rejectWithValue }) => {
-    try {
-      return await userBanningApi.banForRole(data);
-    } catch (error: unknown) {
-      return rejectWithValue(
-        extractErrorMessage(error, "Failed to ban user for role"),
-      );
-    }
-  },
-);
-
 export const banUserForOrg = createAsyncThunk(
   "userBanning/banForOrg",
   async (data: BanForOrgRequest, { rejectWithValue }) => {
@@ -125,21 +111,7 @@ const userBanningSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Ban user for role
     builder
-      .addCase(banUserForRole.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(banUserForRole.fulfilled, (state, action) => {
-        state.loading = false;
-        state.lastOperation = action.payload;
-      })
-      .addCase(banUserForRole.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // Ban user for organization
       .addCase(banUserForOrg.pending, (state) => {
         state.loading = true;
         state.error = null;

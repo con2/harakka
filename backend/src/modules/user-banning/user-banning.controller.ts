@@ -13,7 +13,6 @@ import {
 import { UserBanningService } from "./user-banning.service";
 import { UserBanHistoryDto, UserBanStatusDto } from "./dto/user-banning.dto";
 import {
-  BanForRoleDto,
   BanForOrgDto,
   BanForAppDto,
   UnbanDto,
@@ -26,23 +25,6 @@ import { AuthRequest } from "../../middleware/interfaces/auth-request.interface"
 @Controller("user-banning")
 export class UserBanningController {
   constructor(private readonly userBanningService: UserBanningService) {}
-
-  /**
-   * Ban a user for a specific role in an organization
-   */
-  @Post("ban-for-role")
-  @Roles(["tenant_admin", "super_admin"], {
-    match: "any",
-    sameOrg: true,
-  })
-  @HttpCode(HttpStatus.OK)
-  async banForRole(
-    @Body(ValidationPipe) banForRoleDto: BanForRoleDto,
-    @Req() req: AuthRequest,
-  ): Promise<BanOperationResult> {
-    this.assertOrgContext(req, banForRoleDto.organizationId);
-    return this.userBanningService.banForRole(banForRoleDto, req);
-  }
 
   /**
    * Ban a user for all roles in an organization

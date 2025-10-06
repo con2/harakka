@@ -8,7 +8,6 @@ import {
   ViewUserBanStatusRow,
 } from "./dto/user-banning.dto";
 import {
-  BanForRoleDto,
   BanForOrgDto,
   BanForAppDto,
   UnbanDto,
@@ -21,44 +20,6 @@ import { handleSupabaseError } from "../../utils/handleError.utils";
 @Injectable()
 export class UserBanningService {
   constructor() {}
-  /**
-   * Ban user for a specific role in an organization
-   */
-  async banForRole(
-    {
-      userId,
-      organizationId,
-      roleId,
-      banReason,
-      isPermanent = false,
-      notes,
-    }: BanForRoleDto,
-    req: AuthRequest,
-  ): Promise<BanOperationResult> {
-    const { data, error } = await req.supabase.rpc("ban_user_for_role", {
-      p_target_user: userId,
-      p_organization_id: organizationId,
-      p_role_id: roleId,
-      p_reason: banReason,
-      p_is_permanent: isPermanent,
-      p_notes: notes ?? undefined,
-    });
-
-    if (error) {
-      handleSupabaseError(error);
-    }
-
-    if (!data) {
-      throw new NotFoundException("Ban operation did not return a record");
-    }
-    return {
-      success: true,
-      message: `User has been banned for the specific role successfully`,
-      banRecord: data,
-      ban_history_id: data.id,
-    };
-  }
-
   /**
    * Ban user for all roles in an organization
    */
@@ -134,15 +95,10 @@ export class UserBanningService {
     unbanDto: UnbanDto,
     req: AuthRequest,
   ): Promise<BanOperationResult> {
-    if (unbanDto.banType === "banForRole") {
-      if (!unbanDto.organizationId || !unbanDto.roleId) {
-        throw new BadRequestException(
-          "Organization ID and Role ID are required for role unban",
-        );
-      }
-    }
+    const orgScopedBan =
+      unbanDto.banType === "banForOrg" || unbanDto.banType === "banForRole";
 
-    if (unbanDto.banType === "banForOrg" && !unbanDto.organizationId) {
+    if (orgScopedBan && !unbanDto.organizationId) {
       throw new BadRequestException(
         "Organization ID is required for organisation unban",
       );
@@ -155,7 +111,6 @@ export class UserBanningService {
       p_role_id: unbanDto.roleId ?? undefined,
       p_notes: unbanDto.notes ?? undefined,
     });
-
     if (error) {
       handleSupabaseError(error);
     }
@@ -243,16 +198,6 @@ export class UserBanningService {
       string,
       { name: string | null; active: number; total: number }
     >();
-    const bannedRolesMap = new Map<
-      string,
-      {
-        organizationId: string;
-        organizationName: string | null;
-        roleId: string;
-        roleName: string | null;
-      }
-    >();
-
     (roleDetails ?? []).forEach((role) => {
       if (!role.organization_id) {
         return;
@@ -269,16 +214,6 @@ export class UserBanningService {
       orgSummary.total += 1;
       if (role.is_active) {
         orgSummary.active += 1;
-      } else {
-        const key = `${role.organization_id}-${role.role_id}`;
-        if (role.role_id && !bannedRolesMap.has(key)) {
-          bannedRolesMap.set(key, {
-            organizationId: role.organization_id,
-            organizationName: role.organization_name,
-            roleId: role.role_id,
-            roleName: role.role_name,
-          });
-        }
       }
     });
 
@@ -289,24 +224,18 @@ export class UserBanningService {
         organizationName: stats.name,
       }));
 
-    const bannedFromRoles = Array.from(bannedRolesMap.values());
-
     const isBannedForApp =
       viewRow?.ban_status === "banned_app" ||
       ((roleDetails ?? []).length > 0 &&
         (roleDetails ?? []).every((role) => role.is_active === false));
 
-    const isBanned =
-      isBannedForApp ||
-      bannedFromOrganizations.length > 0 ||
-      bannedFromRoles.length > 0;
+    const isBanned = isBannedForApp || bannedFromOrganizations.length > 0;
 
     return {
       userId,
       isBanned,
       isBannedForApp,
       bannedFromOrganizations,
-      bannedFromRoles,
       banReason: viewRow?.ban_reason ?? null,
       latestBanType: viewRow?.latest_ban_type ?? null,
       latestAction: viewRow?.latest_action ?? null,
