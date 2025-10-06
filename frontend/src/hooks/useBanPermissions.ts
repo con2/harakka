@@ -43,58 +43,32 @@ export const useBanPermissions = () => {
 
       if (!userStatus) return false;
 
-      // Check if user has any active bans
-      const banStatus = userStatus as unknown as Record<string, unknown>;
-
-      // For super admins, show all bans
       if (isActiveRoleSuper) {
-        return Boolean(
-          banStatus.isBannedFromApp ||
-            (banStatus.bannedFromOrganizations as string[])?.length > 0 ||
-            (banStatus.bannedFromRoles as string[])?.length > 0 ||
-            userStatus.isBanned,
-        );
+        return userStatus.isBanned;
       }
 
-      // For tenant_admin, only show bans relevant to their organization context
       if (isActiveRoleTenantAdmin && activeOrgId) {
-        // Check if user is banned from the app (applies to all orgs)
-        if (banStatus.isBannedFromApp || userStatus.isBanned) {
+        if (userStatus.isBannedForApp) {
           return true;
         }
 
-        // Check if user is banned from the current active organization
-        const bannedFromOrgs =
-          (banStatus.bannedFromOrganizations as string[]) || [];
-        if (bannedFromOrgs.includes(activeOrgId)) {
+        const orgBan = userStatus.bannedFromOrganizations.some(
+          (org) => org.organizationId === activeOrgId,
+        );
+        if (orgBan) {
           return true;
         }
 
-        // Check if user is banned from roles within the current organization
-        // Get user's roles in the active org
-        const userRolesInActiveOrg = allUserRoles.filter(
-          (role) =>
-            role.user_id === userId && role.organization_id === activeOrgId,
+        const roleBan = userStatus.bannedFromRoles.some(
+          (role) => role.organizationId === activeOrgId,
         );
 
-        const bannedFromRoles = (banStatus.bannedFromRoles as string[]) || [];
-        const isRoleBannedInActiveOrg = userRolesInActiveOrg.some((role) =>
-          bannedFromRoles.includes(role.role_name || ""),
-        );
-
-        return isRoleBannedInActiveOrg;
+        return roleBan;
       }
 
-      // For other users (admin, etc.), don't show ban status
       return false;
     },
-    [
-      userBanStatuses,
-      isActiveRoleSuper,
-      isActiveRoleTenantAdmin,
-      activeOrgId,
-      allUserRoles,
-    ],
+    [userBanStatuses, isActiveRoleSuper, isActiveRoleTenantAdmin, activeOrgId],
   );
 
   /**
