@@ -37,21 +37,25 @@ function OrgStep() {
   const handleCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const file = e.target.files?.[0];
-      if (!file) throw new Error("No file selected");
+      if (!file) throw new Error(t.orgStep.messages.noFileSelected[lang]);
       validateFile(file);
       await dispatch(uploadCSV(file)).unwrap();
       dispatch(setStepper(3));
     } catch (error) {
-      console.error(error);
       toast.error(typeof error === "string" ? error : "Failed to process file");
     }
   };
 
-  const validateFile = useCallback((file: File) => {
-    if (!file.type.startsWith("text/csv")) {
-      throw new Error(`${file.name} is not a CSV file`);
-    }
-  }, []);
+  const validateFile = useCallback(
+    (file: File) => {
+      if (!file.type.startsWith("text/csv")) {
+        throw new Error(
+          t.orgStep.messages.notACSV[lang].replace("{file_name}", file.name),
+        );
+      }
+    },
+    [lang],
+  );
 
   /*---------------------side effects--------------------------------------------*/
   useEffect(() => {
