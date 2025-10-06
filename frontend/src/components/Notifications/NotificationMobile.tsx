@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { t } from "@/translations";
 import { DBTables } from "@common/database.types";
+import { common } from "@/translations/modules/common";
 
 type NotificationRow = DBTables<"notifications">;
 
@@ -81,7 +82,7 @@ export const NotificationMobile: React.FC<Props> = ({
                 onClick={() => setPanelOpen(false)}
                 className="text-base font-medium p-0 h-auto text-left justify-start hover:underline"
               >
-                {t.navigation.notifications.label?.[lang] || "Close"}
+                {common.close[lang]}
               </Button>
               {/* Visually hidden description to satisfy Dialog a11y */}
               <SheetTitle className="sr-only">

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { t } from "@/translations";
 import { DBTables } from "@common/database.types";
+import { common } from "@/translations/modules/common";
 
 type NotificationRow = DBTables<"notifications">;
 
@@ -47,6 +48,8 @@ export const NotificationDesktopView: React.FC<Props> = ({
   removeNotification,
   onOpenRow,
 }) => {
+  const [open, setOpen] = React.useState(false);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -62,6 +65,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
           <Bell
             aria-hidden="true"
             className="!h-4.5 !w-5 text-(--midnight-black)"
+            onClick={() => setOpen(!open)}
           />
           {/* Notification count badge */}
           {unseen > 0 && (
@@ -81,7 +85,9 @@ export const NotificationDesktopView: React.FC<Props> = ({
         <DropdownMenuLabel className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {/* "Notifications" */}
-            <span>{t.navigation.notifications.label[lang]}</span>
+            <span className="sr-only">
+              {t.navigation.notifications.label[lang]}
+            </span>
             {showToggle && (
               <div className="ml-2 inline-flex rounded border border-(--subtle-grey) overflow-hidden">
                 {/* "Active" */}
@@ -124,6 +130,15 @@ export const NotificationDesktopView: React.FC<Props> = ({
                 <CheckCheck className="h-4 w-4" />
               </Button>
             )}
+            {/* Close button */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+              className="h-8 px-2 text-xs font-medium"
+            >
+              {common.close[lang]}
+            </Button>
             {visibleFeed.length > 0 && (
               // Delete All
               <Button
