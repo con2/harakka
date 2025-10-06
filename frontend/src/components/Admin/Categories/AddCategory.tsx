@@ -137,7 +137,7 @@ function AddCategory() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onValidSubmit, onInvalidSubmit)}
-        className="flex flex-col gap-3 max-w-[500px]"
+        className="flex flex-col gap-3 w-full max-w-[500px]"
       >
         <h1 className="text-xl mb-4">
           {selectedCategory
@@ -145,7 +145,7 @@ function AddCategory() {
             : t.addCategory.headings.addNew[lang]}
         </h1>
 
-        <div className="flex gap-4">
+        <div className="grid w-full md:w-fit grid-cols-1 md:grid-cols-2 gap-6 md:gap-4 md:grid-rows-2">
           <div>
             <FormField
               control={form.control}
@@ -174,9 +174,7 @@ function AddCategory() {
               )}
             />
           </div>
-        </div>
 
-        <div>
           <FormField
             control={form.control}
             name="parent_id"
@@ -189,7 +187,7 @@ function AddCategory() {
                   defaultValue={form.getValues("parent_id") ?? ""}
                 >
                   <FormControl>
-                    <SelectTrigger className="w-[250px]">
+                    <SelectTrigger className="md:w-[250px] w-full">
                       <SelectValue
                         placeholder={t.addCategory.placeholders.noParent[lang]}
                       ></SelectValue>
@@ -206,7 +204,7 @@ function AddCategory() {
           ></FormField>
         </div>
 
-        <div className="*:w-fit px-8 self-end gap-3 flex">
+        <div className="*:w-fit *:px-8 self-end gap-3 flex">
           <Button variant="secondary" onClick={cancel} type="button">
             {t.addCategory.buttons.back[lang]}
           </Button>

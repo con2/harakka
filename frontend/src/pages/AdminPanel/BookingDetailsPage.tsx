@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/ui/data-table";
-import { ColumnDef } from "@tanstack/react-table";
-import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { ColumnDef, Row } from "@tanstack/react-table";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -11,14 +11,25 @@ import {
   updateBookingItem,
   cancelBookingItem,
 } from "@/store/slices/bookingsSlice";
-import { BookingStatus, BookingWithDetails } from "@/types";
+import {
+  BookingItemWithDetails,
+  BookingStatus,
+  BookingWithDetails,
+} from "@/types";
 import Spinner from "@/components/Spinner";
 import BookingConfirmButton from "@/components/Admin/Bookings/BookingConfirmButton";
 import BookingRejectButton from "@/components/Admin/Bookings/BookingRejectButton";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, Clipboard, Info, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  Clipboard,
+  Info,
+  Minus,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
@@ -52,8 +63,12 @@ import {
   updateQuantity,
   fetchItemsAvailability,
 } from "@/utils/quantityHelpers";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileTable from "@/components/ui/MobileTable";
+import { cn } from "@/lib/utils";
 
 const BookingDetailsPage = () => {
+  const { isMobile } = useIsMobile();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -322,13 +337,15 @@ const BookingDetailsPage = () => {
   >[] = [
     {
       id: "select",
-      header: () => (
-        <Checkbox
-          disabled={allSelectableIds.length < 1}
-          checked={allSelected}
-          onCheckedChange={handleSelectAllToggle}
-        />
-      ),
+      header: isMobile
+        ? "Select"
+        : () => (
+            <Checkbox
+              disabled={allSelectableIds.length < 1}
+              checked={allSelected}
+              onCheckedChange={handleSelectAllToggle}
+            />
+          ),
       cell: ({ row }) => {
         const item = row.original;
         const isOwned = item.provider_organization_id === activeOrgId;
@@ -352,19 +369,25 @@ const BookingDetailsPage = () => {
       },
       size: 32,
     },
-    {
-      accessorKey: "image",
-      header: "",
-      cell: ({ row }) => {
-        const item = row.original;
-        return (
-          <div className={item.status === "cancelled" ? "opacity-50" : ""}>
-            <ItemImage item={item} />
-          </div>
-        );
-      },
-      size: 60,
-    },
+    ...(!isMobile
+      ? [
+          {
+            accessorKey: "image",
+            header: "",
+            cell: ({ row }: { row: Row<BookingItemWithDetails> }) => {
+              const item = row.original;
+              return (
+                <div
+                  className={item.status === "cancelled" ? "opacity-50" : ""}
+                >
+                  <ItemImage item={item} />
+                </div>
+              );
+            },
+            size: 60,
+          },
+        ]
+      : []),
     {
       accessorKey: "item_name",
       header: t.bookingDetailsPage.modal.bookingItems.columns.item[lang],
@@ -399,19 +422,19 @@ const BookingDetailsPage = () => {
         }
 
         return (
-          <div className="flex flex-col items-center">
-            <div className="flex items-center">
+          <div className="flex flex-col items-center w-fit ml-auto md:ml-0">
+            <div className="flex items-center gap-1">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleDecrementQuantity(item)}
-                className="h-8 w-8 p-0"
+                className={cn(isMobile ? "h-7 w-7 p-0" : "h-8 w-8 p-0")}
                 disabled={
                   (itemQuantities[String(item.id)] ?? item.quantity ?? 1) <= 1
                 }
                 aria-label="decrease quantity"
               >
-                -
+                <Minus />
               </Button>
               <Input
                 value={itemQuantities[String(item.id)] ?? item.quantity}
@@ -428,14 +451,14 @@ const BookingDetailsPage = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => handleIncrementQuantity(item)}
-                className="h-8 w-8 p-0"
+                className={cn(isMobile ? "h-7 w-7 p-0" : "h-8 w-8 p-0")}
                 disabled={
                   (itemQuantities[String(item.id)] ?? item.quantity ?? 0) >=
                   (availability[item.item_id] ?? Infinity)
                 }
                 aria-label="increase quantity"
               >
-                +
+                <Plus />
               </Button>
             </div>
             <div className="text-xs text-muted-foreground">
@@ -482,31 +505,37 @@ const BookingDetailsPage = () => {
         );
       },
     },
-    {
-      id: "actions",
-      header: showEdit ? t.bookingDetailsPage.edit.columns.actions[lang] : "",
-      cell: ({ row }) => {
-        const item = row.original;
-        if (!showEdit || item.status === "cancelled") {
-          return null;
-        }
+    ...(showEdit
+      ? [
+          {
+            id: "actions",
+            header: showEdit
+              ? t.bookingDetailsPage.edit.columns.actions[lang]
+              : "",
+            cell: ({ row }: { row: Row<BookingItemWithDetails> }) => {
+              const item = row.original;
+              if (!showEdit || item.status === "cancelled") {
+                return null;
+              }
 
-        return (
-          <div className="flex justify-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => cancelItem(item)}
-              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 rounded-md"
-              aria-label="cancel item"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        );
-      },
-      size: 60,
-    },
+              return (
+                <div className="flex justify-end md:justify-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => cancelItem(item)}
+                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700 bg-red-50 md:bg-transparent md:hover:bg-red-50 transition-colors duration-200 rounded-md"
+                    aria-label="cancel item"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              );
+            },
+            size: 60,
+          },
+        ]
+      : []),
   ];
 
   const handleSelfPickup = (value: boolean, location_id: string) => {
@@ -693,9 +722,9 @@ const BookingDetailsPage = () => {
   if (bookingOrg !== activeOrgId) void navigate("/");
 
   return (
-    <div className="mt-4 mx-10">
-      {/* Back Button */}
-      <div>
+    <div className="max-w-[900px]">
+      <div className="flex justify-between">
+        {/* Back Button */}
         <Button
           onClick={() => {
             const pageState = (location.state as { page?: number })?.page;
@@ -707,12 +736,8 @@ const BookingDetailsPage = () => {
         >
           <ChevronLeft /> {t.bookingDetailsPage.buttons.back[lang]}
         </Button>
-      </div>
-      {/* Booking Info Section */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-xl font-normal pt-4">
-          {`${t.bookingDetailsPage.modal.bookingDetails[lang]} ${booking.booking_number}`}
-        </h3>
+
+        {/* Edit Button */}
         {canEdit && (
           <Button onClick={() => setShowEdit((s) => !s)} variant="outline">
             {showEdit
@@ -721,10 +746,16 @@ const BookingDetailsPage = () => {
           </Button>
         )}
       </div>
+      {/* Booking Info Section */}
+      <div className="flex justify-between items-center">
+        <h3 className="text-xl font-normal pt-4">
+          {`${t.bookingDetailsPage.modal.bookingDetails[lang]} ${booking.booking_number}`}
+        </h3>
+      </div>
 
       <div className="mb-4  border-1 border-(muted-foreground) rounded bg-white">
         <div>
-          <div className="space-y-2 grid grid-cols-2 gap-4 p-5 pb-2">
+          <div className="space-y-2 grid grid-cols-1 md:grid-cols-2 gap-4 p-5 md:pb-4">
             <div className="flex flex-col text-md">
               <p>{booking.full_name || t.bookingList.status.unknown[lang]}</p>
               <div className="flex items-center gap-2">
@@ -793,17 +824,19 @@ const BookingDetailsPage = () => {
           </div>
           <Separator />
           <div className="p-4">
-            <div className="flex gap-2">
-              <p>{t.bookingDetailsPage.selfPickup[lang]}</p>
-              <Tooltip>
-                <TooltipTrigger className="h-fit">
-                  <Info className="w-[18px] h-fit" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-[290px] text-center">
-                  {t.bookingDetailsPage.tooltip.self_pickup[lang]}
-                </TooltipContent>
-              </Tooltip>
-              <div className="flex gap-4 ml-4">
+            <div className="flex gap-2 flex-col md:flex-row gap-y-4">
+              <div className="flex gap-2">
+                <p>{t.bookingDetailsPage.selfPickup[lang]}</p>
+                <Tooltip>
+                  <TooltipTrigger className="h-fit">
+                    <Info className="w-[18px] h-fit" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[290px] text-center">
+                    {t.bookingDetailsPage.tooltip.self_pickup[lang]}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <div className="flex gap-4 md:ml-4">
                 {locationsForItems.map((loc) => {
                   const isChecked = pickUpStatuses.find(
                     (s) => s.location_id === loc.storage_location_id,
@@ -863,10 +896,18 @@ const BookingDetailsPage = () => {
           </div>
         )}
 
-        <DataTable
-          columns={bookingItemsColumns}
-          data={sortedBookingItems || []}
-        />
+        {/* Items Table */}
+        {isMobile ? (
+          <MobileTable
+            columns={bookingItemsColumns}
+            data={sortedBookingItems || []}
+          />
+        ) : (
+          <DataTable
+            columns={bookingItemsColumns}
+            data={sortedBookingItems || []}
+          />
+        )}
       </div>
 
       {/* Edit Controls */}

@@ -29,6 +29,7 @@ import { setRedirectUrl } from "@/store/slices/uiSlice";
 import { getOrgLabel } from "@/utils/format";
 import { t } from "@/translations";
 import { SUPPORTED_LANGUAGES } from "@/translations/SUPPORTED_LANGUAGES";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 
 export const UserMenu: React.FC = () => {
@@ -39,6 +40,7 @@ export const UserMenu: React.FC = () => {
     setActiveContext,
   } = useRoles();
   const { lang, setLanguage } = useLanguage();
+  const { isMobile } = useIsMobile();
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { name: userName, avatarUrl, email } = useProfile(user);
@@ -107,7 +109,7 @@ export const UserMenu: React.FC = () => {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
       <DropdownMenuTrigger asChild className="text-primary">
-        <button className="gap-3 p-1 px-2 h-fit flex items-center">
+        <button className="gap-1 md:gap-3 p-1 px-2 h-fit flex items-center">
           <Avatar>
             <AvatarImage
               src={avatarUrl}
@@ -118,13 +120,17 @@ export const UserMenu: React.FC = () => {
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col text-start font-main flex-col">
-            <p className="text-md">{userName || email}</p>
-            <p className="text-xs !font-[var(--main-font)]">
-              {activeRoleName !== "user" &&
-                activeRoleName &&
-                activeOrgName &&
-                getOrgLabel(userName, activeRoleName, activeOrgName)}
-            </p>
+            {!isMobile && (
+              <>
+                <p className="text-md">{userName || email}</p>
+                <p className="text-xs !font-[var(--main-font)]">
+                  {activeRoleName !== "user" &&
+                    activeRoleName &&
+                    activeOrgName &&
+                    getOrgLabel(userName, activeRoleName, activeOrgName)}
+                </p>
+              </>
+            )}
           </div>
           <ChevronDown
             aria-hidden
