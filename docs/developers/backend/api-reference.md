@@ -426,34 +426,6 @@ DELETE /item-images/:imageId
 
 ---
 
-## Tags
-
-### Get All Tags
-
-```
-GET /tags
-```
-
-Returns a list of all tags.
-
-**Response 200**
-
-```json
-[
-  {
-    "id": "uuid",
-    "translations": {
-      "en": { "name": "Armor" },
-      "fi": { "name": "Haarniska" }
-    },
-    "created_at": "2023-01-01T00:00:00Z"
-  }
-  // ...
-]
-```
-
----
-
 ## **Categories (`/categories`)**
 
 ### Get All Categories
@@ -483,8 +455,26 @@ Content-Type: application/json
 
 ### Get All Tags
 
-```http
+```
 GET /tags
+```
+
+Returns a list of all tags.
+
+**Response 200**
+
+```json
+[
+  {
+    "id": "uuid",
+    "translations": {
+      "en": { "name": "Armor" },
+      "fi": { "name": "Haarniska" }
+    },
+    "created_at": "2023-01-01T00:00:00Z"
+  }
+  // ...
+]
 ```
 
 ### Create Tag

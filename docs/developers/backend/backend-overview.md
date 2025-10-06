@@ -41,8 +41,3 @@ backend/src/
 4. [Security](./security.md) - Auth & permissions
 5. [Email System](./email-system.md) - Email templates
 6. [File Upload](./file-upload.md) - Image handling
-7. [Supabase Setup](./supabase-setup.md) - DB configuration
-
-## Quick Start
-
-See [Getting Started](../getting-started.md) for setup instructions.
