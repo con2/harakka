@@ -18,6 +18,8 @@ import {
   banUserForOrg,
   banUserForApp,
   selectUserBanningLoading,
+  fetchAllUserBanStatuses,
+  checkUserBanStatus,
 } from "@/store/slices/userBanningSlice";
 import { UserProfile } from "@common/user.types";
 import { useRoles } from "@/hooks/useRoles";
@@ -166,6 +168,9 @@ const UserBan = ({ user, onSuccess }: Props) => {
         setIsPermanent(false);
         setBanType(getDefaultBanType());
         await syncSessionAndRoles();
+        // Sync state after successful ban operation
+        await dispatch(fetchAllUserBanStatuses());
+        await dispatch(checkUserBanStatus(user.id));
         if (onSuccess) await onSuccess();
       } else {
         toast.error(result?.message || t.userBan.toast.error[lang]);

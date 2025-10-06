@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   unbanUser,
   selectUserBanningLoading,
+  fetchAllUserBanStatuses,
+  checkUserBanStatus,
 } from "@/store/slices/userBanningSlice";
 import { UserProfile } from "@common/user.types";
 import { BanType, SimpleBanHistoryItem } from "@/types/userBanning";
@@ -197,6 +199,9 @@ const UnbanUser = ({ user, onSuccess, refreshKey = 0 }: Props) => {
         toast.success(t.unbanUser.toast.unbanSuccess[lang]);
         await syncSessionAndRoles();
         await loadActiveBans();
+        // Sync state after successful unban operation
+        await dispatch(fetchAllUserBanStatuses());
+        await dispatch(checkUserBanStatus(user.id));
         setOrganizationId("");
         setNotes("");
         if (onSuccess) await onSuccess();

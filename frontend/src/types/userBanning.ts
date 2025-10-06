@@ -97,6 +97,11 @@ export interface BanOperationResult {
   banRecords?: UserBanHistoryRow[];
 }
 
+export interface BanOperationSummary {
+  success: boolean;
+  message: string;
+}
+
 export interface UserBanStatusCheck {
   userId: string;
   isBanned: boolean;
@@ -136,5 +141,5 @@ export interface UserBanningState {
   banHistory: SimpleBanHistoryItem[];
   banStatuses: BanStatusItem[];
   userBanStatuses: Record<string, UserBanStatusCheck>;
-  lastOperation: BanOperationResult | null;
+  lastOperation: BanOperationSummary | null;
 }

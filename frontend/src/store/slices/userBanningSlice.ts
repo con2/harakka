@@ -7,6 +7,7 @@ import {
   BanForAppRequest,
   UnbanRequest,
   UserBanningState,
+  BanOperationSummary,
 } from "@/types/userBanning";
 
 const initialState: UserBanningState = {
@@ -62,7 +63,8 @@ export const fetchUserBanHistory = createAsyncThunk(
   "userBanning/fetchHistory",
   async (userId: string, { rejectWithValue }) => {
     try {
-      return await userBanningApi.getUserBanHistory(userId);
+      const result = await userBanningApi.getUserBanHistory(userId);
+      return result;
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch user ban history"),
@@ -75,7 +77,8 @@ export const fetchAllUserBanStatuses = createAsyncThunk(
   "userBanning/fetchAllStatuses",
   async (_, { rejectWithValue }) => {
     try {
-      return await userBanningApi.getAllUserBanStatuses();
+      const result = await userBanningApi.getAllUserBanStatuses();
+      return result;
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch ban statuses"),
@@ -118,7 +121,10 @@ const userBanningSlice = createSlice({
       })
       .addCase(banUserForOrg.fulfilled, (state, action) => {
         state.loading = false;
-        state.lastOperation = action.payload;
+        state.lastOperation = {
+          success: action.payload.success,
+          message: action.payload.message,
+        } satisfies BanOperationSummary;
       })
       .addCase(banUserForOrg.rejected, (state, action) => {
         state.loading = false;
@@ -131,7 +137,10 @@ const userBanningSlice = createSlice({
       })
       .addCase(banUserForApp.fulfilled, (state, action) => {
         state.loading = false;
-        state.lastOperation = action.payload;
+        state.lastOperation = {
+          success: action.payload.success,
+          message: action.payload.message,
+        } satisfies BanOperationSummary;
       })
       .addCase(banUserForApp.rejected, (state, action) => {
         state.loading = false;
@@ -144,7 +153,10 @@ const userBanningSlice = createSlice({
       })
       .addCase(unbanUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.lastOperation = action.payload;
+        state.lastOperation = {
+          success: action.payload.success,
+          message: action.payload.message,
+        } satisfies BanOperationSummary;
       })
       .addCase(unbanUser.rejected, (state, action) => {
         state.loading = false;
