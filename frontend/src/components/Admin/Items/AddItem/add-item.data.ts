@@ -1,3 +1,5 @@
+import { SelectedStorage } from "@common/items/form.types";
+
 export const TRANSLATION_FIELDS = [
   {
     lang: "fi",
@@ -24,3 +26,31 @@ export const TRANSLATION_FIELDS = [
     translationKey: "descriptionEn",
   },
 ];
+
+export const getInitialItemData = (storage?: SelectedStorage) => ({
+  id: crypto.randomUUID(),
+  location: {
+    id: storage?.id ?? "",
+    name: storage?.name ?? "",
+    address: storage?.address ?? "",
+  },
+  quantity: 1,
+  available_quantity: 1,
+  is_active: true,
+  tags: [],
+  translations: {
+    fi: {
+      item_name: "",
+      item_description: "",
+    },
+    en: {
+      item_name: "",
+      item_description: "",
+    },
+  },
+  category_id: null,
+  images: {
+    main: null,
+    details: [],
+  },
+});

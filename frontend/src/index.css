@@ -7,14 +7,14 @@
 
   --radius: 0.625rem;
 
-  --snow-white: #FFF;
-  --midnight-black: #0B0B0B;
-  --iridiscent-blue: #2f5D9E;
+  --snow-white: #fff;
+  --midnight-black: #0b0b0b;
+  --iridiscent-blue: #2f5d9e;
   --iridiscent-blue-light: #6394d9ff;
-  --emerald-green: #267C6F;
-  --emerald-green-light: #40B3A2;
-  --steel-gray: #7A7D7F;
-  --silver-gleam: #C4C9CC;
+  --emerald-green: #267c6f;
+  --emerald-green-light: #40b3a2;
+  --steel-gray: #7a7d7f;
+  --silver-gleam: #c4c9cc;
   --subtle-grey: oklch(0.97 0 0);
 
   --background: var(--snow-white);
@@ -35,7 +35,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: var(--iridiscent-blue)
+  --ring: var(--iridiscent-blue);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -76,8 +76,8 @@
 }
 
 @theme {
-  --main-font: var(--main-font);
-  --heading-font: var(--heading-font);
+  --font-main: var(--main-font);
+  --font-heading: var(--heading-font);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -116,6 +116,7 @@
   * {
     border: var(--border);
     outline: 50% solid var(--ring);
+    transition: outline 80ms;
   }
   body {
     background-color: var(--background);
@@ -152,6 +153,11 @@
   }
   label {
     margin-bottom: 0.25rem;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--iridiscent-blue);
+    outline-offset: 4px;
   }
 }
 
@@ -220,25 +226,28 @@
 }
 
 /* Custom Toast Styling */
-.custom-toast {
+li:has(.custom-toast) {
   position: relative;
   overflow: hidden;
 
   border-radius: 0.75rem;
   z-index: 1;
-  overflow: visible !important;
+  overflow: hidden;
 
+  /* 
+  ***** Make progressbar disappear on hover *****
   &:is(:hover, [data-expanded-true])::after {
     visibility: hidden !important;
-  }
+  } */
 }
 
-.custom-toast::after {
+.custom-toast {
+  &::after {
   content: "";
   position: absolute;
   border-radius: 0.75rem;
-  bottom: 0 !important;
-  left: 0;
+  bottom: -1px !important;
+  left: -0.5px;
   height: 4px !important;
   width: 0;
   background-color: #4caf50;
@@ -246,6 +255,24 @@
   animation-play-state: running;
   z-index: 0;
   transition: visibility 0s;
+  border-bottom-left-radius: 130px;
+  border-bottom-right-radius: 110px;
+  }
+
+  & button[data-action="true"]{
+    background-color: #4caf50 !important;
+  }
+}
+
+.custom-toast:has(.toast-confirm-card) {
+  border-radius: 14px;
+  overflow: hidden !important;
+  --tw-shadow:
+    0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)),
+    0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
+    var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
 }
 
 /* Use the :hover state to pause animation */
@@ -253,11 +280,27 @@
   animation-play-state: paused;
 }
 
-.custom-toast[data-type="error"]::after {
-  background-color: #d32f2f;
+.custom-toast[data-type="error"] {
+  &::after,
+  button[data-action="true"] {
+    background-color: #d32f2f !important;
+  }
+}
+.custom-toast[data-type="info"] {
+  &::after,
+  button[data-action="true"] {
+    background-color: var(--info-text) !important;
+  }
+}
+.custom-toast[data-type="warning"] {
+  &::after,
+  button[data-action="true"] {
+    background-color: var(--warning-text);
+  }
 }
 
-.custom-toast:not([data-type])::after {
+.custom-toast:not([data-type])::after,
+.toast-confirm.card::after {
   background-color: var(--highlight2); /* Neutral grey */
 }
 
@@ -266,6 +309,6 @@
     width: 0%;
   }
   100% {
-    width: 100%;
+    width: 100.3%;
   }
 }

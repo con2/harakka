@@ -25,6 +25,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchAllCategories,
   selectCategories,
+  selectCategoriesLoading,
 } from "@/store/slices/categoriesSlice";
 import {
   addToItemCreation,
@@ -44,20 +45,21 @@ import {
   fetchFilteredTags,
   selectAllTags,
   selectTagsLoading,
+  selectTagsTotal,
 } from "@/store/slices/tagSlice";
 import { setNextStep } from "@/store/slices/uiSlice";
 import { createItemDto } from "@/store/utils/validate";
 import { t } from "@/translations";
-import { ItemFormTag } from "@/types";
+import { Item, ItemFormTag } from "@/types";
 import { getFirstErrorMessage } from "@/utils/validate";
 import { CreateItemType } from "@common/items/form.types";
 import { ErrorMessage } from "@hookform/error-message";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import { SubmitErrorHandler, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { TRANSLATION_FIELDS } from "../add-item.data";
+import { getInitialItemData, TRANSLATION_FIELDS } from "../add-item.data";
 import ItemImageUpload from "../ItemImageUpload";
 import {
   Accordion,
@@ -65,6 +67,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { buildCategoryTree, Category } from "@/store/utils/format";
+import ItemCard from "@/components/Items/ItemCard";
+import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import Spinner from "@/components/Spinner";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -85,39 +92,23 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   const { location: storage, org } = useAppSelector(selectItemCreation);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector(selectTagsLoading);
+  const tagsTotal = useAppSelector(selectTagsTotal);
   const categories = useAppSelector(selectCategories);
+  const categoriesLoading = useAppSelector(selectCategoriesLoading);
   const isEditing = useAppSelector(selectIsEditing);
+  const [tagPage, setTagPage] = useState(1);
+  const tagsPerPage = 10;
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
-    defaultValues: initialData ??
-      editItem ?? {
-        id: crypto.randomUUID(),
-        location: {
-          id: storage?.id ?? "",
-          name: storage?.name ?? "",
-          address: storage?.address ?? "",
-        },
-        quantity: 1,
-        available_quantity: 1,
-        is_active: true,
-        tags: [],
-        translations: {
-          fi: {
-            item_name: "",
-            item_description: "",
-          },
-          en: {
-            item_name: "",
-            item_description: "",
-          },
-        },
-        category_id: null,
-        images: {
-          main: null,
-          details: [],
-        },
-      },
+    defaultValues:
+      (initialData as CreateItemType) ??
+      editItem ??
+      getInitialItemData(storage || undefined),
   });
+
+  const refetchCategories = () => {
+    void dispatch(fetchAllCategories({ page: 1, limit: 100 }));
+  };
 
   const onValidSubmit = (values: z.infer<typeof createItemDto>) => {
     form.reset();
@@ -207,10 +198,9 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   }, []);
 
   useEffect(() => {
-    if (categories.length === 0)
-      void dispatch(
-        fetchAllCategories({ page: 1, limit: 20, order: "assigned_to" }),
-      );
+    void dispatch(
+      fetchAllCategories({ page: 1, limit: 100, order: "assigned_to" }),
+    );
   }, []);
 
   useEffect(() => {
@@ -228,20 +218,35 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   }, [storage, form]);
 
   useEffect(() => {
-    if (tagSearch)
-      void dispatch(
-        fetchFilteredTags({ page: 1, limit: 20, search: tagSearch }),
-      );
-    else if (tags.length < 1)
-      void dispatch(
-        fetchFilteredTags({
-          page: 1,
-          limit: 20,
-          sortBy: "assigned_to",
-          sortOrder: "desc",
-        }),
-      );
+    setTagPage(1);
+    void dispatch(
+      fetchFilteredTags({
+        page: 1,
+        limit: tagsPerPage,
+        sortBy: "assigned_to",
+        sortOrder: "desc",
+        search: tagSearch,
+        append: false, // don't append on new search
+      }),
+    );
   }, [tagSearch, dispatch]);
+
+  const handleLoadMoreTags = () => {
+    const nextPage = tagPage + 1;
+    setTagPage(nextPage);
+    void dispatch(
+      fetchFilteredTags({
+        page: nextPage,
+        limit: tagsPerPage,
+        sortBy: "assigned_to",
+        sortOrder: "desc",
+        search: tagSearch,
+        append: true, // append when loading more
+      }),
+    );
+  };
+
+  const remainingTags = tagsTotal - tags.length;
 
   useEffect(() => {
     if ((editItem as CreateItemType)?.tags && tags.length > 0) {
@@ -256,6 +261,28 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
       );
     }
   }, [tags, editItem]);
+
+  const mappedCategories = buildCategoryTree(categories);
+  const renderCategoryOptions = (
+    categories: Category[],
+    level = 0,
+  ): ReactNode[] => {
+    return categories.flatMap((cat) => [
+      <SelectItem
+        style={{
+          paddingLeft: `calc(var(--spacing) * 2 + (var(--spacing) * ${level * 4}))`,
+          fontWeight: level === 0 ? "600" : "400",
+        }}
+        key={cat.id}
+        value={cat.id}
+      >
+        {cat.translations[appLang]}
+      </SelectItem>,
+      ...(cat.subcategories && cat.subcategories.length
+        ? renderCategoryOptions(cat.subcategories, level + 1)
+        : []),
+    ]);
+  };
 
   /*------------------render-------------------------------------------------*/
   return (
@@ -282,9 +309,9 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                 className="font-main w-full justify-between flex"
                 iconProps="!w-5 h-auto"
               >
-                <p className="text-2xl font-semibold tracking-tight w-full">
+                <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                   {t.addItemForm.headings.itemDetails[appLang]}
-                </p>
+                </h2>
               </AccordionTrigger>
               <AccordionContent className="mt-10">
                 <div className="flex flex-wrap w-full gap-x-6 space-y-4 justify-between mb-8">
@@ -317,7 +344,21 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                                 {fieldKey === "item_description" ? (
                                   <Textarea
                                     {...field}
-                                    className="border shadow-none border-grey w-full mb-1"
+                                    className={
+                                      (cn(
+                                        "!border shadow-none border-grey w-full mb-1",
+                                      ),
+                                      typeof form.formState.errors
+                                        .translations === "object" &&
+                                        form.formState.errors.translations &&
+                                        fieldLang in
+                                          form.formState.errors.translations &&
+                                        (
+                                          form.formState.errors
+                                            .translations as Record<string, any>
+                                        )[fieldLang]?.[fieldKey] &&
+                                        "!border-(--destructive)")
+                                    }
                                   />
                                 ) : (
                                   <Input
@@ -356,14 +397,27 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                         <FormItem>
                           <FormLabel>
                             {t.addItemForm.labels.category[appLang]}
+                            {categoriesLoading && (
+                              <Spinner
+                                containerClasses="!p-0 m-0"
+                                loaderClasses="!w-3 !h-3"
+                              />
+                            )}
                           </FormLabel>
                           <Select
                             defaultValue={field.value || "---"}
-                            onValueChange={(value) =>
-                              form.setValue("category_id", value)
-                            }
+                            onValueChange={(value) => {
+                              form.setValue("category_id", value);
+                              form.clearErrors("category_id");
+                            }}
                           >
-                            <SelectTrigger className="border shadow-none border-grey w-full">
+                            <SelectTrigger
+                              className={cn(
+                                "border shadow-none border-grey w-full",
+                                form.formState.errors.category_id &&
+                                  "!border-(--destructive)",
+                              )}
+                            >
                               <SelectValue
                                 className="border shadow-none border-grey"
                                 placeholder={""}
@@ -373,13 +427,44 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
-                              {categories?.map((cat) => (
-                                <SelectItem key={cat.id} value={cat.id}>
-                                  {cat.translations[appLang]}
-                                </SelectItem>
-                              ))}
+                              {mappedCategories &&
+                                renderCategoryOptions(mappedCategories)}
                             </SelectContent>
                           </Select>
+                          <FormDescription className="text-primary leading-[0.5] mt-4">
+                            {
+                              t.addItemForm.formDescription.category.prompt[
+                                appLang
+                              ]
+                            }
+                            <br />
+                            <Link
+                              to="/admin/categories"
+                              target="_blank"
+                              className="underline"
+                            >
+                              {
+                                t.addItemForm.formDescription.category
+                                  .createOne[appLang]
+                              }
+                            </Link>{" "}
+                            {
+                              t.addItemForm.formDescription.category.then[
+                                appLang
+                              ]
+                            }{" "}
+                            <Button
+                              type="button"
+                              className="underline px-0"
+                              onClick={refetchCategories}
+                            >
+                              {
+                                t.addItemForm.formDescription.category.refresh[
+                                  appLang
+                                ]
+                              }
+                            </Button>
+                          </FormDescription>
                         </FormItem>
                       </div>
                     )}
@@ -464,7 +549,6 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                     )}
                   />
                 </div>
-
                 <FormField
                   control={form.control}
                   name="is_active"
@@ -488,6 +572,36 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="placement_description"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg p-4 gap-6 w-full mt-5">
+                      <div className="space-y-0.5 flex-1">
+                        <FormLabel>
+                          {t.addItemForm.labels.placement[appLang]}
+                        </FormLabel>
+                        <FormDescription>
+                          {
+                            t.addItemForm.paragraphs.placementDescription[
+                              appLang
+                            ]
+                          }
+                        </FormDescription>
+                      </div>
+                      <FormControl className="flex-1">
+                        <Textarea
+                          {...field}
+                          className={
+                            (cn("!border shadow-none border-grey mb-1"),
+                            form.formState.errors.placement_description &&
+                              "!border-(--destructive)")
+                          }
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </AccordionContent>
             </AccordionItem>
 
@@ -495,9 +609,9 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             <AccordionItem value="tags" className="p-10 w-full">
               <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
                 <div>
-                  <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-1">
+                  <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                     {t.addItemForm.headings.assignTags[appLang]}
-                  </p>
+                  </h2>
                   <p className="text-sm leading-none font-medium">
                     {t.addItemForm.paragraphs.tagPrompt[appLang]}
                   </p>
@@ -524,12 +638,23 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                             onClick={toggleTag}
                             data-id={tag.id}
                             data-translations={tag.translations}
-                            className=""
+                            className="hover:cursor-pointer"
                           >
                             {tag.translations?.[appLang].name}
                           </Badge>
                         );
                       })}
+                    {!tagsLoading && remainingTags > 0 && (
+                      <Button
+                        type="button"
+                        variant="default"
+                        onClick={handleLoadMoreTags}
+                        className="h-auto rounded-md border px-2 py-0.5 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+                      >
+                        +{remainingTags}{" "}
+                        {t.addItemForm.buttons.loadMoreTags[appLang]}
+                      </Button>
+                    )}
                     {tagsLoading && (
                       <div className="flex flex-wrap gap-x-2">
                         {Array(20)
@@ -556,6 +681,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                           onClick={toggleTag}
                           variant="default"
                           data-id={tag.tag_id}
+                          className="hover:cursor-pointer"
                         >
                           {tag.translations?.[appLang].name}
                         </Badge>
@@ -571,22 +697,19 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             </AccordionItem>
 
             {/* Images */}
-            <AccordionItem
-              value="images"
-              className="p-10 w-full border-b-0 w-full"
-            >
+            <AccordionItem value="images" className="p-10 w-full border-b-0">
               <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
                 <div className="mb-6">
-                  <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
+                  <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                     {t.addItemForm.headings.addImages[appLang]}
-                  </p>
+                  </h2>
                   <p className="text-sm leading-none font-medium">
                     {t.addItemForm.paragraphs.imagePrompt[appLang]}
                   </p>
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="mt-5">
+              <AccordionContent className="mt-5 grid grid-cols-[1fr] lg:grid-cols-[6fr_4fr] gap-8">
                 <ItemImageUpload
                   item_id={form.watch("id") || ""}
                   formImages={
@@ -594,6 +717,15 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   }
                   updateForm={form.setValue}
                 />
+                <div className="flex-1 flex flex-col h-fit">
+                  <h2 className="text-start font-main text-primary">
+                    {t.itemImageUpload.headings.preview[appLang]}
+                  </h2>
+                  <ItemCard
+                    preview
+                    item={form.getValues() as unknown as Item}
+                  />
+                </div>
               </AccordionContent>
             </AccordionItem>
 

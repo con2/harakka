@@ -21,6 +21,7 @@ import { selectActiveOrganizationId, selectActiveRoleName } from "./rolesSlice";
 const initialState: BookingsState = {
   bookings: [],
   userBookings: [],
+  orgBookings: [],
   loading: false,
   error: null,
   errorContext: null,
@@ -99,14 +100,52 @@ export const getOwnBookings = createAsyncThunk(
     {
       page = 1,
       limit = 10,
+      status,
+      search,
     }: {
       page?: number;
       limit?: number;
+      status?: BookingStatus | "all";
+      search?: string;
     },
     { rejectWithValue },
   ) => {
     try {
-      return await bookingsApi.getOwnBookings(page, limit);
+      return await bookingsApi.getOwnBookings(page, limit, status, search);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch own bookings"),
+      );
+    }
+  },
+);
+// Get my bookings thunk
+export const getOrgBookings = createAsyncThunk(
+  "bookings/getOrgBookings",
+  async (
+    {
+      org_id,
+      page = 1,
+      limit = 10,
+      status,
+      search,
+    }: {
+      org_id: string;
+      page?: number;
+      limit?: number;
+      status?: BookingStatus | "all";
+      search?: string;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await bookingsApi.getOrgBookings(
+        org_id,
+        page,
+        limit,
+        status,
+        search,
+      );
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch own bookings"),
@@ -118,19 +157,15 @@ export const getOwnBookings = createAsyncThunk(
 // get booking by ID
 export const getBookingByID = createAsyncThunk(
   "bookings/getBookingByID",
-  async (booking_id: string, { rejectWithValue, getState }) => {
+  async (
+    {
+      booking_id,
+      provider_org_id,
+    }: { booking_id: string; provider_org_id?: string },
+    { rejectWithValue },
+  ) => {
     try {
-      const state = getState() as RootState;
-      const roleName = selectActiveRoleName(state);
-      const isElevated = roleName === "super_admin";
-      const orgId = isElevated
-        ? undefined
-        : selectActiveOrganizationId(state) || undefined;
-      if (orgId) {
-        return await bookingsApi.getBookingByID(booking_id, orgId);
-      } else {
-        return await bookingsApi.getBookingByID(booking_id, "");
-      }
+      return await bookingsApi.getBookingByID(booking_id, provider_org_id);
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch user bookings"),
@@ -532,13 +567,13 @@ export const returnItems = createAsyncThunk<
 export const pickUpItems = createAsyncThunk<
   {
     bookingId: string;
-    location_id?: string;
+    location_id: string;
     org_id?: string;
     itemIds?: string[];
   },
   {
     bookingId: string;
-    location_id?: string;
+    location_id: string;
     org_id?: string;
     itemIds?: string[];
   },
@@ -680,6 +715,26 @@ export const bookingsSlice = createSlice({
         state.loading = false;
       })
       .addCase(getOwnBookings.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.errorContext = "fetch";
+        state.loading = false;
+      })
+      // Get org bookings
+      .addCase(getOrgBookings.pending, (state) => {
+        state.loading = true; // Set loading to true while fetching
+        state.error = null; // Clear any previous errors
+        state.errorContext = null;
+      })
+      .addCase(getOrgBookings.fulfilled, (state, action) => {
+        if (action.payload) {
+          state.orgBookings = action.payload.data as ExtendedBookingPreview[];
+          state.bookings_pagination = action.payload.metadata;
+        } else {
+          state.orgBookings = [];
+        }
+        state.loading = false;
+      })
+      .addCase(getOrgBookings.rejected, (state, action) => {
         state.error = action.payload as string;
         state.errorContext = "fetch";
         state.loading = false;
@@ -1072,8 +1127,30 @@ export const bookingsSlice = createSlice({
         state.error = null;
         state.errorContext = null;
       })
-      .addCase(pickUpItems.fulfilled, (state) => {
+      .addCase(pickUpItems.fulfilled, (state, action) => {
         state.loading = false;
+        // Optimistically update currentBooking items to reflect pickup
+        const { bookingId, location_id, org_id, itemIds } = action.payload;
+        if (
+          state.currentBooking?.id === bookingId &&
+          state.currentBooking.booking_items
+        ) {
+          state.currentBooking.booking_items =
+            state.currentBooking.booking_items.map((bi) => {
+              const matchesLocation = bi.location_id === location_id;
+              const matchesOrg = org_id
+                ? bi.provider_organization_id === org_id
+                : true;
+              const matchesId =
+                itemIds && itemIds.length > 0
+                  ? itemIds.includes(bi.id)
+                  : bi.status === "confirmed";
+              if (matchesLocation && matchesOrg && matchesId) {
+                return { ...bi, status: "picked_up" };
+              }
+              return bi;
+            });
+        }
       })
       .addCase(pickUpItems.rejected, (state, action) => {
         state.error = action.payload as string;
@@ -1146,6 +1223,8 @@ export const selectbookingErrorWithContext = (state: RootState) => ({
 });
 export const selectUserBookings = (state: RootState) =>
   state.bookings.userBookings;
+export const selectOrgBookings = (state: RootState) =>
+  state.bookings.orgBookings;
 
 // Pagination data
 export const selectBookingPagination = (state: RootState) =>

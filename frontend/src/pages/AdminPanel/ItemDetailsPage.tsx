@@ -25,13 +25,14 @@ import { createItemDto } from "@/store/utils/validate";
 import { t } from "@/translations";
 import { ChevronLeft } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import z from "zod";
 import { UpdateItem } from "@common/items/storage-items.types";
 
 const ItemDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
   const selectedItem = useAppSelector(selectSelectedItem);
@@ -57,7 +58,8 @@ const ItemDetailsPage = () => {
       address: (selectedItem as Item)?.location_details.address,
     },
     quantity: (selectedItem as Item)?.quantity ?? 1,
-    category_id: selectedItem?.category_id ?? null,
+    category_id: selectedItem?.category_id ?? "",
+    placement_description: (selectedItem as Item)?.placement_description || "",
     tags: (selectedTags ?? []).map((tag) => tag.id),
     images: {
       main: mainImg
@@ -71,6 +73,7 @@ const ItemDetailsPage = () => {
               display_order: mainImg.display_order ?? 0,
               alt_text: mainImg.alt_text ?? "",
               is_active: mainImg.is_active ?? true,
+              object_fit: mainImg.object_fit ?? "cover",
             },
           }
         : null,
@@ -83,6 +86,7 @@ const ItemDetailsPage = () => {
           is_active,
           storage_path,
           alt_text,
+          object_fit,
         } = img;
         return {
           id,
@@ -95,6 +99,7 @@ const ItemDetailsPage = () => {
             display_order: display_order,
             alt_text: alt_text,
             is_active: is_active,
+            object_fit: object_fit,
           },
         };
       }),
@@ -117,7 +122,7 @@ const ItemDetailsPage = () => {
       }
     };
     void load();
-  }, [dispatch, id]);
+  }, [activeOrgId, dispatch, id]);
 
   // Initialize form state once selectedItem is loaded
   useEffect(() => {
@@ -126,10 +131,13 @@ const ItemDetailsPage = () => {
 
   const update = (values: z.infer<typeof createItemDto>) => {
     if (!selectedItem) return;
-    const { location_details, location, ...rest } =
-      values as Partial<UpdateItem> & {
-        location: { id: string; address: string; name: string };
-      };
+    const {
+      location_details,
+      location: itemLocation,
+      ...rest
+    } = values as Partial<UpdateItem> & {
+      location: { id: string; address: string; name: string };
+    };
     try {
       toast.promise(
         dispatch(
@@ -138,7 +146,7 @@ const ItemDetailsPage = () => {
               ...rest,
               org_id: activeOrgId!,
               location_details,
-              location_id: location.id,
+              location_id: itemLocation.id,
             },
             item_id: selectedItem.id,
             orgId: activeOrgId!,
@@ -150,11 +158,12 @@ const ItemDetailsPage = () => {
           error: t.itemDetailsPage.messages.toast.update.error[lang],
         },
       );
+      const pageState = (location.state as { page?: number })?.page;
       void navigate("/admin/items", {
         state: {
           order: "updated_at",
-          highlight: [0],
-          ascending: false,
+          ascending: true,
+          ...(pageState && { page: pageState }),
         },
       });
     } catch {
@@ -196,7 +205,10 @@ const ItemDetailsPage = () => {
             deleteItem({ org_id: orgId, item_id: itemId }),
           ).unwrap();
           toast.success(t.itemDetailsPage.messages.toast.deleteSuccess[lang]);
-          void navigate(-1);
+          const pageState = (location.state as { page?: number })?.page;
+          void navigate("/admin/items", {
+            state: pageState ? { page: pageState } : undefined,
+          });
         } catch (err) {
           console.error(err);
           toast.error(t.itemDetailsPage.messages.toast.deleteFail[lang]);
@@ -215,7 +227,10 @@ const ItemDetailsPage = () => {
       <div className="flex justify-between max-w-[900px]">
         <Button
           onClick={() => {
-            void navigate("/admin/items");
+            const pageState = (location.state as { page?: number })?.page;
+            void navigate("/admin/items", {
+              state: pageState ? { page: pageState } : undefined,
+            });
             dispatch(clearSelectedItem());
           }}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"

@@ -1,5 +1,5 @@
 import { ItemFormData, MappedItem } from "@common/items/form.types";
-import { StorageItem, TagLink } from "@common/items/storage-items.types";
+import { Image, StorageItem, TagLink } from "@common/items/storage-items.types";
 import { ItemImageInsert } from "@src/modules/item-images/types/item-image.types";
 
 export function mapStorageItems(payload: ItemFormData): MappedItem[] {
@@ -103,6 +103,7 @@ export type FilterableQuery = {
   or(expr: string): unknown;
   eq(column: string, value: unknown): unknown;
   overlaps(column: string, value: string[]): unknown;
+  contains(column: string, value: string[]): unknown;
   in(column: string, values: string[]): unknown;
   gte(column: string, value: string | number): unknown;
   lt(column: string, value: string | number): unknown;
@@ -153,7 +154,7 @@ export function buildAvailabilityOrExpr(
 // Notes:
 // - searchquery: applied with or(...) across multiple text columns using ilike.
 // - isActive: strict boolean check to avoid misinterpreting undefined.
-// - tags: uses overlaps on an array column of tag IDs.
+// - tags: uses contains on an array column to ensure items have ALL selected tags (AND logic).
 // - location/org/category: converted to IN lists when non-empty.
 // - from_date/to_date: simple created_at gte/lt bounds.
 // - availability_min/max: uses buildAvailabilityOrExpr to combine the
@@ -193,12 +194,16 @@ export function applyItemFilters<T extends FilterableQuery>(
         `fi_item_type.ilike.%${searchquery}%,` +
         `en_item_name.ilike.%${searchquery}%,` +
         `en_item_type.ilike.%${searchquery}%,` +
+        `category_en_name.ilike.%${searchquery}%,` +
+        `category_fi_name.ilike.%${searchquery}%,` +
+        `translations->en->>item_description.ilike.%${searchquery}%,` +
+        `translations->fi->>item_description.ilike.%${searchquery}%,` +
         `location_name.ilike.%${searchquery}%`,
     );
   }
 
   if (typeof isActive === "boolean") query.eq("is_active", isActive);
-  if (tags) query.overlaps("tag_ids", tags.split(","));
+  if (tags) query.contains("tag_ids", tags.split(","));
 
   if (location_filter) {
     const locIds = location_filter
@@ -224,3 +229,19 @@ export function applyItemFilters<T extends FilterableQuery>(
 
   return query;
 }
+
+export const mapItemImagesUpdate = (
+  images: Image[],
+  item_id: string,
+): ItemImageInsert[] => {
+  return images.map((img: Image) => {
+    const { metadata, url, full_path, path, ...rest } = img;
+    return {
+      image_url: url,
+      item_id,
+      storage_path: full_path,
+      ...rest,
+      ...metadata,
+    };
+  });
+};

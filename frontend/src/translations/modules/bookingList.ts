@@ -2,13 +2,13 @@ import { common } from "./common";
 
 export const bookingList = {
   title: {
-    fi: "Hallinnoi tilauksia",
-    en: "Manage Bookings",
+    fi: "Hallinnoi saapuvia varauksia",
+    en: "Manage Incoming Bookings",
   },
   filters: {
     search: {
       fi: "Hae tilausnumeroa tai asiakasta",
-      en: "Search booking # or customer name",
+      en: "Search booking number or customer name",
     },
     status: {
       all: {
@@ -155,5 +155,53 @@ export const bookingList = {
   loading: {
     fi: "Ladataan tilauksia...",
     en: "Loading bookings...",
+  },
+  aria: {
+    placeholders: {
+      search: {
+        en: "Search booking number or customer name",
+        fi: "Hae varausnumerolla tai asiakkaan nimellä",
+      },
+    },
+    labels: {
+      filters: {
+        recent: {
+          en: "View recently made bookings",
+          fi: "Näytä viimeisimmät varaukset",
+        },
+        upcoming: {
+          en: "View upcoming bookings",
+          fi: "Näytä tulevat varaukset",
+        },
+        overdue: {
+          en: "View overdue bookings",
+          fi: "Näytä myöhästyneet varaukset",
+        },
+        status: {
+          en: "Filter by booking status",
+          fi: "Suodata varaustilan mukaan",
+        },
+      },
+      headers: {
+        bookingNumber: {
+          en: "Booking number",
+          fi: "Varausnumero",
+        },
+      },
+      table: {
+        row: {
+          en: "View booking details of booking {booking_number} made by {user_name} between {start_date} and {end_date}",
+          fi: "Näytä varauksen {booking_number} tiedot. Varauksen tekijä {user_name}, varausaika {start_date} - {end_date}.",
+        },
+        overdue: {
+          en: "Table of overdue bookings, made to {org_name}",
+          fi: "Taulukko myöhästyneistä varauksista, jotka on tehty organisaatiolle {org_name}",
+        },
+        list: {
+          en: "Table containing bookings, made to {org_name}",
+          fi: "Taulukko organisaatiolle {org_name} tehdyistä varauksista",
+        },
+      },
+    },
   },
 };

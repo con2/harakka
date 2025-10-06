@@ -1,5 +1,5 @@
 // UserMenuDropdown.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -7,7 +7,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"; // adjust path to your project
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 import {
   ArrowLeft,
   ArrowLeftRight,
@@ -19,11 +20,7 @@ import {
   UserRound,
 } from "lucide-react";
 
-import {
-  Language,
-  SUPPORTED_LANGUAGES,
-  useLanguage,
-} from "@/context/LanguageContext";
+import { Language, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useRoles } from "@/hooks/useRoles";
@@ -31,6 +28,8 @@ import { useAppDispatch } from "@/store/hooks";
 import { setRedirectUrl } from "@/store/slices/uiSlice";
 import { getOrgLabel } from "@/utils/format";
 import { t } from "@/translations";
+import { SUPPORTED_LANGUAGES } from "@/translations/SUPPORTED_LANGUAGES";
+import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 
 export const UserMenu: React.FC = () => {
   const {
@@ -48,6 +47,7 @@ export const UserMenu: React.FC = () => {
   const [selectGroup, setSelectGroup] = useState<
     "roles" | "links" | "languages"
   >("links");
+  const ref = useRef<null | HTMLDivElement>(null);
 
   const {
     organizationId: activeOrgId,
@@ -106,28 +106,31 @@ export const UserMenu: React.FC = () => {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild className="text-primary">
         <button className="gap-3 p-1 px-2 h-fit flex items-center">
-          {avatarUrl && avatarUrl.trim() !== "" ? (
-            <img
+          <Avatar>
+            <AvatarImage
               src={avatarUrl}
-              className="inline h-6 w-6 rounded-full"
-              alt="User avatar"
+              alt={t.userMenu.alt.userAvatar[lang]}
             />
-          ) : (
-            <UserIcon className="inline h-6 w-6 rounded-full" />
-          )}
-          <div className="flex flex-col text-start font-main flex-col-reverse">
+            <AvatarFallback>
+              <UserIcon className="h-8 w-8 text-muted-foreground rounded-full" />
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col text-start font-main flex-col">
+            <p className="text-md">{userName || email}</p>
             <p className="text-xs !font-[var(--main-font)]">
               {activeRoleName !== "user" &&
                 activeRoleName &&
                 activeOrgName &&
                 getOrgLabel(userName, activeRoleName, activeOrgName)}
             </p>
-            <p className="text-md">{userName || email}</p>
           </div>
           <ChevronDown
-            className={`w-3 h-3 transition-transform ${open ? "transform-[rotate(180deg)]" : "transform-[rotate(0deg)]"}`}
+            aria-hidden
+            className={`w-3 h-3 transition-transform ${
+              open ? "transform-[rotate(180deg)]" : "transform-[rotate(0deg)]"
+            }`}
           />
         </button>
       </DropdownMenuTrigger>
@@ -135,16 +138,22 @@ export const UserMenu: React.FC = () => {
       <DropdownMenuContent align="end" className="min-w-[200px]">
         {selectGroup !== "links" && (
           <>
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault();
-                setSelectGroup("links");
-              }}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4 text-muted-foreground" />
-              {t.common.back[lang]}
-            </DropdownMenuItem>
+            <div ref={ref} tabIndex={-1}>
+              <DropdownMenuItem
+                id="usermenu-back"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setSelectGroup("links");
+                }}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft
+                  aria-hidden
+                  className="w-4 h-4 text-muted-foreground"
+                />
+                {t.common.back[lang]}
+              </DropdownMenuItem>
+            </div>
             <DropdownMenuSeparator />
           </>
         )}
@@ -153,8 +162,11 @@ export const UserMenu: React.FC = () => {
         {selectGroup === "roles" && (
           <>
             {roleOptions.map((opt) => (
-              <DropdownMenuItem
+              <DropdownMenuCheckboxItem
                 key={opt.value}
+                checked={
+                  opt.orgId === activeOrgId && opt.roleName === activeRoleName
+                }
                 onSelect={(e) => {
                   e.preventDefault();
                   handleContextChange(opt.value);
@@ -164,7 +176,7 @@ export const UserMenu: React.FC = () => {
                 className="text-sm"
               >
                 {opt.label}
-              </DropdownMenuItem>
+              </DropdownMenuCheckboxItem>
             ))}
           </>
         )}
@@ -173,8 +185,9 @@ export const UserMenu: React.FC = () => {
         {selectGroup === "languages" && (
           <>
             {SUPPORTED_LANGUAGES.map((l) => (
-              <DropdownMenuItem
+              <DropdownMenuCheckboxItem
                 key={l.key}
+                checked={lang === l.key}
                 onSelect={() => {
                   setLanguage(l.key as Language);
                   setSelectGroup("links");
@@ -183,7 +196,7 @@ export const UserMenu: React.FC = () => {
                 className="text-sm"
               >
                 {l.translations[lang]}
-              </DropdownMenuItem>
+              </DropdownMenuCheckboxItem>
             ))}
           </>
         )}
@@ -193,62 +206,80 @@ export const UserMenu: React.FC = () => {
           <>
             <DropdownMenuItem asChild>
               <Link
+                id="usermenu-my-profile"
                 to="/profile"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2"
               >
-                <UserRound className="w-4 h-4 text-muted-foreground" />
+                <UserRound
+                  aria-hidden
+                  className="w-4 h-4 text-muted-foreground"
+                />
                 {t.userMenu.links.myProfile[lang]}
               </Link>
             </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
               <Link
+                id="usermenu-my-bookings"
                 onClick={() => setOpen(false)}
                 to="/my-bookings"
                 className="flex items-center gap-2"
               >
-                <CalendarDays className="w-4 h-4 text-muted-foreground" />
-                {activeRoleName === "user"
-                  ? t.userMenu.links.myBookings[lang]
-                  : t.userMenu.links.orgBookings[lang]}
+                <CalendarDays
+                  aria-hidden
+                  className="w-4 h-4 text-muted-foreground"
+                />
+                {t.userMenu.links.myBookings[lang]}
               </Link>
             </DropdownMenuItem>
 
             {activeRoles.length > 1 && (
+              <div ref={ref} tabIndex={-1}>
+                <DropdownMenuItem
+                  id="usermenu-change-org"
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setSelectGroup("roles");
+                    ref.current?.focus();
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeftRight
+                    aria-hidden
+                    className="w-4 h-4 text-muted-foreground"
+                  />
+                  {t.userMenu.links.changeOrg[lang]}
+                </DropdownMenuItem>
+              </div>
+            )}
+
+            <div ref={ref} tabIndex={-1}>
               <DropdownMenuItem
+                id="usermenu-change-lang"
                 onSelect={(e) => {
                   e.preventDefault();
-                  setSelectGroup("roles");
+                  setSelectGroup("languages");
+                  ref.current?.focus();
                 }}
                 className="flex items-center gap-2"
               >
-                <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
-                {t.userMenu.links.changeOrg[lang]}
+                <Globe aria-hidden className="w-4 h-4 text-muted-foreground" />
+                {t.userMenu.links.changeLang[lang]}
               </DropdownMenuItem>
-            )}
-
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault();
-                setSelectGroup("languages");
-              }}
-              className="flex items-center gap-2"
-            >
-              <Globe className="w-4 h-4 text-muted-foreground" />
-              {t.userMenu.links.changeLang[lang]}
-            </DropdownMenuItem>
+            </div>
 
             <DropdownMenuSeparator />
 
             <DropdownMenuItem
+              id="usermenu-log-out"
               onSelect={() => {
                 void signOut();
                 void navigate("/");
               }}
               className="flex items-center gap-2"
             >
-              <LogOut className="w-4 h-4 text-muted-foreground" />
+              <LogOut aria-hidden className="w-4 h-4 text-muted-foreground" />
               {t.userMenu.links.logOut[lang]}
             </DropdownMenuItem>
           </>

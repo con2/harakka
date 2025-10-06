@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { SubmitErrorHandler, useForm } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,16 +30,17 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import { Category } from "@common/items/categories";
 import { toast } from "sonner";
 import { getFirstErrorMessage } from "@/utils/validate";
 import { t } from "@/translations";
-import { useEffect } from "react";
+import { ReactNode, useEffect } from "react";
+import { buildCategoryTree, Category } from "@/store/utils/format";
 
 function AddCategory() {
   const { lang } = useLanguage();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const categories = useAppSelector(selectCategories);
   const selectedCategory = useAppSelector(selectCategory);
 
@@ -52,7 +53,10 @@ function AddCategory() {
   const cancel = () => {
     void dispatch(clearSelectedCategory());
     form.reset();
-    void navigate("/admin/categories");
+    const pageState = (location.state as { page?: number })?.page;
+    void navigate("/admin/categories", {
+      state: pageState ? { page: pageState } : undefined,
+    });
   };
 
   useEffect(() => {
@@ -63,18 +67,24 @@ function AddCategory() {
     values: z.infer<typeof createCategoryDto>,
     e?: React.BaseSyntheticEvent,
   ) => {
-    const action = selectedCategory
-      ? updateCategory({ id: selectedCategory.id, updateCategory: values })
-      : createCategory(values);
+    const promise = selectedCategory
+      ? dispatch(
+          updateCategory({ id: selectedCategory.id, updateCategory: values }),
+        ).unwrap()
+      : dispatch(createCategory(values)).unwrap();
 
-    toast.promise(dispatch(action as any).unwrap(), { //eslint-disable-line
+    toast.promise(promise, {
       loading: t.addCategory.messages.loading[lang],
       success: () => {
         if (selectedCategory) {
           clearSelectedCategory();
         }
+        const pageState = (location.state as { page?: number })?.page;
         void navigate("/admin/categories", {
-          state: { search: values.translations[lang] },
+          state: {
+            search: values.translations[lang],
+            ...(pageState && { page: pageState }),
+          },
         });
         // reset form on success
         if (e?.target?.reset) {
@@ -99,6 +109,28 @@ function AddCategory() {
     } else {
       toast.error(t.addCategory.messages.general[lang]);
     }
+  };
+
+  const mappedCategories = buildCategoryTree(categories);
+  const renderCategoryOptions = (
+    categories: Category[],
+    level = 0,
+  ): ReactNode[] => {
+    return categories.flatMap((cat) => [
+      <SelectItem
+        style={{
+          paddingLeft: `calc(var(--spacing) * 2 + (var(--spacing) * ${level * 4}))`,
+          fontWeight: level === 0 ? "600" : "400",
+        }}
+        key={cat.id}
+        value={cat.id}
+      >
+        {cat.translations[lang]}
+      </SelectItem>,
+      ...(cat.subcategories && cat.subcategories.length
+        ? renderCategoryOptions(cat.subcategories, level + 1)
+        : []),
+    ]);
   };
 
   return (
@@ -165,13 +197,8 @@ function AddCategory() {
                   </FormControl>
 
                   <SelectContent>
-                    {categories
-                      ?.filter((cat) => cat.id !== selectedCategory?.id) // Remove the selected category from options
-                      .map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id ?? ""}>
-                          {cat.translations[lang]}
-                        </SelectItem>
-                      ))}
+                    {mappedCategories &&
+                      renderCategoryOptions(mappedCategories)}
                   </SelectContent>
                 </Select>
               </FormItem>

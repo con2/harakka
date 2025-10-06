@@ -14,11 +14,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -103,6 +103,10 @@ export function PaginatedDataTable<TData, TValue>({
       handleOrder?.(originalSorting ?? table.getHeaderGroups()[0].id);
     }
   };
+  const hasOnClick = (row: Row<any>): boolean => {
+    const props = rowProps?.(row);
+    return typeof props?.onClick === "function";
+  };
 
   return (
     <div className="space-y-2">
@@ -141,13 +145,21 @@ export function PaginatedDataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
+                const props = rowProps?.(row) ?? {};
+
                 return (
                   <TableRow
                     key={row.id}
-                    className={`h-10 hover:cursor-pointer ${highlight?.includes(row.index) ? "bg-green-50" : ""}`}
+                    role={hasOnClick(row) ? "button" : "row"}
+                    className={cn(
+                      "h-10",
+                      highlight?.includes(row.index) && "bg-green-50",
+                      props.className,
+                    )}
+                    style={props.style}
                     data-state={row.getIsSelected() && "selected"}
                     data-higlighted={highlight?.includes(row.index)}
-                    {...(rowProps?.(row) ?? {})}
+                    {...props}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="truncate">

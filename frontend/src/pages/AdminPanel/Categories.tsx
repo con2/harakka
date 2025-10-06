@@ -15,16 +15,18 @@ import {
 } from "@/store/slices/categoriesSlice";
 import { Category } from "@common/items/categories";
 import { ColumnDef } from "@tanstack/react-table";
-import { Plus, Trash } from "lucide-react";
+import { Plus, Search, Trash } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { t } from "@/translations";
 import { toastConfirm } from "@/components/ui/toastConfirm";
+import { Input } from "@/components/ui/input";
 
 function Categories() {
   const { lang } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const categories = useAppSelector(selectCategories);
   const loading = useAppSelector(selectCategoriesLoading);
@@ -34,7 +36,9 @@ function Categories() {
   // Local state
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebouncedValue(searchTerm);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    (location.state as { page?: number })?.page ?? 1,
+  );
   const [order, setOrder] = useState("");
   const [ascending, setAscending] = useState<boolean | null>(null);
 
@@ -101,10 +105,15 @@ function Categories() {
         const { id } = row.original;
         const category_name = row.original.translations[lang];
         return (
+          // Delete category button
           <div className="text-right">
             <Button
               variant="destructive"
               className="w-fit p-2"
+              aria-label={t.categories.aria.labels.deleteCategory[lang].replace(
+                "{category_name}",
+                category_name,
+              )}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -119,7 +128,7 @@ function Categories() {
                 });
               }}
             >
-              <Trash />
+              <Trash aria-hidden />
             </Button>
           </div>
         );
@@ -136,11 +145,15 @@ function Categories() {
       </h1>
 
       <div className="flex justify-between items-center mb-4">
-        <div className="flex gap-4 items-center">
-          <input
+        <div className="flex gap-4 items-center relative sm:max-w-xs min-w-[250px]">
+          <Search
+            aria-hidden
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
+          />
+          <Input
             type="text"
             size={50}
-            className="w-full sm:max-w-sm text-sm p-2 bg-white rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            className="w-full pl-10 sm:max-w-sm text-sm bg-white rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             placeholder={t.categories.placeholders.search[lang]}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -170,7 +183,9 @@ function Categories() {
           style: { cursor: "pointer" },
           onClick: () => {
             void dispatch(setSelectedCategory(row.original));
-            void navigate(`/admin/categories/${row.original.id}`);
+            void navigate(`/admin/categories/${row.original.id}`, {
+              state: { page: currentPage },
+            });
           },
         })}
       />

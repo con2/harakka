@@ -1,6 +1,6 @@
 import { addCategory } from "./modules/addCategory";
 import { addItemForm } from "./modules/addItemForm";
-import { addLocationModal } from "./modules/addLocationModal";
+import { addLocationPage } from "./modules/addLocationPage";
 import { addTag } from "./modules/addTag";
 import { adminDashboard } from "./modules/adminDashboard";
 import { adminItemsTable } from "./modules/adminItemsTable";
@@ -25,7 +25,8 @@ import { common } from "./modules/common";
 import { contactForm } from "./modules/contactForm";
 import { currentUserRoles } from "./modules/currentUserRoles";
 import { deleteLocationButton } from "./modules/deleteLocationButton";
-import { editLocationModal } from "./modules/editLocationModal";
+import { editLocationPage } from "./modules/editLocationPage";
+import { error } from "./modules/error";
 import { footer } from "./modules/footer";
 import { itemCard } from "./modules/itemCard";
 import { itemDetails } from "./modules/itemDetails";
@@ -39,6 +40,7 @@ import { locationsList } from "./modules/locationsList";
 import { login } from "./modules/login";
 import { logs } from "./modules/logs";
 import { mobileMenu } from "./modules/mobileMenu";
+import { multipleLocations } from "./modules/multipleLocations";
 import { myBookings } from "./modules/myBookings";
 import { myBookingsPage } from "./modules/myBookingsPage";
 import { myProfile } from "./modules/myProfile";
@@ -47,17 +49,22 @@ import { notification } from "./modules/notification";
 import { organizationLocations } from "./modules/organizationLocations";
 import { organizationLogoUploader } from "./modules/organizationLogoUploader";
 import { organizationPage } from "./modules/organizationPage";
-import { organizations } from "./modules/organizations";
 import {
-  organizationDelete,
-  organizationList,
-} from "./modules/organizationsList";
+  organizations,
+  organizationDelete as orgDelete,
+} from "./modules/organizations";
+import { organizationDetailsPage } from "./modules/organizationDetailsPage";
+import { organizationList } from "./modules/organizationsList";
 import { orgLocationManagement } from "./modules/orgLocationManagement";
 import { orgStep } from "./modules/orgStep";
+import { overdueBookings } from "./modules/OverdueBookings";
 import { pagination } from "./modules/pagination";
 import { passwordReset } from "./modules/passwordReset";
 import { privacyPolicy } from "./modules/privacyPolicy";
 import { profilePicUploader } from "./modules/profilePicUploader";
+import { reports } from "./modules/reports";
+import { requestDetailsPage } from "./modules/requestDetailsPage";
+import { requests } from "./modules/requests";
 import { roleManagement } from "./modules/roleManagement";
 import { rolesList } from "./modules/rolesList";
 import { statusBadge } from "./modules/statusBadge";
@@ -81,12 +88,11 @@ import { userPanel } from "./modules/userPanel";
 import { usersDetailsPage } from "./modules/usersDetailsPage";
 import { userSignupModal } from "./modules/userSignupModal";
 import { usersList } from "./modules/usersList";
-import { overdueBookings } from "./modules/OverdueBookings";
 
 export const t = {
   addCategory,
   addItemForm,
-  addLocationModal,
+  addLocationPage,
   addTag,
   adminDashboard,
   adminItemsTable,
@@ -111,7 +117,8 @@ export const t = {
   contactForm,
   currentUserRoles,
   deleteLocationButton,
-  editLocationModal,
+  editLocationPage,
+  error,
   footer,
   itemCard,
   itemDetails,
@@ -125,6 +132,7 @@ export const t = {
   login,
   logs,
   mobileMenu,
+  multipleLocations,
   myBookings,
   myBookingsPage,
   myProfile,
@@ -132,7 +140,8 @@ export const t = {
   notification,
   orgLocationManagement,
   orgStep,
-  organizationDelete,
+  organizationDelete: orgDelete,
+  organizationDetailsPage,
   organizationList,
   organizationLocations,
   organizationLogoUploader,
@@ -142,6 +151,9 @@ export const t = {
   passwordReset,
   privacyPolicy,
   profilePicUploader,
+  reports,
+  requests,
+  requestDetailsPage,
   roleManagement,
   rolesList,
   statusBadge,

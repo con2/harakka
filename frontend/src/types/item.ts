@@ -6,12 +6,12 @@ import {
 import { ErrorContext, StorageLocationRow, Tag, TagTranslation } from "@/types";
 import { Override } from "./db-helpers";
 import { StorageItemRow } from "@common/items/storage-items.types";
+import { ExtendedTag } from "@common/items/tag.types";
 
 /**
  * Item translations content
  */
 export interface ItemTranslation {
-  item_type: string;
   item_name: string;
   item_description: string;
 }
@@ -62,6 +62,14 @@ export type Item = Override<StorageItemRow, ItemAugmentedFields> & {
 };
 
 /**
+ * Item with extended tag information
+ * Used when displaying items with full tag details including translations
+ */
+export interface ItemWithTags extends Item {
+  tags?: ExtendedTag[];
+}
+
+/**
  * Row shape returned by GET /storage-items/ordered
  * (view_manage_storage_items).  This is *not* the same as StorageItem;
  * it contains flattened name/type strings and aggregated tag data.
@@ -93,6 +101,7 @@ export type ManageItemViewRow = {
   location_id: string;
   location_name?: string;
   compartment_id: string | null;
+  placement_description: string;
 
   /* ─ Inventory fields to match Item interface ─ */
   available_quantity: number;
@@ -137,6 +146,27 @@ export interface ItemState {
     totalPages: number;
   };
   itemCount: number;
+  /** Availability overview keyed by item_id */
+  availabilityOverview?: Record<
+    string,
+    {
+      item_id: string;
+      totalQuantity: number;
+      alreadyBookedQuantity: number;
+      availableQuantity: number;
+    }
+  >;
+  availabilityOverviewLoading?: boolean;
+  availabilityOverviewError?: string | null;
+  availabilityOverviewPagination?: {
+    page: number;
+    total: number;
+    totalPages: number;
+  };
+  // Admin locations where the org has items
+  adminLocationOptions?: { id: string; name: string | null }[];
+  adminLocationOptionsLoading?: boolean;
+  adminLocationOptionsError?: string | null;
   itemCreation: {
     org: SelectedOrg | null;
     location: SelectedStorage | null | undefined;
@@ -144,6 +174,8 @@ export interface ItemState {
     errors: Record<string, string[]>;
   };
   isEditingItem: boolean;
+  // Signature of the in-flight fetchOrderedItems request (JSON stringified args)
+  currentRequestSig?: string | null;
 }
 
 type ItemCreatable = Omit<

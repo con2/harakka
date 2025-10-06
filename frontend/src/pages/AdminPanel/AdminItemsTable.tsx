@@ -8,12 +8,18 @@ import {
   selectItemsLoading,
   fetchAllAdminItems,
   updateItem,
+  fetchAvailabilityOverview,
+  selectAvailabilityOverview,
 } from "@/store/slices/itemsSlice";
 import { fetchFilteredTags, selectAllTags } from "@/store/slices/tagSlice";
+import {
+  fetchAdminLocationOptions,
+  selectAdminLocationOptions,
+} from "@/store/slices/itemsSlice";
 import { t } from "@/translations";
 import { Item, ManageItemViewRow, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye, LoaderCircle, Search, X } from "lucide-react";
+import { Eye, LoaderCircle, Plus, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -33,6 +39,8 @@ import {
   selectCategories,
 } from "@/store/slices/categoriesSlice";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@radix-ui/react-tooltip";
+import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const AdminItemsTable = () => {
   const dispatch = useAppDispatch();
@@ -40,8 +48,10 @@ const AdminItemsTable = () => {
     useLocation()?.state || null,
   );
   const items = useAppSelector(selectAllItems);
+  const availabilityByItem = useAppSelector(selectAvailabilityOverview);
   const error = useAppSelector(selectItemsError);
   const tags = useAppSelector(selectAllTags);
+  const locationOptions = useAppSelector(selectAdminLocationOptions);
   const tagsLoading = useAppSelector((state) => state.tags.loading);
   const org_id = useAppSelector(selectActiveOrganizationId);
   const categories = useAppSelector(selectCategories);
@@ -58,7 +68,9 @@ const AdminItemsTable = () => {
   const navigate = useNavigate();
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    (useLocation().state as { page?: number })?.page ?? 1,
+  );
   const [order, setOrder] = useState<ValidItemOrder>(
     redirectState?.order ?? "created_at",
   );
@@ -69,6 +81,9 @@ const AdminItemsTable = () => {
   const loading = useAppSelector(selectItemsLoading);
   const ITEMS_PER_PAGE = 10;
 
+  // New: location filter (multi-select)
+  const [locationFilter, setLocationFilter] = useState<string[]>([]);
+
   /*-----------------------handlers-----------------------------------*/
   const handlePageChange = (newPage: number) => {
     if (redirectState) setRedirectState(null);
@@ -77,7 +92,9 @@ const AdminItemsTable = () => {
 
   // Navigation: open item details page on row click
   const handleRowClick = (id: string) => {
-    void navigate(`/admin/items/${id}`);
+    void navigate(`/admin/items/${id}`, {
+      state: { page: currentPage },
+    });
   };
 
   const handleSortOrder = (order: string) =>
@@ -97,7 +114,7 @@ const AdminItemsTable = () => {
         searchquery: debouncedSearchQuery,
         ascending: ascending === false ? false : true,
         tag_filters: tagFilter,
-        location_filter: [],
+        location_filter: locationFilter,
         category: "",
         activity_filter: statusFilter !== "all" ? statusFilter : undefined,
       }),
@@ -109,14 +126,31 @@ const AdminItemsTable = () => {
     debouncedSearchQuery,
     currentPage,
     tagFilter,
+    locationFilter,
     statusFilter,
     org_id,
   ]);
 
-  //fetch tags list
+  // Fetch availability for currently visible items (default to "now")
+  useEffect(() => {
+    const ids = items.map((it) => (it as ManageItemViewRow).id).filter(Boolean);
+    if (ids.length === 0) return;
+    void dispatch(
+      fetchAvailabilityOverview({
+        itemIds: ids,
+        locationIds: locationFilter,
+        page: 1,
+        limit: ids.length,
+      }),
+    );
+  }, [dispatch, items, locationFilter]);
+
+  //fetch tags and org-specific item locations list
   useEffect(() => {
     if (tags.length === 0)
       void dispatch(fetchFilteredTags({ limit: 20, sortBy: "assigned_to" }));
+    // Load org-specific item locations via thunk
+    void dispatch(fetchAdminLocationOptions());
     if (categories.length === 0)
       void dispatch(fetchAllCategories({ page: 1, limit: 20 }));
   }, [dispatch, tags.length, items.length, categories.length]);
@@ -149,7 +183,33 @@ const AdminItemsTable = () => {
       sortingFn: "alphanumeric",
       cell: ({ row }) => {
         const name = row.original.translations[lang].item_name || "";
+        if (!name || name.trim() === "") {
+          return t.uiComponents.dataTable.emptyCell[lang] || "—";
+        }
         return name.charAt(0).toUpperCase() + name.slice(1);
+      },
+    },
+    {
+      header: t.adminItemsTable.columns.placement[lang],
+      size: 150,
+      maxSize: 200,
+      id: "placement_description",
+      cell: ({ row }) => {
+        // Some rows may not have a placement description; guard against undefined/null
+        const placement = row.original.placement_description ?? "";
+        const hasOverflow = placement.length >= 60;
+        if (hasOverflow)
+          return (
+            <Tooltip>
+              <TooltipTrigger>
+                <p className="truncate max-w-[200px]">{placement}</p>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[300px]">
+                {placement}
+              </TooltipContent>
+            </Tooltip>
+          );
+        return <p className="truncate max-w-[200px]">{placement || "-"}</p>;
       },
     },
     {
@@ -163,8 +223,7 @@ const AdminItemsTable = () => {
           lang === "fi"
             ? row.original.category_fi_name
             : row.original.category_en_name;
-        if (!cat) return "---";
-        return cat;
+        return cat || t.uiComponents.dataTable.emptyCell[lang] || "—";
       },
     },
     {
@@ -174,7 +233,9 @@ const AdminItemsTable = () => {
       accessorFn: (row) => row.location_name || "N/A",
       cell: ({ row }) => (
         <div className="flex items-center gap-1 text-sm">
-          {row.original.location_name || "N/A"}
+          {row.original.location_name ||
+            t.uiComponents.dataTable.emptyCell[lang] ||
+            "—"}
         </div>
       ),
     },
@@ -185,6 +246,19 @@ const AdminItemsTable = () => {
       accessorFn: (row) => row.quantity,
       cell: ({ row }) =>
         `${row.original.quantity} ${t.adminItemsTable.messages.units[lang]}`,
+    },
+    // Availability snapshot column (optional display)
+    // Shows current available quantity if it has been fetched
+    {
+      header: t.adminItemsTable.columns.availabilityNow[lang],
+      size: 40,
+      id: "available_now",
+      accessorFn: (row) =>
+        availabilityByItem[row.id]?.availableQuantity ?? null,
+      cell: ({ row }) => {
+        const avail = availabilityByItem[row.original.id]?.availableQuantity;
+        return typeof avail === "number" ? `${avail}` : "-";
+      },
     },
     {
       id: "is_active",
@@ -233,9 +307,12 @@ const AdminItemsTable = () => {
       </div>
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
         <div className="flex gap-4 items-center">
-          {/* Search by item name/type */}
-          <div className="relative w-full sm:max-w-md bg-white rounded-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+          {/* Search */}
+          <div className="relative w-full sm:max-w-xs bg-white rounded-md">
+            <Search
+              aria-hidden
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
+            />
             <Input
               placeholder={t.adminItemsTable.filters.searchPlaceholder[lang]}
               value={searchTerm}
@@ -251,13 +328,14 @@ const AdminItemsTable = () => {
                 onClick={() => setSearchTerm("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
-                <X className="w-4 h-4" />
+                <X aria-hidden className="w-4 h-4" />
               </button>
             )}
           </div>
 
           {/* Filter by active status */}
           <select
+            aria-label={t.adminItemsTable.aria.labels.statusFilter[lang]}
             value={statusFilter}
             onChange={(e) =>
               setStatusFilter(e.target.value as "all" | "active" | "inactive")
@@ -347,13 +425,69 @@ const AdminItemsTable = () => {
             </PopoverContent>
           </Popover>
 
+          {/* Filter by locations */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                className="px-3 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+                size={"sm"}
+              >
+                {locationFilter.length > 0
+                  ? t.adminItemsTable.filters.locations.filtered[lang].replace(
+                      "{count}",
+                      locationFilter.length.toString(),
+                    )
+                  : t.adminItemsTable.filters.locations.filter[lang]}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[250px] p-0">
+              <Command>
+                <CommandGroup>
+                  {locationOptions.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      {t.adminItemsTable.filters.locations.noLocations?.[
+                        lang
+                      ] || "No locations found"}
+                    </div>
+                  ) : (
+                    locationOptions.map((loc) => (
+                      <CommandItem
+                        key={loc.id}
+                        onSelect={() =>
+                          setLocationFilter((prev) =>
+                            prev.includes(loc.id)
+                              ? prev.filter((l) => l !== loc.id)
+                              : [...prev, loc.id],
+                          )
+                        }
+                        className="cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={locationFilter.includes(loc.id)}
+                          className={
+                            "mr-2 h-4 w-4 border border-secondary bg-white text-white data-[state=checked]:bg-secondary data-[state=checked]:text-white relative z-10"
+                          }
+                        />
+                        <span>{loc.name ?? "Unnamed"}</span>
+                      </CommandItem>
+                    ))
+                  )}
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
           {/* Clear filters button */}
-          {(searchTerm || statusFilter !== "all" || tagFilter.length > 0) && (
+          {(searchTerm ||
+            statusFilter !== "all" ||
+            tagFilter.length > 0 ||
+            locationFilter.length > 0) && (
             <Button
               onClick={() => {
                 setSearchTerm("");
                 setStatusFilter("all");
                 setTagFilter([]);
+                setLocationFilter([]);
               }}
               size={"sm"}
               className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
@@ -365,10 +499,11 @@ const AdminItemsTable = () => {
         {/* Add New Item button */}
         <div className="flex gap-4 justify-end">
           <Button
-            className="addBtn"
+            className="addBtn gap-2"
             onClick={() => navigate("/admin/items/add")}
             size={"sm"}
           >
+            <Plus aria-hidden />
             {t.adminItemsTable.buttons.addNew[lang]}
           </Button>
         </div>
@@ -387,6 +522,7 @@ const AdminItemsTable = () => {
         originalSorting="quantity"
         highlight={redirectState?.highlight}
         rowProps={(row) => ({
+          style: { cursor: "pointer" },
           onClick: () =>
             handleRowClick(String((row.original as unknown as Item).id)),
         })}

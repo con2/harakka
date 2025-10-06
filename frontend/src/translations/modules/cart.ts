@@ -57,25 +57,6 @@ export const cart = {
       en: "Clicking the button below is not a commitment. It's just a request — we'll review it and get back to you shortly.",
     },
   },
-  locations: {
-    differentLocations: {
-      fi: "Huomio: Tuotteesi sijaitsevat eri paikoissa",
-      en: "Notice: Your items are located in different places",
-    },
-    pickupInfo: {
-      fi: "Sinun tulee noutaa tuotteet seuraavista sijainneista:",
-      en: "You will need to pick up items from the following locations:",
-    },
-
-    itemCount: {
-      fi: "tuotetta",
-      en: "items",
-    },
-    itemCountSingular: {
-      fi: "tuote",
-      en: "item",
-    },
-  },
   item: {
     available: {
       fi: "Yhteensä saatavilla",
@@ -128,6 +109,10 @@ export const cart = {
     unknownError: {
       fi: "Tuntematon virhe",
       en: "Unknown error",
+    },
+    wrongRole: {
+      fi: "Valitse toinen rooli jatkaaksesi kassalle",
+      en: "Please choose another role to proceed with checkout",
     },
   },
   toast: {
@@ -227,6 +212,10 @@ export const cart = {
     checkoutError: {
       fi: "Kassavirhe:",
       en: "Checkout error:",
+    },
+    someoneBooked: {
+      fi: "Valitettavasti toinen käyttäjä on juuri varannut osan tuotteistasi",
+      en: "Unfortunately, some of your items have just been booked by another user",
     },
   },
   profileCompletion: {

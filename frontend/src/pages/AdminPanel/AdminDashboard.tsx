@@ -5,8 +5,8 @@ import {
   selectTotalUsersCount,
 } from "@/store/slices/usersSlice";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../../components/ui/button";
-import { DataTable } from "../../components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect } from "react";
 import {
@@ -21,6 +21,7 @@ import {
   getBookingsCount,
   getOrderedBookings,
   selectAllBookings,
+  selectBookingLoading,
   selectTotalBookingsCount,
 } from "@/store/slices/bookingsSlice";
 import {
@@ -46,34 +47,38 @@ const AdminDashboard = () => {
   const dispatch = useAppDispatch();
   const items = useAppSelector(selectAllItems);
   const bookings = useAppSelector(selectAllBookings);
-  const bookingsLoading = useAppSelector((s) => s.bookings.loading);
+  const bookingsLoading = useAppSelector(selectBookingLoading);
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const itemCount = useAppSelector(selectTotalItemsCount);
   const bookingsCount = useAppSelector(selectTotalBookingsCount);
   const userCount = useAppSelector(selectTotalUsersCount);
-  const { activeContext } = useRoles();
   const organizationsCount = useAppSelector(selectTotalOrganizationsCount);
+  const {
+    activeContext: {
+      organizationName: org_name,
+      roleName: currentRole,
+      organizationId: org_id,
+    },
+  } = useRoles();
   const usersList = useAppSelector((s) => s.users.users.data || []);
-
+  const isSuperAdmin = currentRole === "super_admin";
   useEffect(() => {
     if (items.length <= 1) void dispatch(fetchAllItems({ page: 1, limit: 10 }));
   }, [dispatch, items.length]);
-  useEffect(() => {
-    if (userCount < 1) void dispatch(getUserCount());
-  }, [userCount]); //eslint-disable-line
+
   useEffect(() => {
     void dispatch(getItemCount());
     void dispatch(getUserCount());
     void dispatch(getBookingsCount());
-    if (activeContext?.roleName === "super_admin") {
+    if (isSuperAdmin) {
       void dispatch(getOrganizationsCount());
     }
-  }, [dispatch, activeContext?.organizationId, activeContext?.roleName]);
+  }, [dispatch, org_id, isSuperAdmin]);
 
   useEffect(() => {
-    if (activeContext?.roleName === "super_admin") {
+    if (isSuperAdmin) {
       void dispatch(
         fetchAllOrderedUsers({
           page: 1,
@@ -83,10 +88,10 @@ const AdminDashboard = () => {
         }),
       );
     }
-  }, [dispatch, activeContext?.roleName]);
+  }, [dispatch, isSuperAdmin]);
 
   useEffect(() => {
-    if (activeContext?.roleName !== "super_admin") {
+    if (!isSuperAdmin) {
       void dispatch(
         getOrderedBookings({
           ordered_by: "created_at",
@@ -96,12 +101,20 @@ const AdminDashboard = () => {
         }),
       );
     }
-  }, [dispatch, activeContext?.organizationId, activeContext?.roleName]);
+  }, [dispatch, org_id, isSuperAdmin]);
 
   const bookingColumns: ColumnDef<BookingPreview>[] = [
     {
       accessorKey: "booking_number",
-      header: t.bookingList.columns.bookingNumber[lang],
+      header: () => (
+        <p aria-label={t.bookingList.aria.labels.headers.bookingNumber[lang]}>
+          {t.bookingList.columns.bookingNumber[lang]}
+        </p>
+      ),
+      cell: ({ row }) =>
+        row.original.booking_number ||
+        t.uiComponents.dataTable.emptyCell[lang] ||
+        "—",
     },
     {
       accessorKey: "user_profile.name",
@@ -109,9 +122,15 @@ const AdminDashboard = () => {
       cell: ({ row }) => (
         <div>
           <div>
-            {row.original.full_name || t.bookingList.status.unknown[lang]}
+            {row.original.full_name ||
+              t.uiComponents.dataTable.emptyCell[lang] ||
+              "—"}
           </div>
-          <div className="text-xs text-gray-500">{row.original.email}</div>
+          <div className="text-xs text-gray-500">
+            {row.original.email ||
+              t.uiComponents.dataTable.emptyCell[lang] ||
+              "—"}
+          </div>
         </div>
       ),
     },
@@ -131,8 +150,13 @@ const AdminDashboard = () => {
     {
       accessorKey: "created_at",
       header: t.bookingList.columns.bookingDate[lang],
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
+      cell: ({ row }) => {
+        const createdAt = row.original.created_at;
+        if (!createdAt) {
+          return t.uiComponents.dataTable.emptyCell[lang] || "—";
+        }
+        return formatDate(new Date(createdAt), "d MMM yyyy");
+      },
     },
   ];
 
@@ -140,28 +164,56 @@ const AdminDashboard = () => {
     {
       accessorKey: "full_name",
       header: t.adminDashboard.columns.userList.name[lang],
+      cell: ({ row }) => {
+        const name = row.original.full_name;
+        return (
+          (typeof name === "string" ? name : "") ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—"
+        );
+      },
     },
     {
       accessorKey: "email",
       header: t.adminDashboard.columns.userList.email[lang],
+      cell: ({ row }) => {
+        const email = row.original.email;
+        return (
+          (typeof email === "string" ? email : "") ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—"
+        );
+      },
     },
     {
       accessorKey: "created_at",
       header: t.adminDashboard.columns.userList.joined[lang],
-      cell: ({ row }) =>
-        formatDate(new Date(String(row.original.created_at)), "d MMM yyyy"),
+      cell: ({ row }) => {
+        const createdAt = row.original.created_at;
+        if (!createdAt) {
+          return t.uiComponents.dataTable.emptyCell[lang] || "—";
+        }
+        return formatDate(
+          new Date(typeof createdAt === "string" ? createdAt : ""),
+          "d MMM yyyy",
+        );
+      },
     },
   ];
 
   return (
     <div>
       <div className="w-full flex flex-wrap justify-center items-center mb-8 gap-4">
-        {activeContext?.roleName === "super_admin" && (
+        {isSuperAdmin && (
           <button
+            aria-label={t.adminDashboard.aria.labels.viewOrgs[lang].replace(
+              "{number}",
+              organizationsCount.toString(),
+            )}
             className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 h-fit max-h-[200px] w-fit max-w-[300px] flex-1 cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
             onClick={() => navigate("/admin/organizations")}
           >
-            <div className="flex justify-center items-center">
+            <div aria-hidden className="flex justify-center items-center">
               <p className="text-slate-500">
                 {t.adminDashboard.cards.organizations[lang]}
               </p>
@@ -173,10 +225,20 @@ const AdminDashboard = () => {
           </button>
         )}
         <button
+          aria-label={
+            isSuperAdmin
+              ? t.adminDashboard.aria.labels.viewUsers[lang].replace(
+                  "{number}",
+                  userCount.toString(),
+                )
+              : t.adminDashboard.aria.labels.viewUsers.ofOrg[lang]
+                  .replace("{number}", userCount.toString())
+                  .replace("{org_name}", org_name || "organization")
+          }
           className="flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 h-fit max-h-[200px] w-fit max-w-[300px] flex-1 cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
           onClick={() => navigate("/admin/users")}
         >
-          <div className="flex justify-center items-center">
+          <div aria-hidden className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.users[lang]}
             </p>
@@ -189,18 +251,24 @@ const AdminDashboard = () => {
         </button>
 
         <button
+          aria-label={
+            isSuperAdmin
+              ? t.adminDashboard.aria.labels.viewItems[lang].replace(
+                  "{number}",
+                  itemCount.toString(),
+                )
+              : t.adminDashboard.aria.labels.viewItems.ofOrg[lang]
+                  .replace("{number}", itemCount.toString())
+                  .replace("{org_name}", org_name || "organization")
+          }
           className={`flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 h-fit max-h-[200px] w-fit max-w-[300px] flex-1 cursor-default ${
-            activeContext?.roleName === "super_admin"
+            isSuperAdmin
               ? ""
               : "cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
           }`}
-          onClick={
-            activeContext?.roleName === "super_admin"
-              ? undefined
-              : () => navigate("/admin/items")
-          }
+          onClick={isSuperAdmin ? undefined : () => navigate("/admin/items")}
         >
-          <div className="flex justify-center items-center">
+          <div aria-hidden className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.items[lang]}
             </p>
@@ -211,18 +279,24 @@ const AdminDashboard = () => {
           </div>
         </button>
         <button
+          aria-label={
+            isSuperAdmin
+              ? t.adminDashboard.aria.labels.viewBookings[lang].replace(
+                  "{number}",
+                  bookingsCount.toString(),
+                )
+              : t.adminDashboard.aria.labels.viewBookings.ofOrg[lang]
+                  .replace("{number}", bookingsCount.toString())
+                  .replace("{org_name}", org_name || "organization")
+          }
           className={`flex flex-col items-center justify-center bg-white rounded-lg gap-4 p-4 h-fit max-h-[200px] w-fit max-w-[300px] flex-1 cursor-default ${
-            activeContext?.roleName === "super_admin"
+            isSuperAdmin
               ? ""
               : "cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all duration-200"
           }`}
-          onClick={
-            activeContext?.roleName === "super_admin"
-              ? undefined
-              : () => navigate("/admin/bookings")
-          }
+          onClick={isSuperAdmin ? undefined : () => navigate("/admin/bookings")}
         >
-          <div className="flex justify-center items-center">
+          <div aria-hidden className="flex justify-center items-center">
             <p className="text-slate-500">
               {t.adminDashboard.cards.bookings[lang]}
             </p>
@@ -235,7 +309,7 @@ const AdminDashboard = () => {
       </div>
       {/* Recent section - users for super_admin, bookings for others */}
       <div className="mb-8">
-        {activeContext?.roleName === "super_admin" ? (
+        {isSuperAdmin ? (
           <>
             <h2 className="text-left">
               {t.adminDashboard.sections.recentUsers[lang]}

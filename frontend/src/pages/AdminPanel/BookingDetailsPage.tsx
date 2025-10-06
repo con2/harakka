@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -9,7 +9,6 @@ import {
   selectCurrentBookingLoading,
   updateSelfPickup,
   updateBookingItem,
-  deleteBookingItem,
   cancelBookingItem,
 } from "@/store/slices/bookingsSlice";
 import { BookingStatus, BookingWithDetails } from "@/types";
@@ -34,6 +33,7 @@ import { formatBookingStatus } from "@/utils/format";
 import {
   fetchAllOrgLocations,
   selectOrgLocations,
+  selectOrgLocationsLoading,
 } from "@/store/slices/organizationLocationsSlice";
 import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 import {
@@ -56,6 +56,7 @@ import {
 const BookingDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const booking = useAppSelector(
     selectCurrentBooking,
@@ -64,9 +65,10 @@ const BookingDetailsPage = () => {
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
   const orgLocations = useAppSelector(selectOrgLocations);
+  const orgLocationsLoading = useAppSelector(selectOrgLocationsLoading);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const activeRole = useAppSelector(selectActiveRoleName);
-
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   // Fetch organization name if booking was made on behalf of an organization
   const organizationIds = booking?.booked_by_org ? [booking.booked_by_org] : [];
   const { organizationNames } = useOrganizationNames(organizationIds);
@@ -78,6 +80,7 @@ const BookingDetailsPage = () => {
       booking?.org_status_for_active_org === "confirmed") &&
     isAdmin;
 
+  const hasItemsFromOtherOrgs = booking?.has_items_from_multiple_orgs ?? false;
   // Edit state management
   const [showEdit, setShowEdit] = useState(false);
   const [editFormItems, setEditFormItems] = useState<
@@ -107,10 +110,24 @@ const BookingDetailsPage = () => {
   };
 
   useEffect(() => {
-    if (orgLocations.length === 0)
-      void dispatch(fetchAllOrgLocations({ orgId: activeOrgId! }));
-  }, [orgLocations, activeOrgId, dispatch]);
+    if (!activeOrgId) return;
+    const missingForBooking = booking?.booking_items?.some(
+      (b) =>
+        b.provider_organization_id === activeOrgId &&
+        b.location_id &&
+        !orgLocations.some((l) => l.storage_location_id === b.location_id),
+    );
 
+    if (orgLocations.length === 0 || missingForBooking) {
+      void dispatch(
+        fetchAllOrgLocations({
+          orgId: activeOrgId,
+          pageSize: 20,
+          currentPage: 1,
+        }),
+      );
+    }
+  }, [booking, orgLocations, activeOrgId, dispatch]);
   // Computed booking item data
   const orgItems = useMemo(
     () =>
@@ -135,6 +152,45 @@ const BookingDetailsPage = () => {
     (item) => item.status !== "pending",
   );
 
+  const pickupScope = useMemo(() => {
+    if (selectedItemIds.length > 0) {
+      return orgItems.filter((i) => selectedItemIds.includes(String(i.id)));
+    }
+    return orgItems;
+  }, [orgItems, selectedItemIds]);
+
+  const pickupLocationId = useMemo(() => {
+    if (pickupScope.length === 0) return undefined;
+    const locationSet = new Set(pickupScope.map((i) => i.location_id));
+    return locationSet.size === 1 ? Array.from(locationSet)[0] : undefined;
+  }, [pickupScope]);
+
+  const pickupHasMixedLocations = useMemo(() => {
+    if (pickupScope.length === 0) return false;
+    const locationSet = new Set(pickupScope.map((i) => i.location_id));
+    return locationSet.size > 1;
+  }, [pickupScope]);
+
+  const pickupHasFutureStart = useMemo(() => {
+    const now = new Date();
+    return pickupScope.some(
+      (i) => i.status === "confirmed" && new Date(i.start_date) > now,
+    );
+  }, [pickupScope]);
+
+  const pickupDisabledReason = useMemo(() => {
+    if (pickupHasMixedLocations) {
+      return t.bookingPickup.errors.multiLocation[lang];
+    }
+    if (pickupHasFutureStart) {
+      return t.bookingPickup.errors.beforeStartDate[lang];
+    }
+    return undefined;
+  }, [pickupHasMixedLocations, pickupHasFutureStart, lang]);
+
+  const pickupBlockedForSelection =
+    pickupHasFutureStart || pickupHasMixedLocations || !pickupLocationId;
+
   // Initialize edit form when booking is loaded (only active items)
   useEffect(() => {
     if (!booking?.booking_items) return;
@@ -151,7 +207,13 @@ const BookingDetailsPage = () => {
 
   // Availability check when timeframe or items change during edit mode
   useEffect(() => {
-    if (!globalStartDate || !globalEndDate || !showEdit) return;
+    if (
+      !globalStartDate ||
+      !globalEndDate ||
+      !showEdit ||
+      hasItemsFromOtherOrgs
+    )
+      return;
 
     void fetchItemsAvailability(
       editFormItems,
@@ -160,10 +222,15 @@ const BookingDetailsPage = () => {
       setAvailability,
       setLoadingAvailability,
     );
-  }, [globalStartDate, globalEndDate, editFormItems, showEdit]);
+  }, [
+    globalStartDate,
+    globalEndDate,
+    editFormItems,
+    showEdit,
+    hasItemsFromOtherOrgs,
+  ]);
 
   // Track selected item IDs for bulk actions
-  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   // When booking changes, clear out any selected IDs that are no longer pending
   useEffect(() => {
     if (!booking) return;
@@ -178,7 +245,9 @@ const BookingDetailsPage = () => {
   // Refetch booking details (after confirm/reject)
   const refetchBooking = () => {
     if (!id) return;
-    void dispatch(getBookingByID(id));
+    void dispatch(
+      getBookingByID({ booking_id: id, provider_org_id: activeOrgId! }),
+    );
   };
 
   // Statuses which have no further actions
@@ -200,7 +269,7 @@ const BookingDetailsPage = () => {
     setSelectedItemIds(allSelected ? [] : allSelectableIds);
   };
 
-  const bookingOrg = booking?.booking_items?.[0].provider_organization_id;
+  const bookingOrg = booking?.booking_items?.[0]?.provider_organization_id;
   const sortedBookingItems = sortByStatus(orgItems);
   const LOCATION_IDS = new Set(
     booking?.booking_items?.map((i) => i.location_id),
@@ -286,11 +355,14 @@ const BookingDetailsPage = () => {
     {
       accessorKey: "image",
       header: "",
-      cell: ({ row }) => (
-        <div>
-          <ItemImage item={row.original} />
-        </div>
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <div className={item.status === "cancelled" ? "opacity-50" : ""}>
+            <ItemImage item={item} />
+          </div>
+        );
+      },
       size: 60,
     },
     {
@@ -301,7 +373,11 @@ const BookingDetailsPage = () => {
         const itemName =
           item.storage_items?.translations?.[lang]?.item_name ??
           t.bookingDetailsPage.items.unknownItem[lang];
-        return itemName;
+        return (
+          <span className={item.status === "cancelled" ? "opacity-50" : ""}>
+            {itemName}
+          </span>
+        );
       },
     },
     {
@@ -310,7 +386,16 @@ const BookingDetailsPage = () => {
       cell: ({ row }) => {
         const item = row.original;
         if (!showEdit) {
-          return item.quantity;
+          return (
+            <span className={item.status === "cancelled" ? "opacity-50" : ""}>
+              {item.quantity}
+            </span>
+          );
+        }
+
+        // Don't allow editing cancelled items
+        if (item.status === "cancelled") {
+          return <span className="opacity-50">{item.quantity}</span>;
         }
 
         return (
@@ -322,7 +407,7 @@ const BookingDetailsPage = () => {
                 onClick={() => handleDecrementQuantity(item)}
                 className="h-8 w-8 p-0"
                 disabled={
-                  (itemQuantities[String(item.id)] ?? item.quantity ?? 0) <= 0
+                  (itemQuantities[String(item.id)] ?? item.quantity ?? 1) <= 1
                 }
                 aria-label="decrease quantity"
               >
@@ -332,11 +417,12 @@ const BookingDetailsPage = () => {
                 value={itemQuantities[String(item.id)] ?? item.quantity}
                 onChange={(e) => {
                   const val = Number(e.target.value);
-                  if (!isNaN(val) && val >= 0) {
+                  if (!isNaN(val) && val >= 1) {
                     handleUpdateQuantity(item, val);
                   }
                 }}
                 className="w-[50px] text-center"
+                min={1}
               />
               <Button
                 variant="outline"
@@ -364,18 +450,37 @@ const BookingDetailsPage = () => {
       accessorKey: "location",
       header: t.bookingDetailsPage.modal.bookingItems.columns.location[lang],
       cell: ({ row }) => {
-        const loc = orgLocations.find(
-          (l) => l.storage_location_id === row.original.location_id,
+        if (orgLocationsLoading) {
+          return t.bookingDetailsPage.modal.bookingItems.columns.loading[lang];
+        }
+
+        const locId = row.original.location_id;
+        const loc = orgLocations.find((l) => l.storage_location_id === locId);
+        const name =
+          loc?.storage_locations?.name ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—";
+
+        return (
+          <span
+            className={row.original.status === "cancelled" ? "opacity-50" : ""}
+          >
+            {name}
+          </span>
         );
-        return loc?.storage_locations?.name ?? "";
       },
     },
     {
       accessorKey: "status",
       header: t.bookingDetailsPage.modal.bookingItems.columns.status[lang],
-      cell: ({ row }) => (
-        <StatusBadge status={formatBookingStatus(row.original.status)} />
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <div className={item.status === "cancelled" ? "opacity-50" : ""}>
+            <StatusBadge status={formatBookingStatus(item.status)} />
+          </div>
+        );
+      },
     },
     {
       id: "actions",
@@ -391,9 +496,9 @@ const BookingDetailsPage = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => removeItem(item)}
+              onClick={() => cancelItem(item)}
               className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 rounded-md"
-              aria-label="remove item"
+              aria-label="cancel item"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -423,13 +528,6 @@ const BookingDetailsPage = () => {
   const handleDecrementQuantity = (
     item: NonNullable<BookingWithDetails["booking_items"]>[number],
   ) => {
-    const currentQuantity =
-      itemQuantities[String(item.id)] ?? item.quantity ?? 0;
-
-    if (currentQuantity <= 1) {
-      removeItem(item);
-      return;
-    }
     decrementQuantity(item, itemQuantities, setItemQuantities);
   };
 
@@ -443,83 +541,33 @@ const BookingDetailsPage = () => {
     item: NonNullable<BookingWithDetails["booking_items"]>[number],
     newQuantity: number,
   ) => {
-    if (newQuantity === 0) {
-      removeItem(item);
-      return;
-    }
-
     updateQuantity(item, newQuantity, setItemQuantities, availability);
   };
 
-  // Reusable confirmation function for item deletions
-  const confirmItemDeletion = (
+  // Cancel item function
+  const cancelItem = (
     item: NonNullable<BookingWithDetails["booking_items"]>[number],
-    isLastOrgItem: boolean,
   ) => {
-    const config = isLastOrgItem
-      ? {
-          title: t.bookingDetailsPage.confirmations.removeAllItems.title[lang],
-          description:
-            t.bookingDetailsPage.confirmations.removeAllItems.description[lang],
-          confirmText:
-            t.bookingDetailsPage.confirmations.removeAllItems.confirmText[lang],
-          onSuccess: () => void navigate("/admin/bookings"),
-        }
-      : {
-          title: t.bookingDetailsPage.confirmations.removeItem.title[lang],
-          description:
-            t.bookingDetailsPage.confirmations.removeItem.description[lang],
-          confirmText:
-            t.bookingDetailsPage.confirmations.removeItem.confirmText[lang],
-          onSuccess: () =>
-            toast.success(
-              t.bookingDetailsPage.edit.toast.itemPermanentlyRemoved[lang],
-            ),
-        };
-
     toastConfirm({
-      title: config.title,
-      description: config.description,
-      confirmText: config.confirmText,
-      cancelText:
-        t.bookingDetailsPage.confirmations.removeItem.cancelText[lang],
+      title: t.bookingDetailsPage.edit.confirm.cancelItem.title[lang],
+      description:
+        t.bookingDetailsPage.edit.confirm.cancelItem.description[lang],
+      confirmText:
+        t.bookingDetailsPage.edit.confirm.cancelItem.confirmText[lang],
+      cancelText: t.bookingDetailsPage.edit.confirm.cancelItem.cancelText[lang],
       onConfirm: async () => {
         try {
           await dispatch(
-            deleteBookingItem({
-              bookingId: booking!.id,
-              bookingItemId: item.id,
-            }),
+            cancelBookingItem({ bookingItemId: item.id }),
           ).unwrap();
 
-          if (isLastOrgItem) {
-            toast.success(
-              t.bookingDetailsPage.edit.toast.itemRemovedWillNotAppear[lang],
-            );
-            config.onSuccess();
-          } else {
-            config.onSuccess();
-          }
+          toast.success(t.bookingDetailsPage.edit.toast.itemCancelled[lang]);
+          refetchBooking();
         } catch {
-          toast.error(t.bookingDetailsPage.edit.toast.failedToRemoveItem[lang]);
+          toast.error(t.bookingDetailsPage.edit.toast.failedToCancelItem[lang]);
         }
       },
     });
-  };
-
-  const removeItem = (
-    item: NonNullable<BookingWithDetails["booking_items"]>[number],
-  ) => {
-    if (!booking?.booking_items) return;
-
-    const orgItems = booking.booking_items.filter(
-      (bookingItem) =>
-        bookingItem.provider_organization_id === activeOrgId &&
-        bookingItem.status !== "cancelled",
-    );
-    const isLastOrgItem = orgItems.length === 1 && orgItems[0].id === item.id;
-
-    confirmItemDeletion(item, isLastOrgItem);
   };
 
   const handleSubmitEdit = () => {
@@ -533,80 +581,41 @@ const BookingDetailsPage = () => {
       id: string;
       updates: { quantity?: number; start_date?: string; end_date?: string };
     }> = [];
-    const itemsToCancel: string[] = [];
-    const itemsToRemove: string[] = [];
 
-    // Analyze what happened to each item
+    // Analyze what changed in each non-cancelled item
     originalItems.forEach((originalItem) => {
-      if (!originalItem.id) return;
+      if (!originalItem.id || originalItem.status === "cancelled") return;
 
-      const isInEditForm = editFormItems.find(
-        (ei) => ei.id === originalItem.id,
-      );
       const newQuantity =
         itemQuantities[originalItem.id] ?? originalItem.quantity;
+      const newStartDate = globalStartDate ?? originalItem.start_date;
+      const newEndDate = globalEndDate ?? originalItem.end_date;
 
-      if (!isInEditForm) {
-        // Item was removed from form
-        itemsToRemove.push(originalItem.id);
-      } else if (newQuantity === 0) {
-        // Quantity set to 0 - cancel the item
-        itemsToCancel.push(originalItem.id);
-      } else {
-        // Check if anything changed
-        const newStartDate = globalStartDate ?? originalItem.start_date;
-        const newEndDate = globalEndDate ?? originalItem.end_date;
+      const quantityChanged = newQuantity !== originalItem.quantity;
+      // Only allow date changes if there are no items from other organizations
+      const startDateChanged =
+        !hasItemsFromOtherOrgs && newStartDate !== originalItem.start_date;
+      const endDateChanged =
+        !hasItemsFromOtherOrgs && newEndDate !== originalItem.end_date;
 
-        const quantityChanged = newQuantity !== originalItem.quantity;
-        const startDateChanged = newStartDate !== originalItem.start_date;
-        const endDateChanged = newEndDate !== originalItem.end_date;
+      if (quantityChanged || startDateChanged || endDateChanged) {
+        const updates: {
+          quantity?: number;
+          start_date?: string;
+          end_date?: string;
+        } = {};
 
-        if (quantityChanged || startDateChanged || endDateChanged) {
-          const updates: {
-            quantity?: number;
-            start_date?: string;
-            end_date?: string;
-          } = {};
+        if (quantityChanged) updates.quantity = newQuantity;
+        if (startDateChanged)
+          updates.start_date = new Date(newStartDate).toISOString();
+        if (endDateChanged)
+          updates.end_date = new Date(newEndDate).toISOString();
 
-          if (quantityChanged) updates.quantity = newQuantity;
-          if (startDateChanged)
-            updates.start_date = new Date(newStartDate).toISOString();
-          if (endDateChanged)
-            updates.end_date = new Date(newEndDate).toISOString();
-
-          itemsToUpdate.push({ id: originalItem.id, updates });
-        }
+        itemsToUpdate.push({ id: originalItem.id, updates });
       }
     });
 
-    // Check if all org items would be cancelled/removed
-    const orgItemIds = originalItems
-      .map((item) => item.id)
-      .filter((id): id is string => Boolean(id));
-    const wouldAllOrgItemsBeGone = orgItemIds.every(
-      (itemId) =>
-        itemsToCancel.includes(itemId) || itemsToRemove.includes(itemId),
-    );
-
-    if (wouldAllOrgItemsBeGone) {
-      toastConfirm({
-        title: t.bookingDetailsPage.confirmations.cancelOrgItems.title[lang],
-        description:
-          t.bookingDetailsPage.confirmations.cancelOrgItems.description[lang],
-        confirmText:
-          t.bookingDetailsPage.confirmations.cancelOrgItems.confirmText[lang],
-        cancelText:
-          t.bookingDetailsPage.confirmations.cancelOrgItems.cancelText[lang],
-        onConfirm: async () => {
-          await handleOrgCancellation(orgItemIds);
-        },
-      });
-      return;
-    }
-
-    const totalChanges =
-      itemsToUpdate.length + itemsToCancel.length + itemsToRemove.length;
-    if (totalChanges === 0) {
+    if (itemsToUpdate.length === 0) {
       toast.info(t.bookingDetailsPage.edit.toast.noChanges[lang]);
       setShowEdit(false);
       return;
@@ -614,36 +623,16 @@ const BookingDetailsPage = () => {
 
     toastConfirm({
       title: t.bookingDetailsPage.edit.confirm.saveChanges.title[lang],
-      description: `Apply ${totalChanges} change${totalChanges > 1 ? "s" : ""} to booking items?`,
+      description:
+        t.bookingDetailsPage.edit.confirm.saveChanges.description[lang],
       confirmText:
         t.bookingDetailsPage.edit.confirm.saveChanges.confirmText[lang],
       cancelText:
         t.bookingDetailsPage.edit.confirm.saveChanges.cancelText[lang],
       onConfirm: async () => {
-        await executeBookingItemChanges(
-          itemsToUpdate,
-          itemsToCancel,
-          itemsToRemove,
-        );
+        await executeBookingItemChanges(itemsToUpdate);
       },
     });
-  };
-
-  const handleOrgCancellation = async (orgItemIds: string[]) => {
-    try {
-      await Promise.all(
-        orgItemIds.map((itemId) =>
-          dispatch(cancelBookingItem({ bookingItemId: itemId })).unwrap(),
-        ),
-      );
-
-      toast.success(t.bookingDetailsPage.edit.toast.orgItemsCancelled[lang]);
-      setShowEdit(false);
-      refetchBooking();
-    } catch (err: unknown) {
-      console.error("Failed to cancel org items", err);
-      toast.error(t.bookingDetailsPage.edit.toast.cancelOrgItemsFailed[lang]);
-    }
   };
 
   const executeBookingItemChanges = async (
@@ -651,8 +640,6 @@ const BookingDetailsPage = () => {
       id: string;
       updates: { quantity?: number; start_date?: string; end_date?: string };
     }>,
-    itemsToCancel: string[],
-    itemsToRemove: string[],
   ) => {
     try {
       const promises: Promise<unknown>[] = [];
@@ -661,25 +648,6 @@ const BookingDetailsPage = () => {
       itemsToUpdate.forEach(({ id, updates }) => {
         promises.push(
           dispatch(updateBookingItem({ bookingItemId: id, updates })).unwrap(),
-        );
-      });
-
-      // Cancel items (set status to cancelled)
-      itemsToCancel.forEach((itemId) => {
-        promises.push(
-          dispatch(cancelBookingItem({ bookingItemId: itemId })).unwrap(),
-        );
-      });
-
-      // Remove items completely (permanent deletion for admins)
-      itemsToRemove.forEach((itemId) => {
-        promises.push(
-          dispatch(
-            deleteBookingItem({
-              bookingId: booking!.id,
-              bookingItemId: itemId,
-            }),
-          ).unwrap(),
         );
       });
 
@@ -711,7 +679,9 @@ const BookingDetailsPage = () => {
 
   useEffect(() => {
     if (id) {
-      void dispatch(getBookingByID(id));
+      void dispatch(
+        getBookingByID({ booking_id: id, provider_org_id: activeOrgId! }),
+      );
     }
   }, [id, dispatch, activeOrgId]);
 
@@ -727,7 +697,12 @@ const BookingDetailsPage = () => {
       {/* Back Button */}
       <div>
         <Button
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            const pageState = (location.state as { page?: number })?.page;
+            void navigate("/admin/bookings", {
+              state: pageState ? { page: pageState } : undefined,
+            });
+          }}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
         >
           <ChevronLeft /> {t.bookingDetailsPage.buttons.back[lang]}
@@ -736,8 +711,7 @@ const BookingDetailsPage = () => {
       {/* Booking Info Section */}
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-normal pt-4">
-          {t.bookingDetailsPage.modal.bookingDetails[lang]}{" "}
-          {booking.booking_number}
+          {`${t.bookingDetailsPage.modal.bookingDetails[lang]} ${booking.booking_number}`}
         </h3>
         {canEdit && (
           <Button onClick={() => setShowEdit((s) => !s)} variant="outline">
@@ -867,20 +841,25 @@ const BookingDetailsPage = () => {
         {/* Date picker for edit mode */}
         {showEdit && (
           <div className="mb-4">
-            <h3 className="font-normal text-sm mb-2">
-              {t.bookingDetailsPage.dateRange[lang]}
-            </h3>
-            <InlineTimeframePicker
-              startDate={globalStartDate ? new Date(globalStartDate) : null}
-              endDate={globalEndDate ? new Date(globalEndDate) : null}
-              onChange={(type, date) => {
-                if (type === "start") {
-                  setGlobalStartDate(date ? date.toISOString() : null);
-                  return;
-                }
-                setGlobalEndDate(date ? date.toISOString() : null);
-              }}
-            />
+            {hasItemsFromOtherOrgs ? (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  {t.bookingDetailsPage.edit.hasItemsFromMultipleOrgs[lang]}
+                </p>
+              </div>
+            ) : (
+              <InlineTimeframePicker
+                startDate={globalStartDate ? new Date(globalStartDate) : null}
+                endDate={globalEndDate ? new Date(globalEndDate) : null}
+                onChange={(type, date) => {
+                  if (type === "start") {
+                    setGlobalStartDate(date ? date.toISOString() : null);
+                    return;
+                  }
+                  setGlobalEndDate(date ? date.toISOString() : null);
+                }}
+              />
+            )}
           </div>
         )}
 
@@ -954,6 +933,9 @@ const BookingDetailsPage = () => {
                 id={booking.id}
                 selectedItemIds={selectedItemIds}
                 onSuccess={refetchBooking}
+                location_id={pickupLocationId ?? ""}
+                disabled={pickupBlockedForSelection}
+                disabledReason={pickupDisabledReason}
               />
             </div>
           )}

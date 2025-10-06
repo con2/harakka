@@ -24,5 +24,9 @@ export const uiComponents = {
       fi: "Ei tuloksia.",
       en: "No results.",
     },
+    emptyCell: {
+      fi: "--",
+      en: "--",
+    },
   },
 };

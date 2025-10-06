@@ -420,7 +420,7 @@ Uploads an image for a storage item. Requires admin privileges.
 
 ```
 image: [file]
-image_type: "main" | "thumbnail" | "detail"
+image_type: "main" | "detail"
 display_order: 1
 alt_text: "Description of image"
 ```

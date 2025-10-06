@@ -44,6 +44,10 @@ export const common = {
     fi: "Vahvista",
     en: "Confirm",
   },
+  undo: {
+    fi: "Kumoa",
+    en: "Undo",
+  },
   active: {
     fi: "Aktiivinen",
     en: "Active",
@@ -67,6 +71,18 @@ export const common = {
   status: {
     fi: "Tila",
     en: "Status",
+  },
+  startDate: {
+    en: "Start Date",
+    fi: "Aloituspäivämäärä",
+  },
+  endDate: {
+    en: "End Date",
+    fi: "Lopetuspäivämäärä",
+  },
+  date: {
+    en: "Date",
+    fi: "Päivämäärä",
   },
   // Globally used roles
   roles: {
@@ -156,6 +172,17 @@ export const common = {
     invalidFile: {
       en: "Invalid file",
       fi: "Virheellinen tiedosto",
+    },
+  },
+  loading: {
+    en: "Loading",
+    fi: "Ladataan",
+  },
+  // If some data is missing, i.e. activeOrgName, fallback to neutral string
+  fallbacks: {
+    yourOrg: {
+      en: "your organization",
+      fi: "sinun organisaatiosi",
     },
   },
 };

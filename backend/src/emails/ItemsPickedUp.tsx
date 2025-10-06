@@ -5,6 +5,7 @@ import {
   Body,
   Container,
   Text,
+  Img,
   Section,
 } from "@react-email/components";
 import { PickUpEmail } from "src/modules/mail/interfaces/mail.interface";
@@ -25,13 +26,17 @@ const ItemsPickedUpMail = ({
     <Body
       style={{
         fontFamily: "'Lato', Arial, sans-serif",
-        // backgroundColor: "#2f5D9E",
-        backgroundColor: "#d0c1d8",
+        backgroundColor: "#C4C9CC",
         margin: 0,
         padding: "40px 20px",
         color: "#333333",
       }}
     >
+      <Img
+        width={200}
+        src="https://rcbddkhvysexkvgqpcud.supabase.co/storage/v1/object/public/public-files/v8.5.png"
+        style={{ justifySelf: "center", margin: "0 auto 1rem" }}
+      />
       <Container
         style={{
           backgroundColor: "#ffffff",
@@ -118,7 +123,7 @@ const ItemsPickedUpMail = ({
 
         <Section style={{ textAlign: "center", marginTop: "30px" }}>
           <a
-            href="http://localhost:5180/profile?tab=bookings" // TODO: replace with actual link
+            href="https://agreeable-grass-049dc8010.6.azurestaticapps.net/my-bookings"
             style={{
               backgroundColor: "#2f5D9E",
               color: "#ffffff",
@@ -137,13 +142,13 @@ const ItemsPickedUpMail = ({
           If you have any questions, contact us by answering this mail or use
           the{" "}
           <a
-            href="http://localhost:5180/contact-us" // TODO: replace with actual link
+            href="https://agreeable-grass-049dc8010.6.azurestaticapps.net/contact-us/"
             style={{ color: "#2f5D9E" }}
           >
             {" "}
             contact form{" "}
           </a>
-          in our website.
+          on our website.
         </Text>
       </Container>
     </Body>

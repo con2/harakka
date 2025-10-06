@@ -716,6 +716,7 @@ export type Database = {
           image_url: string
           is_active: boolean | null
           item_id: string
+          object_fit: Database["public"]["Enums"]["object_fit"]
           storage_path: string
         }
         Insert: {
@@ -727,6 +728,7 @@ export type Database = {
           image_url: string
           is_active?: boolean | null
           item_id: string
+          object_fit?: Database["public"]["Enums"]["object_fit"]
           storage_path: string
         }
         Update: {
@@ -738,6 +740,7 @@ export type Database = {
           image_url?: string
           is_active?: boolean | null
           item_id?: string
+          object_fit?: Database["public"]["Enums"]["object_fit"]
           storage_path?: string
         }
         Relationships: [
@@ -850,6 +853,7 @@ export type Database = {
           is_deleted: boolean | null
           location_id: string
           org_id: string
+          placement_description: string
           quantity: number
           translations: Json | null
           updated_at: string | null
@@ -865,6 +869,7 @@ export type Database = {
           is_deleted?: boolean | null
           location_id: string
           org_id: string
+          placement_description?: string
           quantity: number
           translations?: Json | null
           updated_at?: string | null
@@ -880,6 +885,7 @@ export type Database = {
           is_deleted?: boolean | null
           location_id?: string
           org_id?: string
+          placement_description?: string
           quantity?: number
           translations?: Json | null
           updated_at?: string | null
@@ -1490,6 +1496,7 @@ export type Database = {
           location_id: string | null
           location_name: string | null
           organization_id: string | null
+          placement_description: string | null
           quantity: number | null
           tag_ids: string[] | null
           tag_translations: Json[] | null
@@ -1778,6 +1785,22 @@ export type Database = {
       _vol: {
         Args: { "": unknown }
         Returns: string
+      }
+      availability_overview: {
+        Args: {
+          category_ids?: string[]
+          end_ts?: string
+          item_ids?: string[]
+          location_ids?: string[]
+          org_uuid: string
+          start_ts?: string
+        }
+        Returns: {
+          already_booked_quantity: number
+          available_quantity: number
+          item_id: string
+          total_quantity: number
+        }[]
       }
       calculate_storage_item_total: {
         Args: { item_id: string }
@@ -2408,6 +2431,7 @@ export type Database = {
         | "booking.status_rejected"
         | "booking.created"
         | "user.created"
+      object_fit: "cover" | "contain"
       role_type:
         | "User"
         | "Admin"
@@ -2579,6 +2603,7 @@ export const Constants = {
         "booking.created",
         "user.created",
       ],
+      object_fit: ["cover", "contain"],
       role_type: [
         "User",
         "Admin",

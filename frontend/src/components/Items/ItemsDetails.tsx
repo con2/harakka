@@ -1,40 +1,62 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   getItemById,
   selectSelectedItem,
   selectItemsLoading,
   selectItemsError,
-} from "../../store/slices/itemsSlice";
+} from "@/store/slices/itemsSlice";
 import {
   getItemImages,
   selectItemImages,
-} from "../../store/slices/itemImagesSlice";
-import { Button } from "../../components/ui/button";
+} from "@/store/slices/itemImagesSlice";
+import {
+  fetchOrganizationById,
+  selectedOrganization,
+} from "@/store/slices/organizationSlice";
+import {
+  fetchAllCategories,
+  selectCategories,
+} from "@/store/slices/categoriesSlice";
+import { Button } from "@/components/ui/button";
 import { ChevronLeft, Clock, Info, LoaderCircle } from "lucide-react";
-import { addToCart } from "../../store/slices/cartSlice";
+import { addToCart } from "@/store/slices/cartSlice";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
 import imagePlaceholder from "@/assets/defaultImage.jpg";
 import { useTranslation } from "@/hooks/useTranslation";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
-import { Item, ItemImageAvailabilityInfo, ItemTranslation } from "@/types";
+import { extractCityFromLocationName } from "@/utils/locationValidation";
+import {
+  Item,
+  ItemImage,
+  ItemImageAvailabilityInfo,
+  ItemTranslation,
+  ItemWithTags,
+} from "@/types";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import { itemsApi } from "@/api/services/items";
+import { cn } from "@/lib/utils";
 
 const ItemsDetails: React.FC = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { formatDate } = useFormattedDate();
+
+  // get page num from nav state (passed from ItemCard)
+  const fromPage = (location.state as { fromPage?: number } | null)?.fromPage;
 
   const item = useAppSelector(selectSelectedItem);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
   const { startDate, endDate } = useAppSelector((state) => state.timeframe);
   const itemImages = useAppSelector(selectItemImages);
+  const organization = useAppSelector(selectedOrganization);
+  const categories = useAppSelector(selectCategories);
   const [quantity, setQuantity] = useState(1);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [isImageVisible, setIsImageVisible] = useState(false);
@@ -65,27 +87,16 @@ const ItemsDetails: React.FC = () => {
   // Get the main image - no transformation needed
   const mainImage = useMemo(() => {
     // If user selected an image, use that
-    if (selectedImageUrl) return selectedImageUrl;
+    if (selectedImageUrl) return { image_url: selectedImageUrl };
 
     // First try to find a main image
     const mainImg = itemImagesForCurrentItem.find(
       (img) => img.image_type === "main",
     );
-
-    // If no main image, try thumbnail
-    const thumbnailImg = mainImg
-      ? null
-      : itemImagesForCurrentItem.find((img) => img.image_type === "thumbnail");
-
-    const anyImg = mainImg || thumbnailImg ? null : itemImagesForCurrentItem[0];
+    const firstImg = itemImagesForCurrentItem[0];
 
     // Return image URL or placeholder
-    return (
-      mainImg?.image_url ||
-      thumbnailImg?.image_url ||
-      anyImg?.image_url ||
-      imagePlaceholder
-    );
+    return mainImg || firstImg || { image_url: imagePlaceholder };
   }, [itemImagesForCurrentItem, selectedImageUrl]);
 
   const handleAddToCart = () => {
@@ -143,8 +154,6 @@ const ItemsDetails: React.FC = () => {
   useEffect(() => {
     if (id) {
       void dispatch(getItemById(id));
-
-      // Fetch images for this item
       dispatch(getItemImages(id))
         .unwrap()
         .catch((error) => {
@@ -152,6 +161,33 @@ const ItemsDetails: React.FC = () => {
         });
     }
   }, [id, dispatch]);
+
+  // Fetch org data when item is loaded
+  useEffect(() => {
+    const itemWithOrgId = item as Item;
+    if (
+      itemWithOrgId?.org_id &&
+      (!organization || organization.id !== itemWithOrgId.org_id)
+    ) {
+      void dispatch(fetchOrganizationById(itemWithOrgId.org_id));
+    }
+  }, [item, organization, dispatch]);
+
+  // Fetch categories if not already loaded
+  useEffect(() => {
+    if (categories.length === 0) {
+      void dispatch(fetchAllCategories({ page: 1, limit: 100 }));
+    }
+  }, [categories.length, dispatch]);
+
+  // Find the category for this item
+  const itemCategory = useMemo(() => {
+    const itemWithCategory = item as Item;
+    if (itemWithCategory?.category_id && categories.length > 0) {
+      return categories.find((cat) => cat.id === itemWithCategory.category_id);
+    }
+    return null;
+  }, [item, categories]);
 
   if (loading) {
     return (
@@ -185,7 +221,14 @@ const ItemsDetails: React.FC = () => {
       {/* Back Button */}
       <div className="mb-3 mt-4 md:mt-0">
         <Button
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            // navigate back to storage with page state if available
+            if (fromPage) {
+              void navigate("/storage", { state: { fromPage } });
+            } else {
+              void navigate(-1);
+            }
+          }}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
           data-cy="item-details-back-btn"
         >
@@ -201,18 +244,23 @@ const ItemsDetails: React.FC = () => {
             data-cy="item-details-main-image"
           >
             {/* Main Image Container */}
-            <div className="border rounded-md bg-slate-50 overflow-hidden h-full w-full">
+            <button
+              className="border rounded-md bg-slate-50 overflow-hidden h-full w-full"
+              onClick={toggleImageVisibility}
+            >
               <img
-                src={mainImage}
+                src={(mainImage as ItemImage).image_url}
                 alt={itemContent?.item_name || "Tuotteen kuva"}
-                className="w-full h-full object-cover cursor-pointer hover:opacity-90 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-in-out"
+                className={cn(
+                  "w-full h-full cursor-pointer hover:opacity-90 hover:scale-105 hover:shadow-lg transition-all duration-300 ease-in-out",
+                  `object-${(mainImage as ItemImage)?.object_fit || "cover"}`,
+                )}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = imagePlaceholder;
                 }}
-                onClick={toggleImageVisibility}
               />
-            </div>
+            </button>
 
             {/* overlay for enlarged preview (closes on any click) */}
             {isImageVisible && (
@@ -224,7 +272,7 @@ const ItemsDetails: React.FC = () => {
               >
                 <div className="w-[90%] max-w-[420px] max-h-[80%] h-auto border rounded-lg shadow-lg bg-white flex justify-center items-center p-2">
                   <img
-                    src={mainImage}
+                    src={selectedImageUrl || (mainImage as ItemImage).image_url}
                     alt={itemContent?.item_name || "Tuotteen kuva"}
                     className="object-contain w-[400px] h-[400px] max-w-full max-h-full cursor-pointer"
                   />
@@ -240,7 +288,7 @@ const ItemsDetails: React.FC = () => {
               data-cy="item-details-gallery"
             >
               {detailImages.map((img) => (
-                <div
+                <button
                   key={img.id}
                   className="border rounded-md overflow-hidden bg-slate-50 cursor-pointer"
                   onClick={() => setSelectedImageUrl(img.image_url)}
@@ -255,7 +303,7 @@ const ItemsDetails: React.FC = () => {
                       e.currentTarget.src = imagePlaceholder;
                     }}
                   />
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -275,20 +323,39 @@ const ItemsDetails: React.FC = () => {
               : "Tuote"}
           </h2>
 
-          {/* Location Details Section */}
-          {(item as Item).location_details && (
-            <div className="text-sm mt-2" data-cy="item-details-location">
-              {(item as Item).location_details?.name && (
-                <div className="flex items-start">
-                  <span>{t.itemDetails.locations.location[lang]}:</span>
-                  <span className="ml-1">
-                    {(item as Item).location_details?.name}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Organization, Location */}
+          <div className="space-y-1 mt-4 mb-6">
+            {/* Organization */}
+            {organization && (
+              <div
+                className="flex items-center gap-2"
+                data-cy="item-details-organization"
+              >
+                <span className="text-sm text-slate-600 font-semibold">
+                  {t.itemDetails.organization[lang]}:
+                </span>
+                <span className="text-sm">{organization.name}</span>
+              </div>
+            )}
 
+            {/* Location Details */}
+            {(item as Item).location_details && (
+              <div
+                className="flex items-center gap-2"
+                data-cy="item-details-location"
+              >
+                <span className="text-sm text-slate-600 font-semibold">
+                  {t.itemDetails.locations.location[lang]}:
+                </span>
+                <span className="text-sm">
+                  {extractCityFromLocationName(
+                    (item as Item).location_details?.name || "",
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
+          {/* Item description */}
           <p data-cy="item-details-description">
             {itemContent?.item_description
               ? `${itemContent.item_description
@@ -419,6 +486,81 @@ const ItemsDetails: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
+      <div className="mt-6 space-y-2">
+        {/* Category */}
+        {itemCategory && (
+          <div
+            className="flex items-center gap-2"
+            data-cy="item-details-category"
+          >
+            <span className="text-sm text-slate-600 font-semibold">
+              {t.itemDetails.category[lang]}:
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-sm p-1 h-auto text-secondary hover:text-secondary hover:bg-secondary/10 underline-offset-2 hover:underline"
+              onClick={() =>
+                navigate("/storage", {
+                  state: {
+                    preSelectedFilters: {
+                      categories: [itemCategory.id],
+                    },
+                  },
+                })
+              }
+            >
+              {itemCategory.translations[lang] || itemCategory.translations.en}
+            </Button>
+          </div>
+        )}
+
+        {/* Tags */}
+        {(item as ItemWithTags).tags &&
+        (item as ItemWithTags).tags!.length > 0 ? (
+          <div
+            className="flex items-baseline gap-2"
+            data-cy="item-details-tags"
+          >
+            <span className="text-sm text-slate-600 font-semibold">
+              {t.itemDetails.tags[lang]}:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {(item as ItemWithTags).tags!.map((tag) => (
+                <Button
+                  key={tag.id}
+                  variant="ghost"
+                  size="sm"
+                  className="text-sm p-1 h-auto text-secondary hover:text-secondary hover:bg-secondary/10 underline-offset-2 hover:underline"
+                  onClick={() =>
+                    navigate("/storage", {
+                      state: {
+                        preSelectedFilters: {
+                          tagIds: [tag.id],
+                        },
+                      },
+                    })
+                  }
+                >
+                  {tag.translations?.[lang as "en" | "fi"]?.name ||
+                    tag.translations?.en?.name ||
+                    "Tag"}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div
+            className="flex items-center gap-2"
+            data-cy="item-details-no-tags"
+          >
+            <span className="text-sm font-semibold text-slate-600">
+              {t.itemDetails.tags[lang]}:
+            </span>
+            <span className="text-sm italic">{t.itemDetails.noTags[lang]}</span>
+          </div>
+        )}
       </div>
     </div>
     // </div>

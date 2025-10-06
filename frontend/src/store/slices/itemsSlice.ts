@@ -31,6 +31,16 @@ const initialState: ItemState = {
     total: 0,
   },
   itemCount: 0,
+  availabilityOverview: {},
+  availabilityOverviewLoading: false,
+  availabilityOverviewError: null,
+  availabilityOverviewPagination: { page: 1, total: 0, totalPages: 1 },
+  // Signature of the in-flight fetchOrderedItems request (JSON stringified args)
+  currentRequestSig: null as string | null,
+  // Admin location options (org-scoped item locations)
+  adminLocationOptions: [],
+  adminLocationOptionsLoading: false,
+  adminLocationOptionsError: null,
   itemCreation: {
     org: null,
     location: undefined,
@@ -38,6 +48,15 @@ const initialState: ItemState = {
     errors: {},
   },
   isEditingItem: false,
+};
+
+// Helper to safely stringify the async thunk arg (request params)
+const serializeRequestArg = (arg: unknown): string | null => {
+  try {
+    return JSON.stringify(arg);
+  } catch {
+    return null;
+  }
 };
 
 // Fetch all available items
@@ -196,6 +215,47 @@ export const fetchAllAdminItems = createAsyncThunk<
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch admin items"),
+      );
+    }
+  },
+);
+
+// Fetch availability overview (admin)
+export const fetchAvailabilityOverview = createAsyncThunk<
+  ApiResponse<{
+    item_id: string;
+    totalQuantity: number;
+    alreadyBookedQuantity: number;
+    availableQuantity: number;
+  }>,
+  {
+    page?: number;
+    limit?: number;
+    startDate?: Date | string;
+    endDate?: Date | string;
+    itemIds?: string[];
+    locationIds?: string[];
+    categoryIds?: string[];
+  }
+>("items/fetchAvailabilityOverview", async (params, { rejectWithValue }) => {
+  try {
+    return await itemsApi.getAvailabilityOverview(params);
+  } catch (error: unknown) {
+    return rejectWithValue(
+      extractErrorMessage(error, "Failed to fetch availability overview"),
+    );
+  }
+});
+
+// Fetch locations that the active org actually has items in
+export const fetchAdminLocationOptions = createAsyncThunk(
+  "items/fetchAdminLocationOptions",
+  async (_: void, { rejectWithValue }) => {
+    try {
+      return await itemsApi.getAdminLocationOptions();
+    } catch (error: unknown) {
+      return rejectWithValue(
+        extractErrorMessage(error, "Failed to fetch location options"),
       );
     }
   },
@@ -415,20 +475,32 @@ export const itemsSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "fetch";
       })
-      .addCase(fetchOrderedItems.pending, (state) => {
+      .addCase(fetchOrderedItems.pending, (state, action) => {
+        // Mark a new request andget its signature so we can ignore any stale responses.
         state.loading = true;
         state.error = null;
         state.errorContext = null;
+        state.currentRequestSig = serializeRequestArg(action.meta.arg);
       })
       .addCase(fetchOrderedItems.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload.data ?? [];
-        state.item_pagination = action.payload.metadata;
+        // Only apply results if this response matches the current request
+        const respSig = serializeRequestArg(action.meta.arg);
+        if (state.currentRequestSig && respSig === state.currentRequestSig) {
+          state.loading = false;
+          state.items = action.payload.data ?? [];
+          state.item_pagination = action.payload.metadata;
+          state.currentRequestSig = null;
+        }
       })
       .addCase(fetchOrderedItems.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-        state.errorContext = "fetch";
+        // Only surface error if it belongs to the active request
+        const respSig = serializeRequestArg(action.meta.arg);
+        if (state.currentRequestSig && respSig === state.currentRequestSig) {
+          state.loading = false;
+          state.error = action.payload as string;
+          state.errorContext = "fetch";
+          state.currentRequestSig = null;
+        }
       })
       .addCase(fetchAllAdminItems.pending, (state) => {
         state.loading = true;
@@ -545,6 +617,46 @@ export const itemsSlice = createSlice({
         state.error = action.payload as string;
         state.errorContext = "fetch";
       })
+      // Availability overview
+      .addCase(fetchAvailabilityOverview.pending, (state) => {
+        state.availabilityOverviewLoading = true;
+        state.availabilityOverviewError = null;
+      })
+      .addCase(fetchAvailabilityOverview.fulfilled, (state, action) => {
+        state.availabilityOverviewLoading = false;
+        const rows = action.payload.data as Array<{
+          item_id: string;
+          totalQuantity: number;
+          alreadyBookedQuantity: number;
+          availableQuantity: number;
+        }>;
+        const meta = action.payload.metadata ?? {
+          page: 1,
+          total: rows?.length ?? 0,
+          totalPages: 1,
+        };
+        rows?.forEach((r) => {
+          state.availabilityOverview![r.item_id] = r;
+        });
+        state.availabilityOverviewPagination = meta;
+      })
+      .addCase(fetchAvailabilityOverview.rejected, (state, action) => {
+        state.availabilityOverviewLoading = false;
+        state.availabilityOverviewError = action.payload as string;
+      })
+      // Admin location options
+      .addCase(fetchAdminLocationOptions.pending, (state) => {
+        state.adminLocationOptionsLoading = true;
+        state.adminLocationOptionsError = null;
+      })
+      .addCase(fetchAdminLocationOptions.fulfilled, (state, action) => {
+        state.adminLocationOptionsLoading = false;
+        state.adminLocationOptions = action.payload.data ?? [];
+      })
+      .addCase(fetchAdminLocationOptions.rejected, (state, action) => {
+        state.adminLocationOptionsLoading = false;
+        state.adminLocationOptionsError = action.payload as string;
+      })
       .addCase(uploadCSV.pending, (state) => {
         state.loading = true;
       })
@@ -601,6 +713,16 @@ export const selectItemsPagination = (state: RootState) =>
   state.items.item_pagination;
 export const selectTotalItemsCount = (state: RootState) =>
   state.items.itemCount;
+export const selectAvailabilityOverview = (state: RootState) =>
+  state.items.availabilityOverview ?? {};
+export const selectAvailabilityOverviewLoading = (state: RootState) =>
+  state.items.availabilityOverviewLoading ?? false;
+export const selectAvailabilityOverviewPagination = (state: RootState) =>
+  state.items.availabilityOverviewPagination!;
+export const selectAdminLocationOptions = (state: RootState) =>
+  state.items.adminLocationOptions ?? [];
+export const selectAdminLocationOptionsLoading = (state: RootState) =>
+  state.items.adminLocationOptionsLoading ?? false;
 export const selectItemCreation = (state: RootState) =>
   state.items.itemCreation;
 export const selectIsEditing = (state: RootState) => state.items.isEditingItem;

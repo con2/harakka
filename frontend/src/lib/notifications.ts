@@ -47,8 +47,8 @@ export function subscribeToNotifications(
     .from("notifications")
     .select("*")
     .eq("user_id", userId)
-    .is("read_at", null)
     .order("created_at", { ascending: false })
+    .limit(150) // TODO: Add pagination
     .then(({ data, error }) => {
       if (error) {
         console.error("Failed to fetch initial notifications:", error);

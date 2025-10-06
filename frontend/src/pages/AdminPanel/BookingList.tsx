@@ -13,6 +13,7 @@ import {
   Calendar,
   Clock,
   AlertTriangle,
+  Search,
 } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { ColumnDef } from "@tanstack/react-table";
@@ -26,11 +27,18 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useOrganizationNames } from "@/hooks/useOrganizationNames";
 import { BookingPreviewWithOrgData } from "@common/bookings/booking.types";
-import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
-import { useNavigate } from "react-router-dom";
+import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
+import { useLocation, useNavigate } from "react-router-dom";
 import { formatBookingStatus } from "@/utils/format";
 import { bookingsApi, OverdueBookingRow } from "@/api/services/bookings";
-//
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 
 const BookingList = () => {
   const dispatch = useAppDispatch();
@@ -38,6 +46,7 @@ const BookingList = () => {
   const loading = useAppSelector(selectBookingLoading);
   const error = useAppSelector(selectBookingError);
   const navigate = useNavigate();
+  const location = useLocation();
   const { authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
@@ -46,15 +55,19 @@ const BookingList = () => {
   const { totalPages, page } = useAppSelector(selectBookingPagination);
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    (location.state as { page?: number })?.page ?? 1,
+  );
   const debouncedSearchQuery = useDebouncedValue(searchQuery);
-  const activeOrgId = useAppSelector(selectActiveOrganizationId);
+  const { organizationId: activeOrgId } = useAppSelector(
+    selectActiveRoleContext,
+  );
 
   // Get organization IDs from bookings that have booked_by_org set
   const organizationIds = useMemo(() => {
     return (bookings as BookingPreviewWithOrgData[])
       .filter((booking) => booking.booked_by_org)
-      .map((booking) => booking.booked_by_org!)
+      .map((booking) => booking.booked_by_org)
       .filter((id, index, arr) => arr.indexOf(id) === index); // Remove duplicates
   }, [bookings]);
 
@@ -158,8 +171,16 @@ const BookingList = () => {
     },
     {
       accessorKey: "booking_number",
-      header: t.bookingList.columns.bookingNumber[lang],
+      header: () => (
+        <p aria-label={t.bookingList.aria.labels.headers.bookingNumber[lang]}>
+          {t.bookingList.columns.bookingNumber[lang]}
+        </p>
+      ),
       enableSorting: true,
+      cell: ({ row }) =>
+        row.original.booking_number ||
+        t.uiComponents.dataTable.emptyCell[lang] ||
+        "—",
     },
     {
       accessorKey: "full_name",
@@ -173,8 +194,14 @@ const BookingList = () => {
 
         return (
           <div>
-            <div>{booking.full_name || t.bookingList.status.unknown[lang]}</div>
-            <div className="text-xs text-gray-500">{booking.email}</div>
+            <div>
+              {booking.full_name ||
+                t.uiComponents.dataTable.emptyCell[lang] ||
+                "—"}
+            </div>
+            <div className="text-xs text-gray-500">
+              {booking.email || t.uiComponents.dataTable.emptyCell[lang] || "—"}
+            </div>
             {orgName && (
               <div className="text-xs text-blue-600 font-medium mt-1">
                 {t.bookingList.status.onBehalfOf[lang]} {orgName}
@@ -190,7 +217,9 @@ const BookingList = () => {
       enableSorting: true,
       cell: ({ row }) => {
         const startDate = row.original.start_date;
-        if (!startDate) return t.bookingList.status.unknown[lang];
+        if (!startDate) {
+          return t.uiComponents.dataTable.emptyCell[lang] || "—";
+        }
         return formatDate(new Date(startDate), "d MMM yyyy");
       },
     },
@@ -202,19 +231,20 @@ const BookingList = () => {
         const status =
           row.original.org_status_for_active_org ??
           (row.original.status as string | undefined);
-        return (
-          <StatusBadge
-            status={formatBookingStatus(status as BookingStatus) ?? "unknown"}
-          />
-        );
+        return <StatusBadge status={(status as BookingStatus) ?? "unknown"} />;
       },
     },
     {
       accessorKey: "created_at",
       header: t.bookingList.columns.bookingDate[lang],
       enableSorting: true,
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.created_at || ""), "d MMM yyyy"),
+      cell: ({ row }) => {
+        const createdAt = row.original.created_at;
+        if (!createdAt) {
+          return t.uiComponents.dataTable.emptyCell[lang] || "—";
+        }
+        return formatDate(new Date(createdAt), "d MMM yyyy");
+      },
     },
   ];
 
@@ -223,6 +253,10 @@ const BookingList = () => {
       {
         accessorKey: "booking_number",
         header: t.overdueBookings.columns.bookingNumber[lang],
+        cell: ({ row }) =>
+          row.original.booking_number ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—",
       },
       {
         accessorKey: "full_name",
@@ -230,10 +264,14 @@ const BookingList = () => {
         cell: ({ row }) => (
           <div>
             <div>
-              {row.original.full_name ?? t.overdueBookings.status.unknown[lang]}
+              {row.original.full_name ||
+                t.uiComponents.dataTable.emptyCell[lang] ||
+                "—"}
             </div>
             <div className="text-xs text-gray-500">
-              {row.original.user_email ?? "-"}
+              {row.original.user_email ||
+                t.uiComponents.dataTable.emptyCell[lang] ||
+                "—"}
             </div>
           </div>
         ),
@@ -241,11 +279,18 @@ const BookingList = () => {
       {
         accessorKey: "earliest_due_date",
         header: t.overdueBookings.columns.dueDate[lang],
-        cell: ({ row }) => row.original.earliest_due_date,
+        cell: ({ row }) =>
+          row.original.earliest_due_date ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—",
       },
       {
         accessorKey: "days_overdue",
         header: t.overdueBookings.columns.daysOverdue[lang],
+        cell: ({ row }) =>
+          row.original.days_overdue ||
+          t.uiComponents.dataTable.emptyCell[lang] ||
+          "—",
       },
     ],
     [lang],
@@ -277,74 +322,45 @@ const BookingList = () => {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h1 className="text-xl">{t.bookingList.title[lang]}</h1>
-          <Button
-            onClick={() => {
-              if (scopeOverdue) {
-                setOverdueLoading(true);
-                bookingsApi
-                  .getOverdueBookings(currentPage, 10)
-                  .then((res) => {
-                    setOverdueRows(res.data as unknown as OverdueBookingRow[]);
-                    setOverduePageCount(res.metadata?.totalPages ?? 1);
-                  })
-                  .catch((err: unknown) => {
-                    const anyErr = err as {
-                      response?: { data?: { message?: string } };
-                    };
-                    const msg =
-                      anyErr?.response?.data?.message ||
-                      (err instanceof Error ? err.message : String(err));
-                    setOverdueError(msg);
-                  })
-                  .finally(() => setOverdueLoading(false));
-              } else {
-                dispatch(
-                  getOrderedBookings({
-                    ordered_by: orderBy,
-                    ascending: getAscending(orderBy),
-                    page: currentPage,
-                    limit: 10,
-                    searchquery: debouncedSearchQuery,
-                    status_filter:
-                      statusFilter !== "all" ? statusFilter : undefined,
-                  }),
-                );
-              }
-            }}
-            className="bg-background rounded-2xl text-primary/80 border-primary/80 border-1 hover:text-white hover:bg-primary/90"
-          >
-            {t.bookingList.buttons.refresh[lang]}
-          </Button>
         </div>
         {/* Search and Filters */}
         <div className="flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex gap-4 items-center">
-            <input
+          <div className="flex gap-4 items-center relative">
+            <Search
+              aria-hidden
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
+            />
+            <Input
               type="text"
               placeholder={t.bookingList.filters.search[lang]}
               value={searchQuery}
               size={50}
               onChange={(e) => handleSearchQuery(e)}
-              className={`w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] ${scopeOverdue ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`w-full text-sm pl-10 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] ${scopeOverdue ? "opacity-50 cursor-not-allowed" : ""}`}
               disabled={scopeOverdue}
             />
-            <select
+            <Select
+              aria-label={t.bookingList.aria.labels.filters.status[lang]}
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as BookingStatus)}
-              className={`select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] ${scopeOverdue ? "opacity-50 cursor-not-allowed" : ""}`}
+              onValueChange={(value) => setStatusFilter(value as BookingStatus)}
               disabled={scopeOverdue}
             >
-              {statusFilterOptions.map((option) => (
-                <option key={`option-${option}`} value={option}>
-                  {
-                    t.bookingList.filters.status[
-                      option as keyof typeof t.bookingList.filters.status
-                    ]?.[lang]
-                  }
-                </option>
-              ))}
-            </select>
-            {(searchQuery || statusFilter !== "all" || scopeOverdue) && (
+              <SelectTrigger>
+                {formatBookingStatus(statusFilter, true)}
+              </SelectTrigger>
+              <SelectContent>
+                {statusFilterOptions.map((option) => (
+                  <SelectItem key={`option-${option}`} value={option}>
+                    {
+                      t.bookingList.filters.status[
+                        option as keyof typeof t.bookingList.filters.status
+                      ]?.[lang]
+                    }
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(searchQuery || statusFilter !== "all") && (
               <Button
                 onClick={() => {
                   setSearchQuery("");
@@ -361,9 +377,9 @@ const BookingList = () => {
 
           {/* Ordering/Scope Toggle Buttons */}
           <div className="flex gap-2 items-center">
-            <span className="text-sm italic text-primary/70">
+            <Label className="text-sm italic text-primary/70">
               {t.bookingList.filters.filterBy[lang]}
-            </span>
+            </Label>
             {/* Recent Button */}
             <Button
               onClick={() => handleOrderToggle("created_at")}
@@ -373,14 +389,15 @@ const BookingList = () => {
                   : "default"
               }
               size="sm"
-              disabled={!scopeOverdue && orderBy === "created_at"}
+              aria-label={t.bookingList.aria.labels.filters.recent[lang]}
+              aria-disabled={!scopeOverdue && orderBy === "created_at"}
               className={`flex items-center gap-2 ${
                 !scopeOverdue && orderBy === "created_at"
                   ? "cursor-not-allowed opacity-75"
                   : "cursor-pointer"
               }`}
             >
-              <Clock className="h-4 w-4" />
+              <Clock aria-hidden className="h-4 w-4" />
               {t.bookingList.filters.recent[lang]}
             </Button>
             {/* Upcoming Button */}
@@ -392,14 +409,15 @@ const BookingList = () => {
                   : "default"
               }
               size="sm"
-              disabled={!scopeOverdue && orderBy === "start_date"}
+              aria-label={t.bookingList.aria.labels.filters.upcoming[lang]}
+              aria-disabled={!scopeOverdue && orderBy === "start_date"}
               className={`flex items-center gap-2 ${
                 !scopeOverdue && orderBy === "start_date"
                   ? "cursor-not-allowed opacity-75"
                   : "cursor-pointer"
               }`}
             >
-              <Calendar className="h-4 w-4" />
+              <Calendar aria-hidden className="h-4 w-4" />
               {t.bookingList.filters.upcoming[lang]}
             </Button>
             {/* Overdue Button */}
@@ -410,6 +428,7 @@ const BookingList = () => {
               }}
               variant={scopeOverdue ? "secondary" : "default"}
               size="sm"
+              aria-label={t.bookingList.aria.labels.filters.overdue[lang]}
               disabled={scopeOverdue}
               className={`flex items-center gap-2 ${
                 scopeOverdue
@@ -417,7 +436,7 @@ const BookingList = () => {
                   : "cursor-pointer"
               }`}
             >
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle aria-hidden className="h-4 w-4" />
               {t.bookingList.filters.overdue[lang]}
             </Button>
           </div>
@@ -433,7 +452,9 @@ const BookingList = () => {
             rowProps={(row) => ({
               style: { cursor: "pointer" },
               onClick: () =>
-                navigate(`/admin/bookings/${row.original.booking_id}`),
+                navigate(`/admin/bookings/${row.original.booking_id}`, {
+                  state: { page: currentPage },
+                }),
             })}
           />
         ) : (
@@ -445,7 +466,10 @@ const BookingList = () => {
             onPageChange={(page) => handlePageChange(page + 1)}
             rowProps={(row) => ({
               style: { cursor: "pointer" },
-              onClick: () => navigate(`/admin/bookings/${row.original.id}`),
+              onClick: () =>
+                navigate(`/admin/bookings/${row.original.id}`, {
+                  state: { page: currentPage },
+                }),
             })}
           />
         )}

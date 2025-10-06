@@ -480,10 +480,10 @@ export const useRoles = () => {
       console.error("Failed to sync session and roles:", error);
       return false;
     }
-  }, [refreshSupabaseSession, refreshCurrentUserRoles, refreshAllUserRoles]);
+  }, [refreshCurrentUserRoles, refreshAllUserRoles]);
 
   const setupPeriodicSessionCheck = useCallback(
-    (intervalMinutes = 5) => {
+    (intervalMinutes = 4) => {
       // Don't set up checks if not authenticated
       if (!isAuthenticated) return () => {};
 
@@ -548,5 +548,64 @@ export const useRoles = () => {
 
     // Periodic session check setup
     setupPeriodicSessionCheck,
+
+    // Helpers
+    /**
+     * Pick the best admin-capable role for a given organization.
+     * Preference order: `tenant_admin` → `storage_manager` because those roles are allowed
+     * manage/view bookings with provider organizations.
+     * Returns a narrowed, non-nullable context shape suitable for setActiveContext.
+     *
+     * @param orgId - Organization id to match against the user's roles
+     * @returns {null | { organization_id: string; role_name: string; organization_name: string | null }}
+     *          Best matching role context or null if none found.
+     */
+    findBestOrgAdminRole: (orgId: string) => {
+      const preferred: Array<"tenant_admin" | "storage_manager"> = [
+        "tenant_admin",
+        "storage_manager",
+      ];
+      const match = currentUserRoles.find(
+        (r) =>
+          r.is_active &&
+          r.organization_id === orgId &&
+          r.role_name !== null &&
+          preferred.includes(r.role_name as (typeof preferred)[number]) &&
+          r.organization_id !== null,
+      );
+      if (match && match.organization_id && match.role_name) {
+        return {
+          organization_id: match.organization_id,
+          role_name: match.role_name,
+          organization_name: match.organization_name ?? null,
+        };
+      }
+      return null;
+    },
+    /**
+     * Find a super_admin context for the current user.
+     * Prefers the "Global" organization when available, falls back to the first super_admin role.
+     * Returns a narrowed, non-nullable context shape suitable for setActiveContext.
+     *
+     * @returns {null | { organization_id: string; role_name: string; organization_name: string | null }}
+     *          A super_admin role context or null if user lacks that role.
+     */
+    findSuperAdminRole: () => {
+      // Prefer a Global super_admin if present, else first valid match
+      const supers = currentUserRoles.filter(
+        (r) =>
+          r.is_active && r.role_name === "super_admin" && r.organization_id,
+      );
+      if (supers.length === 0) return null;
+      const globalFirst =
+        supers.find(
+          (r) => (r.organization_name || "").toLowerCase() === "global",
+        ) || supers[0];
+      return {
+        organization_id: globalFirst.organization_id as string,
+        role_name: globalFirst.role_name as string,
+        organization_name: globalFirst.organization_name ?? null,
+      };
+    },
   };
 };

@@ -117,18 +117,19 @@ const TimeframeSelector: React.FC = () => {
 
   return (
     <div className="w-full max-w-screen-2xl mx-auto px-4 bg-slate-50 p-6 rounded-lg mb-6 flex flex-col items-center">
-      <h2 className="text-lg font-semibold mb-3 flex items-center justify-center">
+      <h2 className="text-lg font-semibold mb-3 flex items-center justify-center gap-2">
         {t.timeframeSelector.title[lang]}
         <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="cursor-pointer text-muted-foreground">
-              <Info className="ml-1 text-secondary w-4 h-4" />
-            </span>
+          <TooltipTrigger asChild aria-describedby="timeframe-tooltip-content">
+            <button className="cursor-pointer text-muted-foreground">
+              <Info aria-hidden className="text-secondary w-4 h-4" />
+            </button>
           </TooltipTrigger>
           <TooltipContent
+            id="timeframe-tooltip-content"
             side="top"
             align="start"
-            className="max-w-sm break-words"
+            className="break-words w-fit max-w-[200px]"
           >
             {t.timeframeSelector.tooltip[lang]}
           </TooltipContent>
@@ -217,22 +218,24 @@ const TimeframeSelector: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex w-full lg:w-auto items-center justify-center">
-          {/* Clear Dates Button */}
-          <Button
-            size="sm"
-            onClick={handleClearTimeframe}
-            className={`mt-6 ${
-              confirmClearDates
-                ? "bg-amber-500 text-white hover:bg-amber-600"
-                : "bg-white text-highlight2 border border-highlight2 hover:bg-highlight2 hover:text-white"
-            } ${startDate || endDate ? "visible" : "invisible"}`}
-          >
-            {confirmClearDates
-              ? t.timeframeSelector.confirmClear[lang]
-              : t.timeframeSelector.clearDates[lang]}
-          </Button>
-        </div>
+        {/* Clear Dates Button - only render when dates are selected */}
+        {(startDate || endDate) && (
+          <div className="flex w-full lg:w-auto items-center justify-center">
+            <Button
+              size="sm"
+              onClick={handleClearTimeframe}
+              className={`mt-6 ${
+                confirmClearDates
+                  ? "bg-amber-500 text-white hover:bg-amber-600"
+                  : "bg-white text-highlight2 border border-highlight2 hover:bg-highlight2 hover:text-white"
+              }`}
+            >
+              {confirmClearDates
+                ? t.timeframeSelector.confirmClear[lang]
+                : t.timeframeSelector.clearDates[lang]}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
