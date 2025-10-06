@@ -7,6 +7,7 @@ import { toastConfirm } from "../../ui/toastConfirm";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 const BookingReturnButton = ({
   id,
@@ -16,6 +17,7 @@ const BookingReturnButton = ({
   onSuccess,
   location_id,
   children,
+  className,
 }: {
   id: string;
   disabled?: boolean;
@@ -24,6 +26,7 @@ const BookingReturnButton = ({
   onSuccess?: () => void;
   location_id?: string;
   children?: ReactNode;
+  className?: string;
 }) => {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
@@ -65,7 +68,10 @@ const BookingReturnButton = ({
       disabled={disabled}
       onClick={handleReturnItems}
       title={t.bookingList.buttons.return[lang]}
-      className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 gap-2"
+      className={cn(
+        "text-blue-600 hover:text-blue-800 hover:bg-blue-100 gap-2",
+        className,
+      )}
     >
       <RotateCcw className="h-4 w-4" />
       {children}

@@ -39,6 +39,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import InlineTimeframePicker from "@/components/InlineTimeframeSelector";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileTable from "@/components/ui/MobileTable";
 
 function RequestDetailsPage() {
   const { id } = useParams();
@@ -56,6 +58,7 @@ function RequestDetailsPage() {
   const { organizationId: activeOrgId, organizationName: activeOrgName } =
     useAppSelector(selectActiveRoleContext);
   const itemsWithLoadedImages = useAppSelector(selectItemsWithLoadedImages);
+  const { isMobile } = useIsMobile();
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -445,6 +448,7 @@ function RequestDetailsPage() {
     handleDecrementQuantity,
     availability,
     removeItem,
+    isMobile,
   );
 
   if (loading) return <Spinner />;
@@ -471,7 +475,7 @@ function RequestDetailsPage() {
               booking_number,
             )}
           </h1>
-          <div className="space-y-2 grid grid-cols-2 gap-4 text-sm text-primary">
+          <div className="space-y-2 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-primary">
             <div className="flex flex-col">
               <p>{full_name}</p>
               <div className="flex items-center gap-2">
@@ -611,9 +615,11 @@ function RequestDetailsPage() {
             <h4 className="text-md font-medium mb-2 text-gray-700">
               {`${orgGroup.orgName || "Unknown Organization"} ${t.myBookingsPage.bookingDetails.orgItems[lang]} (${orgGroup.items.length})`}
             </h4>
-            <div className="border rounded-3xl overflow-hidden [&_td,th]:p-2">
+            {isMobile ? (
+              <MobileTable columns={columns} data={orgGroup.items} />
+            ) : (
               <DataTable columns={columns} data={orgGroup.items} />
-            </div>
+            )}
           </div>
         ))}
       </div>

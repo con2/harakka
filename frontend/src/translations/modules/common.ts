@@ -185,4 +185,22 @@ export const common = {
       fi: "sinun organisaatiosi",
     },
   },
+  filters: {
+    sortOrder: {
+      en: "Sort Order",
+      fi: "Lajittelujärjestys",
+    },
+    sortBy: {
+      en: "Sort By",
+      fi: "Lajitteluperuste",
+    },
+    ascending: {
+      en: "Ascending",
+      fi: "Nouseva",
+    },
+    descending: {
+      en: "Descending",
+      fi: "Laskeva",
+    },
+  },
 };
