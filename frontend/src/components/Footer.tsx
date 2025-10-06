@@ -66,13 +66,13 @@ const Footer = () => {
             </ul>
           </div>
           <div className="flex flex-col flex-1">
-            <h3>THE TEAM</h3>
+            <h3>{t.footer.sections.theTeam.title[lang]}</h3>
             <div className="flex flex-col gap-2">
               <Link to="" className="hover:underline underline-offset-2">
-                Dev team
+                {t.footer.sections.theTeam.devTeam[lang]}
               </Link>
               <p>
-                Big thank you to photographer{" "}
+                {t.footer.sections.theTeam.photographer.prefix[lang]}{" "}
                 <Link
                   to="https://www.flickr.com/people/darkismus/"
                   target="_blank"
@@ -80,7 +80,7 @@ const Footer = () => {
                 >
                   Tuomas Puikkonen
                 </Link>{" "}
-                for allowing use of his images
+                {t.footer.sections.theTeam.photographer.suffix[lang]}
               </p>
             </div>
           </div>
