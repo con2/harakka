@@ -1,13 +1,13 @@
 import { common } from "./common";
 
-export const addLocationModal = {
+export const editLocationPage = {
   title: {
-    en: "Add New Location",
-    fi: "Lisää uusi sijainti",
+    en: "Edit Location",
+    fi: "Muokkaa sijaintia",
   },
   description: {
-    en: "Create a new storage location for this organization",
-    fi: "Luo uusi varastosijainti tälle organisaatiolle",
+    en: "Update the details of this storage location",
+    fi: "Päivitä tämän varastosijainnin tiedot",
   },
   fields: {
     name: {
@@ -20,8 +20,8 @@ export const addLocationModal = {
         fi: "Syötä sijainnin nimi",
       },
       notVisibleToUsers: {
-        en: "Location name will not be visible to users",
-        fi: "Sijainti ei ole näkyvissä käyttäjille",
+        en: "The users can only see the city name. Full address is shown after booking confirmation.",
+        fi: "Käyttäjille näkyy vain kaupungin nimi. Vahvistuksen jälkeen näytetään koko osoite.",
       },
     },
     street: {
@@ -94,41 +94,15 @@ export const addLocationModal = {
         fi: "Syötä kuvan URL (valinnainen)",
       },
     },
-    isActive: {
-      label: {
-        en: "Active Location",
-        fi: "Aktiivinen sijainti",
-      },
-    },
   },
   labels: {
     address: {
       en: common.personalData.address.en,
       fi: common.personalData.address.fi,
     },
-  },
-  buttons: {
-    create: {
-      en: "Create Location",
-      fi: "Luo sijainti",
-    },
-    creating: {
-      en: "Creating...",
-      fi: "Luodaan...",
-    },
-    cancel: {
-      en: common.cancel.en,
-      fi: common.cancel.fi,
-    },
-  },
-  messages: {
-    success: {
-      en: "Location created successfully!",
-      fi: "Sijainti luotu onnistuneesti!",
-    },
-    error: {
-      en: "Failed to create location",
-      fi: "Sijainnin luominen epäonnistui",
+    activeLocation: {
+      en: "Active Location",
+      fi: "Aktiivinen sijainti",
     },
   },
   validation: {
@@ -139,6 +113,40 @@ export const addLocationModal = {
     invalidCityName: {
       en: "Please enter a valid city name (letters, spaces, and hyphens only)",
       fi: "Syötä kelvollinen kaupungin nimi (vain kirjaimia, välilyöntejä ja yhdysviivoja)",
+    },
+  },
+  buttons: {
+    save: {
+      en: "Save Changes",
+      fi: "Tallenna muutokset",
+    },
+    saving: {
+      en: "Saving...",
+      fi: "Tallennetaan...",
+    },
+    cancel: {
+      en: common.cancel.en,
+      fi: common.cancel.fi,
+    },
+    back: {
+      en: common.back.en,
+      fi: common.back.fi,
+    },
+  },
+  ariaLabels: {
+    backButton: {
+      en: "Go back to locations",
+      fi: "Palaa sijainteihin",
+    },
+  },
+  messages: {
+    success: {
+      en: "Location updated successfully!",
+      fi: "Sijainti päivitetty onnistuneesti!",
+    },
+    error: {
+      en: "Failed to update location",
+      fi: "Sijainnin päivittäminen epäonnistui",
     },
   },
 };

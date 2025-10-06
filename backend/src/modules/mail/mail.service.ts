@@ -20,6 +20,7 @@ import BookingRejectionEmail from "./../../emails/BookingRejectionEmail";
 import BookingDeleteMail from "./../../emails/BookingDeleteMail";
 import ItemsReturnedMail from "./../../emails/ItemsReturned";
 import ItemsPickedUpMail from "./../../emails/ItemsPickedUp";
+import BookingPartlyConfirmationEmail from "@src/emails/BookingPartlyConfirmationEmail";
 
 /**
  * Options accepted by {@link MailService.sendMail}.
@@ -226,12 +227,18 @@ export class MailService {
    *
    * @internal Called by {@link sendBookingMail} only.
    */
-  private pickTemplate(type: BookingMailType, payload) {
+  private pickTemplate(type: BookingMailType, payload, extraData?: any) {
     switch (type) {
       case BookingMailType.Creation:
         return BookingCreationEmail(payload);
       case BookingMailType.Confirmation:
         return BookingConfirmationEmail(payload);
+      case BookingMailType.PartlyConfirmed:
+        return BookingPartlyConfirmationEmail({
+          ...payload,
+          confirmedItems: extraData?.confirmedItems || [],
+          rejectedItems: extraData?.rejectedItems || [],
+        });
       case BookingMailType.Update:
         return BookingUpdateEmail(payload);
       case BookingMailType.Cancellation:
@@ -258,6 +265,8 @@ export class MailService {
         return "Varaus vastaanotettu - Booking request received";
       case BookingMailType.Confirmation:
         return "Varaus vahvistettu - Booking confirmed";
+      case BookingMailType.PartlyConfirmed:
+        return "Varaus osittain vahvistettu - Booking partly confirmed";
       case BookingMailType.Update:
         return "Varaus päivitetty - Booking updated";
       case BookingMailType.Cancellation:
@@ -295,7 +304,9 @@ export class MailService {
    */
   public async sendBookingMail(
     type: BookingMailType,
-    params: BookingMailParams,
+    params: BookingMailParams & {
+      extraData?: { confirmedItems: any[]; rejectedItems: any[] };
+    },
   ) {
     type EmailPayloadWithOptionalReturn = BookingEmailPayload & {
       returnDate?: string;
@@ -318,24 +329,18 @@ export class MailService {
       })),
     };
 
-    const template = this.pickTemplate(type, formattedPayload);
-    // For cancellation emails, the template expects bookingId, startDate, and recipientRole
-    let finalTemplate = template;
-    if (type === BookingMailType.Cancellation) {
-      finalTemplate = BookingCancelledEmail({
-        bookingId: params.bookingId,
-        startDate: formattedPayload.pickupDate,
-        items: formattedPayload.items,
-        recipientRole: "user", // identical copy goes to admin via Bcc
-      });
-    }
+    const template = this.pickTemplate(
+      type,
+      formattedPayload,
+      params.extraData,
+    );
     const subject = this.subjectLine(type);
 
     await this.sendMail({
       to: formattedPayload.recipient,
       bcc: process.env.BOOKING_ADMIN_EMAIL ?? process.env.STORAGE_EMAIL, // Send to admin as well
       subject,
-      template: finalTemplate,
+      template,
     });
   }
 }
