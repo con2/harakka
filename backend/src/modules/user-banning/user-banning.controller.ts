@@ -8,6 +8,7 @@ import {
   ValidationPipe,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from "@nestjs/common";
 import { UserBanningService } from "./user-banning.service";
 import { UserBanHistoryDto, UserBanStatusDto } from "./dto/user-banning.dto";
@@ -39,6 +40,7 @@ export class UserBanningController {
     @Body(ValidationPipe) banForRoleDto: BanForRoleDto,
     @Req() req: AuthRequest,
   ): Promise<BanOperationResult> {
+    this.assertOrgContext(req, banForRoleDto.organizationId);
     return this.userBanningService.banForRole(banForRoleDto, req);
   }
 
@@ -55,6 +57,7 @@ export class UserBanningController {
     @Body(ValidationPipe) banForOrgDto: BanForOrgDto,
     @Req() req: AuthRequest,
   ): Promise<BanOperationResult> {
+    this.assertOrgContext(req, banForOrgDto.organizationId);
     return this.userBanningService.banForOrg(banForOrgDto, req);
   }
 
@@ -62,15 +65,13 @@ export class UserBanningController {
    * Ban a user from the entire application
    */
   @Post("ban-for-app")
-  @Roles(["tenant_admin", "super_admin"], {
-    match: "any",
-    sameOrg: true,
-  })
+  @Roles(["super_admin"], { match: "any" })
   @HttpCode(HttpStatus.OK)
   async banForApp(
     @Body(ValidationPipe) banForAppDto: BanForAppDto,
     @Req() req: AuthRequest,
   ): Promise<BanOperationResult> {
+    this.assertSuperAdmin(req);
     return this.userBanningService.banForApp(banForAppDto, req);
   }
 
@@ -87,6 +88,13 @@ export class UserBanningController {
     @Body(ValidationPipe) unbanDto: UnbanDto,
     @Req() req: AuthRequest,
   ): Promise<BanOperationResult> {
+    if (unbanDto.organizationId) {
+      this.assertOrgContext(req, unbanDto.organizationId);
+    }
+    console.log("Ban Type:", unbanDto.banType);
+    if (unbanDto.banType === "banForApp") {
+      this.assertSuperAdmin(req);
+    }
     return this.userBanningService.unbanUser(unbanDto, req);
   }
 
@@ -132,5 +140,51 @@ export class UserBanningController {
     @Req() req: AuthRequest,
   ): Promise<UserBanStatusCheck> {
     return this.userBanningService.checkUserBanStatus(userId, req);
+  }
+
+  private isSuperAdmin(req: AuthRequest): boolean {
+    const metadataRoles = (req.user?.app_metadata?.roles ?? []) as Array<{
+      role_name?: string;
+    }>;
+    const userRoles = req.userRoles ?? [];
+
+    return (
+      metadataRoles.some((role) => role.role_name === "super_admin") ||
+      userRoles.some((role) => role.role_name === "super_admin")
+    );
+  }
+
+  private assertSuperAdmin(req: AuthRequest): void {
+    if (!this.isSuperAdmin(req)) {
+      throw new BadRequestException(
+        "Only super admins can perform this operation.",
+      );
+    }
+  }
+
+  private assertOrgContext(req: AuthRequest, organizationId: string): void {
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID is required.");
+    }
+
+    if (this.isSuperAdmin(req)) {
+      return;
+    }
+
+    const headerOrgId = (req.headers["x-org-id"] as string | undefined)?.trim();
+    const contextOrgId = req.activeRoleContext?.organizationId;
+    const effectiveOrgId = headerOrgId || contextOrgId;
+
+    if (!effectiveOrgId) {
+      throw new BadRequestException(
+        "Organization context is missing. Provide x-org-id header or active role context.",
+      );
+    }
+
+    if (effectiveOrgId !== organizationId) {
+      throw new BadRequestException(
+        "You can only manage bans inside your active organization.",
+      );
+    }
   }
 }
