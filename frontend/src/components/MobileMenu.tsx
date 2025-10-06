@@ -78,16 +78,18 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
               <ChevronRight />
             </Button>
             <Button onClick={() => handleNavigation("/cart")}>
-              {t.mobileMenu.buttons.cart[lang]} <ChevronRight />
+              {t.mobileMenu.buttons.cart[lang]}
+              <ChevronRight />
             </Button>
+            {isLoggedIn && (
+              <Button onClick={() => handleNavigation("/my-bookings")}>
+                {t.mobileMenu.buttons.myBookings[lang]} <ChevronRight />
+              </Button>
+            )}
             {isGlobalUser && (
               <>
                 <Button onClick={() => handleNavigation("/how-it-works")}>
                   {t.mobileMenu.buttons.guide[lang]}
-                  <ChevronRight />
-                </Button>
-                <Button onClick={() => handleNavigation("/my-bookings")}>
-                  {t.mobileMenu.buttons.myBookings[lang]}
                   <ChevronRight />
                 </Button>
                 <Button onClick={() => handleNavigation("/organizations")}>
@@ -112,7 +114,7 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
           </div>
 
           {/* Admin Links */}
-          <div className="flex flex-col mb-10">
+          <div className="flex flex-col">
             {isAnyTypeOfAdmin && (
               <p className="mb-2 font-semibold text-lg text-(--iridiscent-blue)">
                 {t.mobileMenu.headings.admin[lang]}
@@ -124,21 +126,31 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
                   {t.adminPanel.navigation.dashboard[lang]}
                   <ChevronRight />
                 </Button>
+              </>
+            )}
+            {(isTenantAdmin || isStorageManager) && (
+              <>
+                <Button onClick={() => handleNavigation("/admin/bookings")}>
+                  {t.adminPanel.navigation.bookingsIn[lang]}
+                  <ChevronRight />
+                </Button>
+                <Button onClick={() => handleNavigation("/admin/categories")}>
+                  {t.adminPanel.navigation.categories[lang]}
+                  <ChevronRight />
+                </Button>
                 <Button onClick={() => handleNavigation("/admin/items")}>
                   {t.adminPanel.navigation.items[lang]}
                   <ChevronRight />
                 </Button>
+                <Button onClick={() => handleNavigation("/admin/tags")}>
+                  {t.adminPanel.navigation.tags[lang]}
+                  <ChevronRight />
+                </Button>
               </>
             )}
-            {(isTenantAdmin || isStorageManager) && (
-              <Button onClick={() => handleNavigation("/admin/bookings")}>
-                {t.adminPanel.navigation.bookings[lang]}
-                <ChevronRight />
-              </Button>
-            )}
-            {(isTenantAdmin || isStorageManager) && (
-              <Button onClick={() => handleNavigation("/admin/categories")}>
-                {t.adminPanel.navigation.categories[lang]}
+            {(isTenantAdmin || isStorageManager || isRequester) && (
+              <Button onClick={() => handleNavigation("/admin/requests")}>
+                {t.adminPanel.navigation.bookingsOut[lang]}
                 <ChevronRight />
               </Button>
             )}
@@ -148,23 +160,21 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
                   {t.adminPanel.navigation.users[lang]}
                   <ChevronRight />
                 </Button>
-                <Button onClick={() => handleNavigation("/admin/tags")}>
-                  {t.adminPanel.navigation.tags[lang]}
-                  <ChevronRight />
-                </Button>
               </>
             )}
             {isSuperAdmin && (
-              <Button onClick={() => handleNavigation("/admin/logs")}>
-                {t.adminPanel.navigation.logs[lang]}
-                <ChevronRight />
-              </Button>
-            )}
-            {(isStorageManager || isTenantAdmin || isRequester) && (
-              <Button onClick={() => handleNavigation("/admin/requests")}>
-                {t.mobileMenu.buttons.orgBookings[lang]}
-                <ChevronRight />
-              </Button>
+              <>
+                <Button onClick={() => handleNavigation("/admin/logs")}>
+                  {t.adminPanel.navigation.logs[lang]}
+                  <ChevronRight />
+                </Button>
+                <Button
+                  onClick={() => handleNavigation("/admin/organizations")}
+                >
+                  {t.adminPanel.navigation.organizations[lang]}
+                  <ChevronRight />
+                </Button>
+              </>
             )}
           </div>
         </div>

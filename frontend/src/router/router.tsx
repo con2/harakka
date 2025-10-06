@@ -52,6 +52,7 @@ import OrganizationsList from "../components/Organization/OrganizationsList";
 import ItemDetailsPage from "@/pages/AdminPanel/ItemDetailsPage";
 import AddCategory from "@/components/Admin/Categories/AddCategory";
 import MyBookings from "@/pages/MyBookings";
+import Reports from "@/pages/AdminPanel/Reports";
 
 export const router = createBrowserRouter([
   {
@@ -328,6 +329,16 @@ export const router = createBrowserRouter([
                 allowedRoles={["tenant_admin", "storage_manager"]}
               >
                 <AddCategory />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "reports",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
+                <Reports />
               </ProtectedRoute>
             ),
           },
