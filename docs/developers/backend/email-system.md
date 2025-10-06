@@ -72,3 +72,26 @@ There is the client stored:
 https://console.cloud.google.com/auth/clients?authuser=2&inv=1&invt=AbwmXQ&project=bookingappmailing
 
 you should be logged in with the email to see the details
+
+## Other Emails
+
+### Supabase Authentication Emails
+
+The following authentication-related emails are handled directly by Supabase's built-in SMTP service:
+
+- **Email Confirmation** - New user account verification
+- **User Invitations** - Organization member invitations
+- **Magic Link Authentication** - Passwordless login
+- **Email Address Change** - Account email update verification
+- **Password Reset** - Forgot password functionality
+- **Re-authentication** - Security verification for sensitive operations
+
+### Configuration
+
+Authentication email templates and SMTP settings are managed through the Supabase Dashboard:
+
+![Supabase Email Settings](../../../assets/screenshots/supabase-email-settings.png)
+
+_Navigate to Authentication → Email Templates to customize templates_
+
+For detailed configuration instructions, refer to the [Supabase Email Documentation](https://supabase.com/docs/guides/auth/auth-email-templates).
