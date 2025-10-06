@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { SubmitErrorHandler, useForm } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,6 +40,7 @@ function AddCategory() {
   const { lang } = useLanguage();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const categories = useAppSelector(selectCategories);
   const selectedCategory = useAppSelector(selectCategory);
 
@@ -52,7 +53,10 @@ function AddCategory() {
   const cancel = () => {
     void dispatch(clearSelectedCategory());
     form.reset();
-    void navigate("/admin/categories");
+    const pageState = (location.state as { page?: number })?.page;
+    void navigate("/admin/categories", {
+      state: pageState ? { page: pageState } : undefined,
+    });
   };
 
   useEffect(() => {
@@ -75,8 +79,12 @@ function AddCategory() {
         if (selectedCategory) {
           clearSelectedCategory();
         }
+        const pageState = (location.state as { page?: number })?.page;
         void navigate("/admin/categories", {
-          state: { search: values.translations[lang] },
+          state: {
+            search: values.translations[lang],
+            ...(pageState && { page: pageState }),
+          },
         });
         // reset form on success
         if (e?.target?.reset) {

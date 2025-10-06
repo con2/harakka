@@ -17,7 +17,7 @@ import { Category } from "@common/items/categories";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, ListFilter, Plus, Search, Trash } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { t } from "@/translations";
 import { toastConfirm } from "@/components/ui/toastConfirm";
@@ -37,6 +37,7 @@ function Categories() {
   const isMobile = width <= 600;
   const { lang } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const categories = useAppSelector(selectCategories);
   const loading = useAppSelector(selectCategoriesLoading);
@@ -46,7 +47,9 @@ function Categories() {
   // Local state
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebouncedValue(searchTerm);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    (location.state as { page?: number })?.page ?? 1,
+  );
   const [order, setOrder] = useState("");
   const [ascending, setAscending] = useState<boolean | null>(null);
 
@@ -241,7 +244,9 @@ function Categories() {
           onPageChange={(page) => handlePageChange(page + 1)}
           rowClick={(row) => {
             void dispatch(setSelectedCategory(row.original));
-            void navigate(`/admin/categories/${row.original.id}`);
+            void navigate(`/admin/categories/${row.original.id}`, {
+              state: { page: currentPage },
+            });
           }}
         />
       ) : (
@@ -259,7 +264,9 @@ function Categories() {
             style: { cursor: "pointer" },
             onClick: () => {
               void dispatch(setSelectedCategory(row.original));
-              void navigate(`/admin/categories/${row.original.id}`);
+              void navigate(`/admin/categories/${row.original.id}`, {
+                state: { page: currentPage },
+              });
             },
           })}
         />

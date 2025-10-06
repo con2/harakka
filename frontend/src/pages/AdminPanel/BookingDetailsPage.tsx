@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -71,6 +71,7 @@ const BookingDetailsPage = () => {
   const { isMobile } = useIsMobile();
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const booking = useAppSelector(
     selectCurrentBooking,
@@ -725,7 +726,12 @@ const BookingDetailsPage = () => {
       <div className="flex justify-between">
         {/* Back Button */}
         <Button
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            const pageState = (location.state as { page?: number })?.page;
+            void navigate("/admin/bookings", {
+              state: pageState ? { page: pageState } : undefined,
+            });
+          }}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
         >
           <ChevronLeft /> {t.bookingDetailsPage.buttons.back[lang]}

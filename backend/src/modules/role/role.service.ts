@@ -11,6 +11,7 @@ import { CreateUserRoleDto, UpdateUserRoleDto } from "./dto/role.dto";
 import { JwtService } from "../jwt/jwt.service";
 import { SupabaseService } from "../supabase/supabase.service";
 import { ViewUserRolesWithDetails } from "@common/role.types";
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Injectable()
 export class RoleService {
@@ -19,6 +20,17 @@ export class RoleService {
     private readonly jwtService: JwtService,
     private readonly supabaseService: SupabaseService,
   ) {}
+
+  private buildOverrides(message: string) {
+    return {
+      badRequest: message,
+      conflict: message,
+      forbidden: message,
+      internal: message,
+      notAcceptable: message,
+      notFound: message,
+    };
+  }
   /**
    * Get all active roles for the current authenticated user
    * Uses roles already fetched and attached to request by AuthMiddleware
@@ -126,10 +138,11 @@ export class RoleService {
       .select("*")
       .order("role", { ascending: true });
 
-    if (error) {
-      this.logger.error(`Failed to fetch roles: ${error.message}`);
-      throw new BadRequestException("Failed to fetch roles");
-    }
+    if (error)
+      handleSupabaseError(error, {
+        messageOverrides: this.buildOverrides("Failed to fetch roles"),
+        loggerContext: { scope: "RoleService.getAllRoles" },
+      });
     return data;
   }
 
@@ -185,8 +198,21 @@ export class RoleService {
       .select("id")
       .single();
 
-    if (error) {
-      this.logger.error(`Failed to create user role: ${error.message}`);
+    if (error)
+      handleSupabaseError(error, {
+        messageOverrides: this.buildOverrides(
+          "Failed to create role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.createUserRole.insert",
+          user_id,
+          organization_id,
+        },
+      });
+    if (!data) {
+      this.logger.error(
+        "Supabase returned no data while creating user role assignment",
+      );
       throw new BadRequestException("Failed to create role assignment");
     }
 
@@ -197,9 +223,20 @@ export class RoleService {
       .eq("id", data.id)
       .single();
 
-    if (viewError || !roleDetails) {
+    if (viewError)
+      handleSupabaseError(viewError, {
+        messageOverrides: this.buildOverrides(
+          "Failed to fetch created role details",
+        ),
+        loggerContext: {
+          scope: "RoleService.createUserRole.view",
+          user_id,
+          organization_id,
+        },
+      });
+    if (!roleDetails) {
       this.logger.error(
-        `Failed to fetch created role details: ${viewError?.message}`,
+        `Failed to fetch created role details: no data returned for role assignment ${data.id}`,
       );
       throw new BadRequestException("Failed to fetch created role details");
     }
@@ -225,7 +262,17 @@ export class RoleService {
       .eq("id", tableKeyId)
       .single();
 
-    if (existingError || !existing) {
+    if (existingError)
+      handleSupabaseError(existingError, {
+        messageOverrides: this.buildOverrides(
+          "Failed to fetch role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.updateUserRole.fetchExisting",
+          tableKeyId,
+        },
+      });
+    if (!existing) {
       throw new NotFoundException("Role assignment not found");
     }
 
@@ -239,7 +286,7 @@ export class RoleService {
     }
 
     // Update the role assignment
-    const { data } = await req.supabase
+    const { data, error: updateError } = await req.supabase
       .from("user_organization_roles")
       .update({
         role_id: updateRoleDto.role_id,
@@ -267,6 +314,17 @@ export class RoleService {
       )
       .single();
 
+    if (updateError)
+      handleSupabaseError(updateError, {
+        messageOverrides: this.buildOverrides(
+          "Failed to update role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.updateUserRole.update",
+          tableKeyId,
+        },
+      });
+
     if (!data) {
       this.logger.error("No data returned after updating user role assignment");
       throw new BadRequestException("No data returned after update");
@@ -279,9 +337,19 @@ export class RoleService {
       .eq("id", data.id)
       .single();
 
-    if (viewError || !roleDetails) {
+    if (viewError)
+      handleSupabaseError(viewError, {
+        messageOverrides: this.buildOverrides(
+          "Failed to fetch created role details",
+        ),
+        loggerContext: {
+          scope: "RoleService.updateUserRole.view",
+          tableKeyId,
+        },
+      });
+    if (!roleDetails) {
       this.logger.error(
-        `Failed to fetch updated role details: ${viewError?.message}`,
+        `Failed to fetch updated role details: no data returned for ${data.id}`,
       );
       throw new BadRequestException("Failed to fetch created role details");
     }
@@ -307,7 +375,17 @@ export class RoleService {
       .eq("id", oldRoleId)
       .single();
 
-    if (existingError || !existingRole) {
+    if (existingError)
+      handleSupabaseError(existingError, {
+        messageOverrides: this.buildOverrides(
+          "Failed to fetch role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.replaceUserRole.fetchExisting",
+          oldRoleId,
+        },
+      });
+    if (!existingRole) {
       throw new NotFoundException("Original role assignment not found");
     }
 
@@ -324,10 +402,16 @@ export class RoleService {
       .delete()
       .eq("id", oldRoleId);
 
-    if (deleteError) {
-      this.logger.error(`Failed to delete old role: ${deleteError.message}`);
-      throw new BadRequestException("Failed to delete old role assignment");
-    }
+    if (deleteError)
+      handleSupabaseError(deleteError, {
+        messageOverrides: this.buildOverrides(
+          "Failed to delete old role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.replaceUserRole.deleteOld",
+          oldRoleId,
+        },
+      });
 
     // Step 2: Create the new role
     // Check if another role already exists in this org (which could happen if roles were modified during this operation)
@@ -360,8 +444,21 @@ export class RoleService {
       .select("id")
       .single();
 
-    if (createError || !newRole) {
-      this.logger.error(`Failed to create new role: ${createError?.message}`);
+    if (createError)
+      handleSupabaseError(createError, {
+        messageOverrides: this.buildOverrides(
+          "Failed to create new role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.replaceUserRole.insert",
+          user_id: createRoleDto.user_id,
+          organization_id: createRoleDto.organization_id,
+        },
+      });
+    if (!newRole) {
+      this.logger.error(
+        "Supabase returned no data while creating replacement role assignment",
+      );
       throw new BadRequestException("Failed to create new role assignment");
     }
 
@@ -372,9 +469,19 @@ export class RoleService {
       .eq("id", newRole.id)
       .single();
 
-    if (viewError || !roleDetails) {
+    if (viewError)
+      handleSupabaseError(viewError, {
+        messageOverrides: this.buildOverrides(
+          "Failed to fetch created role details",
+        ),
+        loggerContext: {
+          scope: "RoleService.replaceUserRole.view",
+          newRoleId: newRole.id,
+        },
+      });
+    if (!roleDetails) {
       this.logger.error(
-        `Failed to fetch created role details: ${viewError?.message}`,
+        `Failed to fetch created role details: no data returned for ${newRole.id}`,
       );
       throw new BadRequestException("Failed to fetch created role details");
     }
@@ -403,7 +510,17 @@ export class RoleService {
       .eq("id", tableKeyId)
       .single();
 
-    if (existingError || !existing) {
+    if (existingError)
+      handleSupabaseError(existingError, {
+        messageOverrides: this.buildOverrides(
+          "Failed to fetch role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.deleteUserRole.fetchExisting",
+          tableKeyId,
+        },
+      });
+    if (!existing) {
       throw new NotFoundException("Role assignment not found");
     }
 
@@ -413,10 +530,16 @@ export class RoleService {
       .update({ is_active: false })
       .eq("id", tableKeyId);
 
-    if (error) {
-      this.logger.error(`Failed to delete user role: ${error.message}`);
-      throw new BadRequestException("Failed to delete role assignment");
-    }
+    if (error)
+      handleSupabaseError(error, {
+        messageOverrides: this.buildOverrides(
+          "Failed to delete role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.deleteUserRole.update",
+          tableKeyId,
+        },
+      });
 
     // After successful role deletion, update JWT
     await this.updateUserJWTById(existing.user_id);
@@ -441,7 +564,17 @@ export class RoleService {
       .eq("id", tableKeyId)
       .single();
 
-    if (existingError || !existing) {
+    if (existingError)
+      handleSupabaseError(existingError, {
+        messageOverrides: this.buildOverrides(
+          "Failed to fetch role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.permanentDeleteUserRole.fetchExisting",
+          tableKeyId,
+        },
+      });
+    if (!existing) {
       throw new NotFoundException("Role assignment not found");
     }
 
@@ -451,14 +584,16 @@ export class RoleService {
       .delete()
       .eq("id", tableKeyId);
 
-    if (error) {
-      this.logger.error(
-        `Failed to permanently delete user role: ${error.message}`,
-      );
-      throw new BadRequestException(
-        "Failed to permanently delete role assignment",
-      );
-    }
+    if (error)
+      handleSupabaseError(error, {
+        messageOverrides: this.buildOverrides(
+          "Failed to permanently delete role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.permanentDeleteUserRole.delete",
+          tableKeyId,
+        },
+      });
 
     // After successful permanent deletion, update JWT
     await this.updateUserJWTById(existing.user_id);
@@ -484,7 +619,17 @@ export class RoleService {
         .eq("id", tableKeyId)
         .single();
 
-      if (viewError || !roleDetails) {
+      if (viewError)
+        handleSupabaseError(viewError, {
+          messageOverrides: this.buildOverrides(
+            "Failed to fetch role assignment",
+          ),
+          loggerContext: {
+            scope: "RoleService.leaveOrg.view",
+            tableKeyId,
+          },
+        });
+      if (!roleDetails) {
         this.logger.warn(`leaveOrg: role ${tableKeyId} not found`);
         throw new NotFoundException("Role assignment not found");
       }
@@ -547,10 +692,11 @@ export class RoleService {
       .select("*")
       .order("assigned_at", { ascending: false });
 
-    if (error) {
-      this.logger.error(`Failed to fetch all user roles: ${error.message}`);
-      throw new BadRequestException("Failed to fetch user roles");
-    }
+    if (error)
+      handleSupabaseError(error, {
+        messageOverrides: this.buildOverrides("Failed to fetch user roles"),
+        loggerContext: { scope: "RoleService.getAllUserRoles" },
+      });
     if (!data) {
       return [];
     }
@@ -573,7 +719,17 @@ export class RoleService {
       .eq("id", tableKeyId)
       .single();
 
-    if (existingError || !existing) {
+    if (existingError)
+      handleSupabaseError(existingError, {
+        messageOverrides: this.buildOverrides(
+          "Failed to fetch role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.deleteRoleRecordById.fetchExisting",
+          tableKeyId,
+        },
+      });
+    if (!existing) {
       this.logger.warn(`deleteRoleRecordById: role ${tableKeyId} not found`);
       throw new NotFoundException("Role assignment not found");
     }
@@ -584,12 +740,16 @@ export class RoleService {
       .delete()
       .eq("id", tableKeyId);
 
-    if (error) {
-      this.logger.error(
-        `Failed to delete role record ${tableKeyId}: ${error.message}`,
-      );
-      throw new BadRequestException("Failed to delete role assignment");
-    }
+    if (error)
+      handleSupabaseError(error, {
+        messageOverrides: this.buildOverrides(
+          "Failed to delete role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.deleteRoleRecordById.delete",
+          tableKeyId,
+        },
+      });
 
     return { userId: existing.user_id };
   }
@@ -663,9 +823,22 @@ export class RoleService {
       .select("id")
       .single();
 
-    if (error) {
-      this.logger.error(`Failed to create user role: ${error.message}`);
-      throw new Error(`Failed to create role assignment: ${error.message}`);
+    if (error)
+      handleSupabaseError(error, {
+        messageOverrides: this.buildOverrides(
+          "Failed to create role assignment",
+        ),
+        loggerContext: {
+          scope: "RoleService.createUserRoleById.insert",
+          userId,
+          organizationId,
+        },
+      });
+    if (!data) {
+      this.logger.error(
+        "Supabase returned no data while creating user role assignment",
+      );
+      throw new BadRequestException("Failed to create role assignment");
     }
 
     // Get the complete role details using the view
@@ -675,11 +848,22 @@ export class RoleService {
       .eq("id", data.id)
       .single();
 
-    if (viewError || !roleDetails) {
+    if (viewError)
+      handleSupabaseError(viewError, {
+        messageOverrides: this.buildOverrides(
+          "Failed to fetch created role details",
+        ),
+        loggerContext: {
+          scope: "RoleService.createUserRoleById.view",
+          userId,
+          organizationId,
+        },
+      });
+    if (!roleDetails) {
       this.logger.error(
-        `Failed to fetch created role details: ${viewError?.message}`,
+        `Failed to fetch created role details: no data returned for ${data.id}`,
       );
-      throw new Error("Failed to fetch created role details");
+      throw new BadRequestException("Failed to fetch created role details");
     }
 
     // After successful role creation, update JWT

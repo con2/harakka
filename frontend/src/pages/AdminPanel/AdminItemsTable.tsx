@@ -86,7 +86,9 @@ const AdminItemsTable = () => {
   const navigate = useNavigate();
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    (useLocation().state as { page?: number })?.page ?? 1,
+  );
   const [order, setOrder] = useState<ValidItemOrder>(
     redirectState?.order ?? "created_at",
   );
@@ -121,7 +123,9 @@ const AdminItemsTable = () => {
 
   // Navigation: open item details page on row click
   const handleRowClick = (id: string) => {
-    void navigate(`/admin/items/${id}`);
+    void navigate(`/admin/items/${id}`, {
+      state: { page: currentPage },
+    });
   };
 
   const handleSortOrder = (order: string) =>
@@ -621,6 +625,7 @@ const AdminItemsTable = () => {
           originalSorting="quantity"
           highlight={redirectState?.highlight}
           rowProps={(row) => ({
+            style: { cursor: "pointer" },
             onClick: () =>
               handleRowClick(String((row.original as unknown as Item).id)),
           })}

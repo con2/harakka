@@ -22,7 +22,7 @@ import { BookingStatus } from "@/types";
 import { formatBookingStatus } from "@/utils/format";
 import { Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getRequestColumns } from "./requests.columns";
 import { Role } from "@common/role.types";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -33,6 +33,7 @@ function Requests() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
+  const location = useLocation();
 
   // Bookings
   const bookingsLoading = useAppSelector(selectBookingLoading);
@@ -53,7 +54,9 @@ function Requests() {
 
   // Pagination
   const { totalPages, limit } = useAppSelector(selectBookingPagination);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    (location.state as { page?: number })?.page ?? 1,
+  );
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
@@ -148,7 +151,10 @@ function Requests() {
           onPageChange={(page) => handlePageChange(page + 1)}
           rowProps={(row) => ({
             style: { cursor: "pointer" },
-            onClick: () => navigate(`/admin/requests/${row.original.id}`),
+            onClick: () =>
+              navigate(`/admin/requests/${row.original.id}`, {
+                state: { page: currentPage },
+              }),
           })}
         />
       )}
