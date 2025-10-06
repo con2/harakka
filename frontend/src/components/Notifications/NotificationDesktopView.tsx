@@ -84,6 +84,15 @@ export const NotificationDesktopView: React.FC<Props> = ({
         {/* Top part of container */}
         <DropdownMenuLabel className="flex items-center justify-between">
           <div className="flex items-center gap-2">
+            {/* Close button */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+              className="h-8 px-2 text-xs font-medium"
+            >
+              {common.close[lang]}
+            </Button>
             {/* "Notifications" */}
             <span className="sr-only">
               {t.navigation.notifications.label[lang]}
@@ -130,15 +139,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
                 <CheckCheck className="h-4 w-4" />
               </Button>
             )}
-            {/* Close button */}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setOpen(false)}
-              className="h-8 px-2 text-xs font-medium"
-            >
-              {common.close[lang]}
-            </Button>
+
             {visibleFeed.length > 0 && (
               // Delete All
               <Button
