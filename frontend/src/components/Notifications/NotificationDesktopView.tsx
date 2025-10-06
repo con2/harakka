@@ -51,7 +51,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
   const [open, setOpen] = React.useState(false);
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         {/* Notification bell */}
         <Button
@@ -83,8 +83,8 @@ export const NotificationDesktopView: React.FC<Props> = ({
       <DropdownMenuContent className="w-80 md:w-96" align="end">
         {/* Top part of container */}
         <DropdownMenuLabel className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {/* Close button */}
+          {/* Close button */}
+          <div className="flex items-center">
             <Button
               size="sm"
               variant="ghost"
@@ -93,12 +93,17 @@ export const NotificationDesktopView: React.FC<Props> = ({
             >
               {common.close[lang]}
             </Button>
-            {/* "Notifications" */}
+          </div>
+
+          {/* centered toggle-area */}
+          <div className="flex-1 flex items-center justify-center gap-2">
+            {/* Hidden title for accessibility */}
             <span className="sr-only">
               {t.navigation.notifications.label[lang]}
             </span>
+
             {showToggle && (
-              <div className="ml-2 inline-flex rounded border border-(--subtle-grey) overflow-hidden">
+              <div className="inline-flex rounded border border-(--subtle-grey) overflow-hidden">
                 {/* "Active" */}
                 <button
                   className={`px-2 py-0.5 text-xs ${!viewAll ? "bg-(--subtle-grey)" : ""}`}
@@ -117,15 +122,17 @@ export const NotificationDesktopView: React.FC<Props> = ({
                 </button>
               </div>
             )}
-            {/* "Other" */}
+
+            {/* "Other" count */}
             {showToggle && !viewAll && otherUnread > 0 && (
-              <span className="ml-1 text-[0.7rem] text-muted-foreground">
+              <span className="text-[0.7rem] text-muted-foreground">
                 {t.navigation.notifications.otherContextsPrefix[lang]}{" "}
                 {otherUnread}
               </span>
             )}
           </div>
-          {/* Actions */}
+
+          {/* Actions - feste Breite rechts */}
           <div className="flex items-center gap-1">
             {(viewAll ? unseen > 0 : visibleUnseen > 0) && (
               // Mark All as Read
