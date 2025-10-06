@@ -117,7 +117,7 @@ const Organizations = () => {
       accessorKey: "name",
       cell: ({ row }) => (
         <button
-          className="text-primary hover:underline font-medium text-left text-wrap"
+          className="text-primary hover:underline font-medium text-left text-wrap truncate min-w-[70px] text-right md:text-left"
           onClick={() => openDetailsPage(row.original)}
           aria-label={t.organizations.accessibility.viewDetails[lang].replace(
             "{orgName}",

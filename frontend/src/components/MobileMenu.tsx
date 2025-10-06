@@ -163,10 +163,18 @@ function MobileMenu({ closeMenu }: MobileMenuProps) {
               </>
             )}
             {isSuperAdmin && (
-              <Button onClick={() => handleNavigation("/admin/logs")}>
-                {t.adminPanel.navigation.logs[lang]}
-                <ChevronRight />
-              </Button>
+              <>
+                <Button onClick={() => handleNavigation("/admin/logs")}>
+                  {t.adminPanel.navigation.logs[lang]}
+                  <ChevronRight />
+                </Button>
+                <Button
+                  onClick={() => handleNavigation("/admin/organizations")}
+                >
+                  {t.adminPanel.navigation.organizations[lang]}
+                  <ChevronRight />
+                </Button>
+              </>
             )}
           </div>
         </div>
