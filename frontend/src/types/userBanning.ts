@@ -128,6 +128,7 @@ export interface SimpleBanHistoryItem {
   is_permanent?: boolean | null;
   role_assignment_id?: string | null;
   organization_id?: string | null;
+  affected_assignments?: Json | null;
   banned_at?: string | null;
   unbanned_at?: string | null;
   notes?: string | null;

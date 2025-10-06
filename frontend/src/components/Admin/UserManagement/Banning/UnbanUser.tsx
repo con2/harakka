@@ -67,6 +67,45 @@ const UnbanUser = ({ user, onSuccess, refreshKey = 0 }: Props) => {
   const canUnbanFromApp = isSuper;
   const canUnbanFromOrg = isSuper || isTenantAdmin;
 
+  const extractRoleIdFromBan = useCallback(
+    (ban: SimpleBanHistoryItem): string | undefined => {
+      const payload = ban.affected_assignments as
+        | { assignments?: Array<Record<string, unknown>> }
+        | null
+        | undefined;
+
+      const assignments =
+        payload &&
+        typeof payload === "object" &&
+        Array.isArray(payload.assignments)
+          ? payload.assignments
+          : [];
+
+      const primary = assignments.find(
+        (assignment) => typeof assignment?.role_id === "string",
+      );
+      if (primary && typeof primary.role_id === "string") {
+        return primary.role_id;
+      }
+
+      const assignmentMatch = assignments.find(
+        (assignment) => typeof assignment?.role_assignment_id === "string",
+      );
+      if (
+        assignmentMatch &&
+        typeof assignmentMatch.role_assignment_id === "string"
+      ) {
+        const role = allUserRoles.find(
+          (r) => r.id === assignmentMatch.role_assignment_id,
+        );
+        return role?.role_id ?? undefined;
+      }
+
+      return undefined;
+    },
+    [allUserRoles],
+  );
+
   const [banType, setBanType] = useState<BanCategoryOption>("organization");
   const [notes, setNotes] = useState("");
   const [organizationId, setOrganizationId] = useState("");
@@ -173,6 +212,7 @@ const UnbanUser = ({ user, onSuccess, refreshKey = 0 }: Props) => {
 
     try {
       let banTypeForRpc: BanType = mapCategoryToBanType(banType);
+      let roleIdForRpc: string | undefined;
       if (banType === "organization") {
         const matchingLegacyRoleBan = activeBans.find(
           (ban) =>
@@ -181,8 +221,13 @@ const UnbanUser = ({ user, onSuccess, refreshKey = 0 }: Props) => {
             ban.organization_id === organizationId &&
             ban.ban_type === "banForRole",
         );
+
         if (matchingLegacyRoleBan) {
-          banTypeForRpc = "banForRole";
+          const extractedRoleId = extractRoleIdFromBan(matchingLegacyRoleBan);
+          if (extractedRoleId) {
+            banTypeForRpc = "banForRole";
+            roleIdForRpc = extractedRoleId;
+          }
         }
       }
 
@@ -191,6 +236,7 @@ const UnbanUser = ({ user, onSuccess, refreshKey = 0 }: Props) => {
           userId: user.id,
           banType: banTypeForRpc,
           organizationId: organizationId || undefined,
+          roleId: roleIdForRpc,
           notes: notes.trim() || undefined,
         }),
       ).unwrap();
