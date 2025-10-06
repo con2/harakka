@@ -48,7 +48,8 @@ const UserPanel = () => {
   const MAX_VISIBLE = 5;
 
   useEffect(() => {
-    void dispatch(fetchAllCategories({ page: 1, limit: 50 }));
+    /* TODO: Paginate categories */
+    void dispatch(fetchAllCategories({ page: 1, limit: 500 }));
     void dispatch(
       fetchFilteredTags({
         page: 1,
@@ -321,38 +322,40 @@ const UserPanel = () => {
                 {" "}
                 {t.userPanel.filters.categories[lang]}
               </label>
-              <CategoryTree
-                nodes={visibleCategories}
-                lang={lang}
-                selectedIds={new Set(filters.categories)}
-                onToggleSelect={(id) => {
-                  setFilters((prev) => {
-                    const next = new Set(prev.categories);
-                    if (next.has(id)) {
-                      // toggle off
-                      next.delete(id);
-                    } else {
-                      // Switch within branch: deselect ancestors and descendants of id
-                      const toRemove = new Set<string>([
-                        ...collectAncestors(id),
-                        ...collectDescendants(id),
-                      ]);
-                      toRemove.forEach((x) => next.delete(x));
-                      next.add(id);
-                    }
-                    return { ...prev, categories: Array.from(next) };
-                  });
-                }}
-                expandedIds={expandedCategories}
-                onToggleExpand={(id) => {
-                  setExpandedCategories((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(id)) next.delete(id);
-                    else next.add(id);
-                    return next;
-                  });
-                }}
-              />
+              <div className="max-h-[60vh] overflow-y-auto pr-2">
+                <CategoryTree
+                  nodes={visibleCategories}
+                  lang={lang}
+                  selectedIds={new Set(filters.categories)}
+                  onToggleSelect={(id) => {
+                    setFilters((prev) => {
+                      const next = new Set(prev.categories);
+                      if (next.has(id)) {
+                        // toggle off
+                        next.delete(id);
+                      } else {
+                        // Switch within branch: deselect ancestors and descendants of id
+                        const toRemove = new Set<string>([
+                          ...collectAncestors(id),
+                          ...collectDescendants(id),
+                        ]);
+                        toRemove.forEach((x) => next.delete(x));
+                        next.add(id);
+                      }
+                      return { ...prev, categories: Array.from(next) };
+                    });
+                  }}
+                  expandedIds={expandedCategories}
+                  onToggleExpand={(id) => {
+                    setExpandedCategories((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(id)) next.delete(id);
+                      else next.add(id);
+                      return next;
+                    });
+                  }}
+                />
+              </div>
               {mappedCategories.length > MAX_VISIBLE && (
                 <Button
                   variant="ghost"
