@@ -22,7 +22,7 @@ export const toastConfirm = ({
   toast.custom((t) => (
     <div onMouseDown={(e) => e.stopPropagation()} data-cy="toast-confirm-root">
       <Card
-        className="toast-confirm-card w-[360px]"
+        className="toast-confirm-card w-full md:w-[360px]"
         data-cy="toast-confirm-card"
       >
         <CardHeader>

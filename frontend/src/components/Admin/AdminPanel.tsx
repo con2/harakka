@@ -11,6 +11,7 @@ import {
   Building2,
   MapPin,
   LayoutGrid,
+  BarChart2,
 } from "lucide-react";
 import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -130,6 +131,15 @@ const AdminPanel = () => {
               icon={<MapPin aria-hidden className="w-5 h-5" />}
               label={t.adminPanel.navigation.locations[lang]}
               dataCy="admin-nav-locations"
+            />
+          )}
+
+          {hasAnyRole(["tenant_admin", "storage_manager"]) && (
+            <SidebarLink
+              to="/admin/reports"
+              icon={<BarChart2 aria-hidden className="w-5 h-5" />}
+              label={t.adminPanel.navigation.reports[lang]}
+              dataCy="admin-nav-reports"
             />
           )}
 

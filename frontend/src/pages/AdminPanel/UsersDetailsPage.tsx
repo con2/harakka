@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { usersApi } from "@/api/services/users";
 import { UserProfile } from "@common/user.types";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
-import { formatRoleName } from "@/utils/format";
+import { formatSnakeCase } from "@/utils/format";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Clipboard, RefreshCw } from "lucide-react";
@@ -41,6 +41,9 @@ import { Separator } from "@/components/ui/separator";
 import { Address } from "@/types/address";
 import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 import { ViewUserRolesWithDetails } from "@common/role.types";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileTable from "@/components/ui/MobileTable";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import {
   fetchUserBanHistory,
   checkUserBanStatus,
@@ -95,7 +98,7 @@ const UsersDetailsPage = () => {
     isNewRole: boolean;
   };
   const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
-
+  const { isMobile } = useIsMobile();
   const [activeTab, setActiveTab] = useState<"history" | "ban" | "unban">(
     "history",
   );
@@ -295,10 +298,125 @@ const UsersDetailsPage = () => {
     );
   };
 
+  const roleAssignmentsColumns: ColumnDef<RoleAssignment>[] = [
+    {
+      accessorKey: "organization",
+      header: t.usersDetailsPage.columns.organization[lang],
+      cell: ({ row }: { row: Row<RoleAssignment> }) => {
+        const ra = row.original;
+
+        if (ra.id) {
+          return (
+            <span className="truncate text-sm pl-2">
+              {organizations.find((o) => o.id === ra.org_id)?.name ?? ra.org_id}
+            </span>
+          );
+        }
+
+        return (
+          <Select
+            disabled={!isSuperAdmin && ra.org_id !== activeOrgId}
+            onValueChange={(value) => handleOrgChange(row.index, value)}
+            defaultValue={ra.org_id ?? undefined}
+          >
+            <SelectTrigger className="w-full max-w-[200px] justify-self-end">
+              <SelectValue
+                placeholder={
+                  t.usersDetailsPage.placeholders.selectOrganization[lang]
+                }
+              >
+                {ra.org_name}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {(isSuperAdmin
+                ? organizations.filter((org) => !assignedOrgIds.has(org.id))
+                : organizations.filter((o) => o.id === activeOrgId)
+              ).map((org) => (
+                <SelectItem key={org.id} value={org.id}>
+                  {org.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      },
+    },
+    {
+      accessorKey: "role",
+      header: t.usersDetailsPage.columns.role[lang],
+      cell: ({ row }: { row: Row<RoleAssignment> }) => {
+        const ra = row.original;
+
+        return (
+          <Select
+            onValueChange={(value) =>
+              handleRoleAssignmentChange(row.index, "role_name", value)
+            }
+            disabled={
+              (!isSuperAdmin && ra.org_id !== activeOrgId) ||
+              (ra.org_name === "Global" && Boolean(ra.role_name)) ||
+              (isAssigningRole && !lastRoleEntry.org_id)
+            }
+            defaultValue={ra.role_name ?? ""}
+          >
+            <SelectTrigger className="w-full max-w-[200px] justify-self-end">
+              <SelectValue
+                placeholder={t.usersDetailsPage.placeholders.selectRole[lang]}
+              >
+                {formatSnakeCase(ra.role_name ?? "")}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {getSelectableRoles(ra.org_id).map((r) => (
+                <SelectItem key={r.id} value={r.role}>
+                  {formatSnakeCase(r.role)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      },
+    },
+    {
+      accessorKey: "active",
+      header: t.usersDetailsPage.columns.active[lang],
+      cell: ({ row }: { row: Row<RoleAssignment> }) => {
+        const ra = row.original;
+        return (
+          <Switch
+            disabled={ra.org_id !== activeOrgId && !isSuperAdmin}
+            checked={ra.is_active}
+            onCheckedChange={() => toggleRoleActive(row.index)}
+            className="justify-self-center"
+          />
+        );
+      },
+      size: 80,
+    },
+    {
+      id: "actions",
+      header: t.usersDetailsPage.columns.actions[lang],
+      cell: ({ row }: { row: Row<RoleAssignment> }) => {
+        return (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="justify-self-end"
+            onClick={() => removeRoleAssignment(row.index)}
+          >
+            {t.usersDetailsPage.buttons.remove[lang]}
+          </Button>
+        );
+      },
+    },
+  ];
+
   const removeRoleAssignment = (index: number) => {
     if (!canManageRoles) return;
     const ra = roleAssignments[index];
-    const roleLabel = ra?.role_name ? formatRoleName(ra.role_name) : "role";
+    const roleLabel = ra?.role_name ? formatSnakeCase(ra.role_name) : "role";
     const orgLabel = ra?.org_name ?? ra?.org_id ?? "organization";
 
     toastConfirm({
@@ -561,7 +679,7 @@ const UsersDetailsPage = () => {
   }
 
   return (
-    <div className="mt-4 mx-10">
+    <div className="lg:mt-4 lg:mx-10">
       <div>
         <Button
           onClick={() => navigate(-1)}
@@ -574,13 +692,13 @@ const UsersDetailsPage = () => {
       <div className="mt-6 max-w-5xl">
         <h2 className="text-xl font-semibold mb-4">{user.full_name}</h2>
         {/* User details section */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-6">
           <div>
-            <Label className="text-lg">
+            <Label className="text-md font-semibold leading-[1]">
               {t.usersDetailsPage.labels.email[lang]}
             </Label>{" "}
-            <div className="inline-flex items-center gap-2">
-              <span>{user.email ?? "-"}</span>
+            <div className="inline-flex items-center">
+              <span className="leading-[1]">{user.email ?? "-"}</span>
               <button
                 type="button"
                 onClick={() => copyEmailToClipboard(user.email ?? "")}
@@ -598,13 +716,13 @@ const UsersDetailsPage = () => {
             </div>
           </div>
           <div>
-            <Label className="text-lg">
+            <Label className="text-md font-semibold leading-[1]">
               {t.usersDetailsPage.labels.phone[lang]}
             </Label>{" "}
             {user.phone ?? "-"}
           </div>
           <div>
-            <Label className="text-lg">
+            <Label className="text-md font-semibold leading-[1]">
               {t.usersDetailsPage.labels.created[lang]}
             </Label>{" "}
             {user.created_at
@@ -613,7 +731,7 @@ const UsersDetailsPage = () => {
           </div>
           {/* Addresses */}
           <div>
-            <Label className="text-lg">
+            <Label className="text-md font-semibold leading-[1]">
               {t.usersDetailsPage.labels.addresses[lang] ?? "Addresses"}
             </Label>
             {addressesLoading ? (
@@ -638,8 +756,8 @@ const UsersDetailsPage = () => {
 
         {/* Roles management section */}
         <div className="mt-6">
-          <div className="flex justify-between items-start">
-            <Label className="text-lg">
+          <div className="flex justify-between items-start mb-4 md:mb-0">
+            <Label className="text-xl font-semibold">
               {t.usersDetailsPage.labels.roles[lang]}
             </Label>
 
@@ -689,7 +807,14 @@ const UsersDetailsPage = () => {
             </div>
           </div>
 
-          {canManageRoles ? (
+          {isMobile && (
+            <MobileTable
+              columns={roleAssignmentsColumns}
+              data={roleAssignments}
+            />
+          )}
+
+          {!isMobile && canManageRoles ? (
             <>
               {roleAssignments.length > 0 ? (
                 <div className="border rounded-md overflow-y-auto mt-2">
@@ -762,13 +887,13 @@ const UsersDetailsPage = () => {
                               t.usersDetailsPage.placeholders.selectRole[lang]
                             }
                           >
-                            {formatRoleName(ra.role_name ?? "")}
+                            {formatSnakeCase(ra.role_name ?? "")}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {getSelectableRoles(ra.org_id).map((r) => (
                             <SelectItem key={r.id} value={r.role}>
-                              {formatRoleName(r.role)}
+                              {formatSnakeCase(r.role)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -801,7 +926,8 @@ const UsersDetailsPage = () => {
             </>
           ) : (
             <div className="flex flex-col gap-1 mt-2">
-              {roleAssignments.length > 0 ? (
+              {roleAssignments.length > 0 &&
+                !isMobile &&
                 roleAssignments.map((ra, idx) => (
                   <span
                     key={idx}
@@ -811,8 +937,8 @@ const UsersDetailsPage = () => {
                       ra.org_id}{" "}
                     — {ra.role_name}
                   </span>
-                ))
-              ) : (
+                ))}
+              {!isMobile && roleAssignments.length === 0 && (
                 <span className="text-slate-500">
                   {t.usersDetailsPage.status.noRoles[lang]}
                 </span>
