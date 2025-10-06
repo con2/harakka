@@ -39,8 +39,10 @@ export function CategoryTree({
     return false;
   };
 
+  const branchClass = depth === 0 ? "pl-0" : "pl-3 border-l border-slate-200";
+
   return (
-    <div>
+    <div className={`space-y-1 ${branchClass}`}>
       {nodes.map((node) => {
         const hasChildren = (node.subcategories?.length ?? 0) > 0;
         const isSelected = selectedIds.has(node.id);
@@ -74,9 +76,15 @@ export function CategoryTree({
                 className={`justify-start h-fit px-0 no-underline hover:underline hover:bg-transparent hover:text-current focus-visible:ring-0 focus:outline-none  underline-offset-4 ${labelClass}`}
                 variant="ghost"
                 onClick={() => onToggleSelect(node.id)}
+                title={
+                  node.translations[lang] ||
+                  node.translations[lang === "fi" ? "en" : "fi"]
+                }
               >
-                {node.translations[lang] ||
-                  node.translations[lang === "fi" ? "en" : "fi"]}
+                <span className="max-w-[180px] truncate inline-block align-top text-left">
+                  {node.translations[lang] ||
+                    node.translations[lang === "fi" ? "en" : "fi"]}
+                </span>
               </Button>
             </div>
 
