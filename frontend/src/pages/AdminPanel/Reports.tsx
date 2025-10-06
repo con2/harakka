@@ -1,9 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   fetchAllAdminItems,
-  selectAllItems,
   selectItemsError,
   selectItemsLoading,
 } from "@/store/slices/itemsSlice";
@@ -19,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 type FlattenedItem = Record<string, string>;
 
@@ -121,17 +121,16 @@ const serializeValue = (value: unknown): string => {
 
 const Reports: React.FC = () => {
   const dispatch = useAppDispatch();
-  const items = useAppSelector(selectAllItems);
+  //const items = useAppSelector(selectAllItems);
   const loading = useAppSelector(selectItemsLoading);
   const error = useAppSelector(selectItemsError);
+  const activeOrganizationId = useAppSelector(selectActiveOrganizationId);
 
   const { lang } = useLanguage();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isFetching, setIsFetching] = useState(false);
-  const [availabilityData, setAvailabilityData] = useState<
-    Record<string, number>
-  >({});
+  const [flattenedItems, setFlattenedItems] = useState<FlattenedItem[]>([]);
 
   // Define allColumns as readonly
   const allColumns = [
@@ -192,12 +191,17 @@ const Reports: React.FC = () => {
         }),
       ).unwrap();
 
-      // 2. Collect item IDs from the updated items state
-      const itemIds = adminItemsResponse.data
-        ? adminItemsResponse.data.map((item) => item.id)
-        : [];
+      // 2. Check if data exists before proceeding
+      if (!adminItemsResponse.data || adminItemsResponse.data.length === 0) {
+        console.warn("No data returned from admin items response");
+        setFlattenedItems([]); // Clear flattened items
+        return;
+      }
 
-      // 3. Fetch availability data for the collected item IDs
+      // 3. Collect item IDs from the updated items state
+      const itemIds = adminItemsResponse.data.map((item) => item.id);
+
+      // 4. Fetch availability data for the collected item IDs
       const now = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
       const availabilityResponse = await itemsApi.getAvailabilityOverview({
         startDate: now,
@@ -207,31 +211,29 @@ const Reports: React.FC = () => {
         limit: Number.MAX_SAFE_INTEGER,
       });
 
-      // 4. Update availability data state
+      // 5. Update availability data state
+      const availabilityMap: Record<string, number> = {};
       if (availabilityResponse.data) {
-        const availabilityMap: Record<string, number> = {};
         availabilityResponse.data.forEach((item) => {
           availabilityMap[item.item_id] = item.availableQuantity;
         });
-        setAvailabilityData(availabilityMap);
       }
+
+      // 6. Enrich flattened items with availability data
+      const flattenedItemsWithAvailability = adminItemsResponse.data.map(
+        (item, index) => ({
+          RowNumber: (index + 1).toString(),
+          ...flattenItem(item as Record<string, unknown>),
+          available_quantity: availabilityMap[item.id]?.toString() || "N/A",
+        }),
+      );
+      setFlattenedItems(flattenedItemsWithAvailability);
     } catch (err) {
       console.error("Failed to fetch report data", err);
     } finally {
       setIsFetching(false);
     }
   };
-
-  const flattenedItems = useMemo(() => {
-    if (!items.length) {
-      return [];
-    }
-    return items.map((item, index) => ({
-      RowNumber: (index + 1).toString(), // Add a numeration column
-      ...flattenItem(item as Record<string, unknown>),
-      available_quantity: availabilityData[item.id]?.toString(), // use fetched availability data
-    }));
-  }, [items, availabilityData]);
 
   const csvHeaders = useMemo(() => {
     return selectedColumns.map((key) => ({
@@ -241,6 +243,11 @@ const Reports: React.FC = () => {
   }, [selectedColumns, lang]);
 
   const hasData = flattenedItems.length > 0 && csvHeaders.length > 0;
+
+  // Clear flattened items when activeOrganizationId changes
+  useEffect(() => {
+    setFlattenedItems([]);
+  }, [activeOrganizationId]);
 
   return (
     <div className="space-y-4">
@@ -330,7 +337,7 @@ const Reports: React.FC = () => {
             </CSVLink>
           </Button>
         ) : (
-          <div className="p-4 text-muted">{t.reports.noData[lang]}</div>
+          <div className="p-4">{t.reports.noData[lang]}</div>
         )}
       </div>
     </div>

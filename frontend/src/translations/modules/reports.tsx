@@ -24,8 +24,8 @@ export const reports = {
     fi: "Lataa CSV",
   },
   noData: {
-    en: "No data available to download.",
-    fi: "Ei ladattavaa dataa.",
+    en: "No data available to download. Fetch first",
+    fi: "Ei ladattavaa dataa. Hae ensin",
   },
   columns: {
     RowNumber: {
