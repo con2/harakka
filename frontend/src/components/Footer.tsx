@@ -7,9 +7,9 @@ const Footer = () => {
 
   return (
     <footer className="bg-secondary text-white py-6 mt-auto">
-      <div className="max-w-4xl mx-auto px-4 text-center">
-        <div className="flex justify-center gap-8 mt-4 text-left text-sm">
-          <div className="flex flex-col flex-1">
+      <div className="max-w-4xl mx-auto px-7 text-center">
+        <div className="flex justify-center gap-8 mt-4 text-left text-sm flex-wrap">
+          <div className="flex flex-col flex-1 min-w-[120px]">
             <h3>{t.footer.sections.shop.title[lang]}</h3>
             <ul className="text-left">
               <li>
@@ -27,7 +27,7 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-col flex-1 min-w-[120px]">
             <h3>{t.footer.sections.about.title[lang]}</h3>
             <ul className="text-left">
               <li>
@@ -47,7 +47,7 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-col flex-1 min-w-[120px]">
             <h3>{t.footer.sections.stayUpdated.title[lang]}</h3>
             <div className="flex flex-col gap-2">
               <p>{t.footer.sections.stayUpdated.description[lang]}</p>

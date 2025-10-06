@@ -25,12 +25,15 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileTable from "@/components/ui/MobileTable";
 
 const MyBookingsPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const bookings = useAppSelector(selectUserBookings);
   const { totalPages } = useAppSelector(selectBookingPagination);
+  const { isMobile } = useIsMobile();
   const [currentPage, setCurrentPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus | "all">(
@@ -103,10 +106,6 @@ const MyBookingsPage = () => {
           return formatDate(original.created_at as string);
         },
       },
-      {
-        id: "actions",
-        cell: () => <div className="text-sm" />,
-      },
     ];
   }, [lang, formatDateLocalized]);
 
@@ -122,18 +121,21 @@ const MyBookingsPage = () => {
           <h1 className="text-xl">{t.myBookings.headings[lang]}</h1>
         </div>
         <div className="flex relative flex-wrap gap-4 items-center mb-4">
-          <Search
-            aria-hidden
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
-          />
-          <Input
-            type="text"
-            aria-placeholder={t.myBookings.aria.placeholders.search[lang]}
-            placeholder={t.myBookings.filter.searchPlaceholder[lang]}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-sm pl-10 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-          />
+          <div className="relative min-w-[250px]">
+            <Search
+              aria-hidden
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
+            />
+            <Input
+              type="text"
+              aria-placeholder={t.myBookings.aria.placeholders.search[lang]}
+              placeholder={t.myBookings.filter.searchPlaceholder[lang]}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-sm pl-10 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+            />
+          </div>
+
           <Select
             value={statusFilter}
             aria-label={t.myBookings.aria.labels.filterByStatus[lang]}
@@ -167,7 +169,20 @@ const MyBookingsPage = () => {
             </Button>
           )}
         </div>
-        {totalPages > 1 ? (
+        {/* Mobile Table */}
+        {isMobile && (
+          <MobileTable
+            columns={columns}
+            data={filteredBookings}
+            pageIndex={currentPage}
+            pageCount={totalPages}
+            onPageChange={setCurrentPage}
+            rowClick={(row) => handleRowClick(row)}
+          />
+        )}
+
+        {/* Desktop Tables */}
+        {!isMobile && totalPages > 1 && (
           <PaginatedDataTable
             columns={columns}
             data={filteredBookings}
@@ -179,7 +194,9 @@ const MyBookingsPage = () => {
               className: "cursor-pointer hover:bg-gray-50",
             })}
           />
-        ) : (
+        )}
+
+        {!isMobile && totalPages <= 1 && (
           <DataTable
             columns={columns}
             data={filteredBookings}

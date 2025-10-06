@@ -2,7 +2,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { LoaderCircle, Plus, Search, X } from "lucide-react";
+import { ArrowUpDown, ListFilter, Plus, Search, X } from "lucide-react";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
 import { TagAssignmentFilter } from "@/types";
 import { ExtendedTag } from "@common/items/tag.types";
@@ -21,8 +21,19 @@ import { t } from "@/translations";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { useIsMobile } from "@/hooks/use-mobile";
+import Spinner from "@/components/Spinner";
+import MobileTable from "@/components/ui/MobileTable";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const TagList = () => {
+  const { isMobile } = useIsMobile();
   const dispatch = useAppDispatch();
   const tags = useAppSelector(selectAllTags);
   const loading = useAppSelector(selectTagsLoading);
@@ -45,6 +56,16 @@ const TagList = () => {
   // Translation
   const { lang } = useLanguage();
   const navigate = useNavigate();
+
+  const SORT_BY = [
+    { label: t.tagList.sorting.recentlyCreated, value: "created_at" },
+    { label: t.tagList.sorting.assignmentCount, value: "assigned_to" },
+    { label: t.tagList.sorting.popularity, value: "popularity_rank" },
+  ];
+  const SORT_ORDERS = [
+    { label: t.common.filters.ascending, value: "asc" },
+    { label: t.common.filters.descending, value: "desc" },
+  ];
 
   // Fetch tags when search term or assignment filter changes
   useEffect(() => {
@@ -142,7 +163,9 @@ const TagList = () => {
           >
             {rank}
           </Badge>
-        ) : null;
+        ) : (
+          "---"
+        );
       },
       enableSorting: false,
     },
@@ -156,20 +179,18 @@ const TagList = () => {
     <div className="space-y-4">
       {/* Loading state */}
       {loading ? (
-        <div className="flex justify-center p-8">
-          <LoaderCircle className="animate-spin text-muted" />
-        </div>
+        <Spinner containerClasses="my-20" />
       ) : (
         <>
           {/* Header and actions */}
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-xl">{t.tagList.title[lang]}</h1>
+            <h1 className="text-2xl md:text-xl">{t.tagList.title[lang]}</h1>
           </div>
 
           {/* Filters  and searc */}
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex justify-start w-full gap-4">
-              <div className="relative w-full sm:max-w-xs rounded-md bg-white">
+          <div className="flex justify-between items-center mb-4 gap-4 flex-wrap w-full">
+            <div className="flex justify-start gap-4 flex-wrap md:flex-nowrap">
+              <div className="relative w-full sm:max-w-xs rounded-md bg-white min-w-[250px]">
                 <Search
                   aria-hidden
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
@@ -196,25 +217,90 @@ const TagList = () => {
                   </button>
                 )}
               </div>
-              <div className="flex gap-4 items-center">
-                <select
+              <div className="flex gap-4 items-center flex-wrap">
+                <Select
                   aria-label={t.tagList.aria.labels.filterAssigned[lang]}
                   value={assignmentFilter}
-                  onChange={(e) =>
-                    setAssignmentFilter(e.target.value as TagAssignmentFilter)
+                  onValueChange={(val) =>
+                    setAssignmentFilter(val as TagAssignmentFilter)
                   }
-                  className="text-sm p-2 rounded-md border bg-white focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
                 >
-                  <option value="all">
-                    {t.tagList.filters.assignment.all[lang]}
-                  </option>
-                  <option value="assigned">
-                    {t.tagList.filters.assignment.assigned[lang]}
-                  </option>
-                  <option value="unassigned">
-                    {t.tagList.filters.assignment.unassigned[lang]}
-                  </option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue>
+                      {t.tagList.filters.assignment[assignmentFilter][lang]}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["all", "assigned", "unassigned"].map((opt) => (
+                      <SelectItem value={opt} key={`select-assigned-${opt}`}>
+                        {
+                          t.tagList.filters.assignment[
+                            opt as keyof typeof t.tagList.filters.assignment
+                          ][lang]
+                        }
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {isMobile && (
+                  <>
+                    <Select
+                      onValueChange={(val) => setSortBy(val)}
+                      value={sortBy}
+                    >
+                      <SelectTrigger>
+                        <ListFilter />
+                        <SelectValue
+                          placeholder={t.common.filters.sortOrder[lang]}
+                        >
+                          {SORT_BY.find((o) => o.value === sortBy)?.label[
+                            lang
+                          ] || t.common.filters.sortOrder[lang]}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SORT_BY.map((order) => {
+                          const { value, label } = order;
+                          return (
+                            <SelectItem value={value} key={`sort-${value}`}>
+                              {label[lang]}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      onValueChange={(val) => setSortOrder(val as "asc")}
+                      value={order}
+                    >
+                      <SelectTrigger>
+                        <ArrowUpDown />
+                        <SelectValue
+                          placeholder={t.common.filters.sortOrder[lang]}
+                        >
+                          {
+                            SORT_ORDERS.find((o) => o.value === sortOrder)
+                              ?.label[lang]
+                          }
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SORT_ORDERS.map((order) => {
+                          const { value, label } = order;
+                          return (
+                            <SelectItem
+                              key={`sort-order-${value}`}
+                              value={value}
+                            >
+                              {label[lang]}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
 
                 {(searchTerm || assignmentFilter !== "all") && (
                   <Button
@@ -246,25 +332,39 @@ const TagList = () => {
           </div>
 
           {/* Table */}
-          <PaginatedDataTable
-            columns={columns}
-            data={tags || []}
-            pageIndex={currentPage - 1}
-            pageCount={totalPages}
-            onPageChange={(page) => handlePageChange(page + 1)}
-            order={order}
-            ascending={ascending}
-            handleOrder={handleOrder}
-            handleAscending={handleAscending}
-            originalSorting="created_at"
-            rowProps={(row) => ({
-              style: { cursor: "pointer" },
-              onClick: () => {
+          {isMobile ? (
+            <MobileTable
+              columns={columns}
+              data={tags || []}
+              rowClick={(row) => {
                 void dispatch(selectTag(row.original));
                 void navigate(`/admin/tags/${row.original.id}`);
-              },
-            })}
-          />
+              }}
+              pageIndex={currentPage - 1}
+              pageCount={totalPages}
+              onPageChange={(page) => handlePageChange(page + 1)}
+            />
+          ) : (
+            <PaginatedDataTable
+              columns={columns}
+              data={tags || []}
+              pageIndex={currentPage - 1}
+              pageCount={totalPages}
+              onPageChange={(page) => handlePageChange(page + 1)}
+              order={order}
+              ascending={ascending}
+              handleOrder={handleOrder}
+              handleAscending={handleAscending}
+              originalSorting="created_at"
+              rowProps={(row) => ({
+                style: { cursor: "pointer" },
+                onClick: () => {
+                  void dispatch(selectTag(row.original));
+                  void navigate(`/admin/tags/${row.original.id}`);
+                },
+              })}
+            />
+          )}
         </>
       )}
     </div>

@@ -19,7 +19,14 @@ import {
 import { t } from "@/translations";
 import { Item, ManageItemViewRow, ValidItemOrder } from "@/types/item";
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye, LoaderCircle, Plus, Search, X } from "lucide-react";
+import {
+  ArrowUpDown,
+  ListFilter,
+  LoaderCircle,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -41,8 +48,19 @@ import {
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileTable from "@/components/ui/MobileTable";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const AdminItemsTable = () => {
+  const { width } = useIsMobile();
+  const isMobile = width <= 1200;
   const dispatch = useAppDispatch();
   const [redirectState, setRedirectState] = useState(
     useLocation()?.state || null,
@@ -78,6 +96,19 @@ const AdminItemsTable = () => {
   const { totalPages } = useAppSelector(selectItemsPagination);
   const loading = useAppSelector(selectItemsLoading);
   const ITEMS_PER_PAGE = 10;
+  const SORT_BY = [
+    { label: t.adminItemsTable.sorting.recentlyCreated, value: "created_at" },
+    {
+      label: t.adminItemsTable.sorting.name,
+      value: lang === "en" ? "en_item_name" : "fi_item_name",
+    },
+    { label: t.adminItemsTable.sorting.quantity, value: "quantity" },
+    { label: t.adminItemsTable.sorting.activityStatus, value: "is_active" },
+  ];
+  const SORT_ORDERS = [
+    { label: t.common.filters.ascending, value: true },
+    { label: t.common.filters.descending, value: false },
+  ];
 
   // New: location filter (multi-select)
   const [locationFilter, setLocationFilter] = useState<string[]>([]);
@@ -154,26 +185,9 @@ const AdminItemsTable = () => {
   /* ————————————————————————— Item Columns ———————————————————————— */
   const itemsColumns: ColumnDef<ManageItemViewRow>[] = [
     {
-      id: "view",
-      size: 5,
-      cell: () => {
-        return (
-          <div className="flex space-x-1">
-            <Button
-              variant={"ghost"}
-              size="sm"
-              title={t.adminItemsTable.columns.viewDetails[lang]}
-              className={cn("hover:text-slate-900 hover:bg-slate-300")}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-          </div>
-        );
-      },
-    },
-    {
       header: t.adminItemsTable.columns.name[lang],
-      size: 120,
+      size: 80,
+      maxSize: 120,
       id: `item_name`,
       accessorFn: (row) => row.translations[lang].item_name || "",
       sortingFn: "alphanumeric",
@@ -182,7 +196,11 @@ const AdminItemsTable = () => {
         if (!name || name.trim() === "") {
           return t.uiComponents.dataTable.emptyCell[lang] || "—";
         }
-        return name.charAt(0).toUpperCase() + name.slice(1);
+        return (
+          <span className="text-wrap">
+            {name.charAt(0).toUpperCase() + name.slice(1)}
+          </span>
+        );
       },
     },
     {
@@ -205,7 +223,15 @@ const AdminItemsTable = () => {
               </TooltipContent>
             </Tooltip>
           );
-        return <p className="truncate max-w-[200px]">{placement || "-"}</p>;
+        return (
+          <p
+            className={
+              (cn("truncate max-w-[200px]"), isMobile ? "ml-auto" : "ml-0")
+            }
+          >
+            {placement || "-"}
+          </p>
+        );
       },
     },
     {
@@ -227,13 +253,10 @@ const AdminItemsTable = () => {
       size: 70,
       id: "location_name",
       accessorFn: (row) => row.location_name || "N/A",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1 text-sm">
-          {row.original.location_name ||
-            t.uiComponents.dataTable.emptyCell[lang] ||
-            "—"}
-        </div>
-      ),
+      cell: ({ row }) =>
+        row.original.location_name ||
+        t.uiComponents.dataTable.emptyCell[lang] ||
+        "—",
     },
     {
       header: t.adminItemsTable.columns.quantity[lang],
@@ -301,227 +324,308 @@ const AdminItemsTable = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-xl">{t.adminItemsTable.title[lang]}</h1>
       </div>
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-        <div className="flex gap-4 items-center">
+      <div className="flex sm:flex-row justify-between items-end mb-4 w-full">
+        <div className="flex gap-4 items-center flex-wrap w-full">
           {/* Search */}
-          <div className="relative w-full sm:max-w-xs bg-white rounded-md">
-            <Search
-              aria-hidden
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
-            />
-            <Input
-              placeholder={t.adminItemsTable.filters.searchPlaceholder[lang]}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape" && searchTerm) setSearchTerm("");
-              }}
-              className="pl-10 pr-9 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          <div className="relative w-full flex-wrap rounded-md flex gap-4 flex-col sm:flex-row">
+            <div className="relative flex gap-4 lg:min-w-[250px] text-sm w-full md:w-fit">
+              <Search
+                aria-hidden
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
+              />
+              <Input
+                placeholder={t.adminItemsTable.filters.searchPlaceholder[lang]}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape" && searchTerm) setSearchTerm("");
+                }}
+                className="pl-10 pr-9 rounded-md w-full sm:w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X aria-hidden className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {/* Filter by active status */}
+            <div className="flex gap-4 flex-wrap">
+              <Select
+                aria-label={t.adminItemsTable.aria.labels.statusFilter[lang]}
+                value={statusFilter}
+                onValueChange={(val) =>
+                  setStatusFilter(val as "all" | "active" | "inactive")
+                }
               >
-                <X aria-hidden className="w-4 h-4" />
-              </button>
-            )}
+                <SelectTrigger>
+                  <SelectValue>
+                    {t.adminItemsTable.filters.status[statusFilter][lang]}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {["all", "active", "inactive"].map((opt) => (
+                    <SelectItem key={`select-active-${opt}`} value={opt}>
+                      {
+                        t.adminItemsTable.filters.status[
+                          opt as keyof typeof t.adminItemsTable.filters.status
+                        ][lang]
+                      }
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {isMobile && (
+                <>
+                  <Select
+                    onValueChange={(val) => setOrder(val as ValidItemOrder)}
+                    value={order}
+                  >
+                    <SelectTrigger>
+                      <ListFilter />
+                      <SelectValue placeholder="Sort Order">
+                        {SORT_BY.find((o) => o.value === order)?.label[lang]}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SORT_BY.map((order) => {
+                        const { value, label } = order;
+                        return (
+                          <SelectItem value={value} key={`sort-${value}`}>
+                            {label[lang]}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    onValueChange={(val) => setAscending(val === "true")}
+                    value={ascending ? "true" : "false"}
+                  >
+                    <SelectTrigger>
+                      <ArrowUpDown />
+                      <SelectValue
+                        placeholder={t.common.filters.sortOrder[lang]}
+                      >
+                        {
+                          SORT_ORDERS.find((o) => o.value === ascending)?.label[
+                            lang
+                          ]
+                        }
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SORT_ORDERS.map((order) => {
+                        const { value, label } = order;
+                        return (
+                          <SelectItem
+                            key={`sort-order-${value}`}
+                            value={value.toString()}
+                          >
+                            {label[lang]}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Filter by active status */}
-          <select
-            aria-label={t.adminItemsTable.aria.labels.statusFilter[lang]}
-            value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value as "all" | "active" | "inactive")
-            }
-            className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-          >
-            <option value="all">
-              {t.adminItemsTable.filters.status.all[lang]}
-            </option>
-            <option value="active">
-              {t.adminItemsTable.filters.status.active[lang]}
-            </option>
-            <option value="inactive">
-              {t.adminItemsTable.filters.status.inactive[lang]}
-            </option>
-          </select>
+          <div className="flex justify-between w-full flex-wrap gap-2">
+            <div className="flex gap-2 flex-wrap">
+              {/* Filter by tags */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    className="px-3 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+                    size={"sm"}
+                  >
+                    {tagFilter.length > 0
+                      ? t.adminItemsTable.filters.tags.filtered[lang].replace(
+                          "{count}",
+                          tagFilter.length.toString(),
+                        )
+                      : t.adminItemsTable.filters.tags.filter[lang]}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[250px] p-0">
+                  <Command>
+                    <CommandGroup>
+                      {tagsLoading ? (
+                        <div className="flex justify-center p-4">
+                          <LoaderCircle className="h-4 w-4 animate-spin" />
+                        </div>
+                      ) : tags.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          {t.adminItemsTable.filters.tags.noTags[lang] ||
+                            "No tags found"}
+                        </div>
+                      ) : (
+                        tags.map((tag) => {
+                          const label =
+                            tag.translations?.[lang]?.name?.toLowerCase() || // Try current language first
+                            tag.translations?.[
+                              lang === "fi" ? "en" : "fi"
+                            ]?.name?.toLowerCase() || // Fall back to other language
+                            t.adminItemsTable.filters.tags.unnamed[lang] ||
+                            "Unnamed";
 
-          {/* Filter by tags */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                className="px-3 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
-                size={"sm"}
-              >
-                {tagFilter.length > 0
-                  ? t.adminItemsTable.filters.tags.filtered[lang].replace(
-                      "{count}",
-                      tagFilter.length.toString(),
-                    )
-                  : t.adminItemsTable.filters.tags.filter[lang]}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[250px] p-0">
-              <Command>
-                <CommandGroup>
-                  {tagsLoading ? (
-                    <div className="flex justify-center p-4">
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
-                    </div>
-                  ) : tags.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground text-center">
-                      {t.adminItemsTable.filters.tags.noTags[lang] ||
-                        "No tags found"}
-                    </div>
-                  ) : (
-                    tags.map((tag) => {
-                      const label =
-                        tag.translations?.[lang]?.name?.toLowerCase() || // Try current language first
-                        tag.translations?.[
-                          lang === "fi" ? "en" : "fi"
-                        ]?.name?.toLowerCase() || // Fall back to other language
-                        t.adminItemsTable.filters.tags.unnamed[lang] ||
-                        "Unnamed";
-
-                      function cn(...classes: (string | undefined)[]): string {
-                        return classes.filter(Boolean).join(" ");
-                      }
-                      return (
-                        <CommandItem
-                          key={tag.id}
-                          onSelect={() =>
-                            setTagFilter((prev) =>
-                              prev.includes(tag.id)
-                                ? prev.filter((t) => t !== tag.id)
-                                : [...prev, tag.id],
-                            )
+                          function cn(
+                            ...classes: (string | undefined)[]
+                          ): string {
+                            return classes.filter(Boolean).join(" ");
                           }
-                          className="cursor-pointer"
-                        >
-                          <Checkbox
-                            checked={tagFilter.includes(tag.id)}
-                            className={cn(
-                              "mr-2 h-4 w-4 border border-secondary bg-white text-white",
-                              "data-[state=checked]:bg-secondary",
-                              "data-[state=checked]:text-white",
-                              "relative",
-                              "z-10",
-                            )}
-                          />
-                          <span>{label}</span>
-                        </CommandItem>
-                      );
-                    })
-                  )}
-                </CommandGroup>
-              </Command>
-            </PopoverContent>
-          </Popover>
+                          return (
+                            <CommandItem
+                              key={tag.id}
+                              onSelect={() =>
+                                setTagFilter((prev) =>
+                                  prev.includes(tag.id)
+                                    ? prev.filter((t) => t !== tag.id)
+                                    : [...prev, tag.id],
+                                )
+                              }
+                              className="cursor-pointer"
+                            >
+                              <Checkbox
+                                checked={tagFilter.includes(tag.id)}
+                                className={cn(
+                                  "mr-2 h-4 w-4 border border-secondary bg-white text-white",
+                                  "data-[state=checked]:bg-secondary",
+                                  "data-[state=checked]:text-white",
+                                  "relative",
+                                  "z-10",
+                                )}
+                              />
+                              <span>{label}</span>
+                            </CommandItem>
+                          );
+                        })
+                      )}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
 
-          {/* Filter by locations */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                className="px-3 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
-                size={"sm"}
-              >
-                {locationFilter.length > 0
-                  ? t.adminItemsTable.filters.locations.filtered[lang].replace(
-                      "{count}",
-                      locationFilter.length.toString(),
-                    )
-                  : t.adminItemsTable.filters.locations.filter[lang]}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[250px] p-0">
-              <Command>
-                <CommandGroup>
-                  {locationOptions.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground text-center">
-                      {t.adminItemsTable.filters.locations.noLocations?.[
-                        lang
-                      ] || "No locations found"}
-                    </div>
-                  ) : (
-                    locationOptions.map((loc) => (
-                      <CommandItem
-                        key={loc.id}
-                        onSelect={() =>
-                          setLocationFilter((prev) =>
-                            prev.includes(loc.id)
-                              ? prev.filter((l) => l !== loc.id)
-                              : [...prev, loc.id],
-                          )
-                        }
-                        className="cursor-pointer"
-                      >
-                        <Checkbox
-                          checked={locationFilter.includes(loc.id)}
-                          className={
-                            "mr-2 h-4 w-4 border border-secondary bg-white text-white data-[state=checked]:bg-secondary data-[state=checked]:text-white relative z-10"
-                          }
-                        />
-                        <span>{loc.name ?? "Unnamed"}</span>
-                      </CommandItem>
-                    ))
-                  )}
-                </CommandGroup>
-              </Command>
-            </PopoverContent>
-          </Popover>
+              {/* Filter by locations */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    className="px-3 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+                    size={"sm"}
+                  >
+                    {locationFilter.length > 0
+                      ? t.adminItemsTable.filters.locations.filtered[
+                          lang
+                        ].replace("{count}", locationFilter.length.toString())
+                      : t.adminItemsTable.filters.locations.filter[lang]}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[250px] p-0">
+                  <Command>
+                    <CommandGroup>
+                      {locationOptions.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          {t.adminItemsTable.filters.locations.noLocations?.[
+                            lang
+                          ] || "No locations found"}
+                        </div>
+                      ) : (
+                        locationOptions.map((loc) => (
+                          <CommandItem
+                            key={loc.id}
+                            onSelect={() =>
+                              setLocationFilter((prev) =>
+                                prev.includes(loc.id)
+                                  ? prev.filter((l) => l !== loc.id)
+                                  : [...prev, loc.id],
+                              )
+                            }
+                            className="cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={locationFilter.includes(loc.id)}
+                              className={
+                                "mr-2 h-4 w-4 border border-secondary bg-white text-white data-[state=checked]:bg-secondary data-[state=checked]:text-white relative z-10"
+                              }
+                            />
+                            <span>{loc.name ?? "Unnamed"}</span>
+                          </CommandItem>
+                        ))
+                      )}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
 
-          {/* Clear filters button */}
-          {(searchTerm ||
-            statusFilter !== "all" ||
-            tagFilter.length > 0 ||
-            locationFilter.length > 0) && (
+              {/* Clear filters button */}
+              {(searchTerm ||
+                statusFilter !== "all" ||
+                tagFilter.length > 0 ||
+                locationFilter.length > 0) && (
+                <Button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStatusFilter("all");
+                    setTagFilter([]);
+                    setLocationFilter([]);
+                  }}
+                  size={"sm"}
+                  className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
+                >
+                  {t.adminItemsTable.filters.clear[lang]}
+                </Button>
+              )}
+            </div>
+
+            {/* Add New Item button */}
             <Button
-              onClick={() => {
-                setSearchTerm("");
-                setStatusFilter("all");
-                setTagFilter([]);
-                setLocationFilter([]);
-              }}
+              className="addBtn gap-2"
+              onClick={() => navigate("/admin/items/add")}
               size={"sm"}
-              className="px-2 py-1 bg-white text-secondary border-1 border-secondary hover:bg-secondary hover:text-white rounded-2xl"
             >
-              {t.adminItemsTable.filters.clear[lang]}
+              <Plus aria-hidden />
+              {t.adminItemsTable.buttons.addNew[lang]}
             </Button>
-          )}
-        </div>
-        {/* Add New Item button */}
-        <div className="flex gap-4 justify-end">
-          <Button
-            className="addBtn gap-2"
-            onClick={() => navigate("/admin/items/add")}
-            size={"sm"}
-          >
-            <Plus aria-hidden />
-            {t.adminItemsTable.buttons.addNew[lang]}
-          </Button>
+          </div>
         </div>
       </div>
 
-      <PaginatedDataTable
-        columns={itemsColumns}
-        data={items as ManageItemViewRow[]}
-        pageIndex={currentPage - 1}
-        pageCount={totalPages}
-        onPageChange={(page) => handlePageChange(page + 1)}
-        handleAscending={handleAscending}
-        handleOrder={handleSortOrder}
-        order={order}
-        ascending={ascending}
-        originalSorting="quantity"
-        highlight={redirectState?.highlight}
-        rowProps={(row) => ({
-          onClick: () =>
-            handleRowClick(String((row.original as unknown as Item).id)),
-        })}
-      />
+      {isMobile ? (
+        <MobileTable
+          columns={itemsColumns}
+          data={items as ManageItemViewRow[]}
+          pageIndex={currentPage - 1}
+          pageCount={totalPages}
+          onPageChange={(page) => handlePageChange(page + 1)}
+          rowClick={(row) =>
+            handleRowClick(String((row.original as unknown as Item).id))
+          }
+        />
+      ) : (
+        <PaginatedDataTable
+          columns={itemsColumns}
+          data={items as ManageItemViewRow[]}
+          pageIndex={currentPage - 1}
+          pageCount={totalPages}
+          onPageChange={(page) => handlePageChange(page + 1)}
+          handleAscending={handleAscending}
+          handleOrder={handleSortOrder}
+          order={order}
+          ascending={ascending}
+          originalSorting="quantity"
+          highlight={redirectState?.highlight}
+          rowProps={(row) => ({
+            onClick: () =>
+              handleRowClick(String((row.original as unknown as Item).id)),
+          })}
+        />
+      )}
     </div>
   );
 };
