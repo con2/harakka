@@ -102,18 +102,29 @@ export interface BanOperationResult {
   success: boolean;
   message: string;
   ban_history_id?: string;
+  banRecord?: UserBanHistoryRow;
+  banRecords?: UserBanHistoryRow[];
 }
 
 export interface UserBanStatusCheck {
   userId: string;
   isBanned: boolean;
-  banType?: string;
-  banReason?: string;
-  bannedAt?: Date;
-  isPermanent?: boolean;
-  isBannedForApp?: boolean;
-  bannedOrganizations?: string[];
-  bannedRoles?: Array<{ organizationId: string; roleId: string }>;
+  isBannedForApp: boolean;
+  bannedFromOrganizations: Array<{
+    organizationId: string;
+    organizationName: string | null;
+  }>;
+  bannedFromRoles: Array<{
+    organizationId: string;
+    organizationName: string | null;
+    roleId: string;
+    roleName: string | null;
+  }>;
+  banReason: string | null;
+  latestBanType: string | null;
+  latestAction: string | null;
+  bannedAt: string | null;
+  isPermanent: boolean | null;
 }
 
 // Simplified ban history interface for state management
