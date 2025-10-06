@@ -183,6 +183,12 @@ export const addItemForm = {
           fi: "Sijainti on virheellinen.",
         },
       },
+      category_id: {
+        invalid_string: {
+          en: "Category is required",
+          fi: "Kategoria on pakollinen",
+        },
+      },
       invalid_type: {
         en: "An invalid type was provided for {field}",
         fi: "Virheellinen tyyppi annettu kentälle {field}",
