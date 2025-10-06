@@ -24,15 +24,6 @@ export type ViewUserBanStatusRow =
 export type BanType = UserBanHistoryRow["ban_type"];
 export type BanAction = UserBanHistoryRow["action"];
 
-export type BanForRoleRequest = {
-  userId: string;
-  organizationId: string;
-  roleId: string; // This is the actual role_id from the role table (not role_assignment_id)
-  banReason: string;
-  isPermanent?: boolean;
-  notes?: string;
-};
-
 export type BanForOrgRequest = {
   userId: string;
   organizationId: string;
@@ -113,12 +104,6 @@ export interface UserBanStatusCheck {
   bannedFromOrganizations: Array<{
     organizationId: string;
     organizationName: string | null;
-  }>;
-  bannedFromRoles: Array<{
-    organizationId: string;
-    organizationName: string | null;
-    roleId: string;
-    roleName: string | null;
   }>;
   banReason: string | null;
   latestBanType: string | null;
