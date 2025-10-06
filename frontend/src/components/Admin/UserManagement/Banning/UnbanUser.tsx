@@ -30,15 +30,44 @@ interface TargetUserOrganization {
 
 interface Props {
   user: UserProfile;
-  onSuccess?: () => void;
+  refreshKey?: number;
+  onSuccess?: () => Promise<void> | void;
 }
 
-const UnbanUser = ({ user, onSuccess }: Props) => {
+type BanCategoryOption = "application" | "organization" | "role";
+
+const mapCategoryToBanType = (category: BanCategoryOption): BanType => {
+  switch (category) {
+    case "application":
+      return "banForApp";
+    case "organization":
+      return "banForOrg";
+    case "role":
+    default:
+      return "banForRole";
+  }
+};
+
+const mapBanTypeToCategory = (banType: string): BanCategoryOption | null => {
+  switch (banType) {
+    case "banForApp":
+      return "application";
+    case "banForOrg":
+      return "organization";
+    case "banForRole":
+      return "role";
+    default:
+      return null;
+  }
+};
+
+const UnbanUser = ({ user, onSuccess, refreshKey = 0 }: Props) => {
   const dispatch = useAppDispatch();
   const loading = useAppSelector(selectUserBanningLoading);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const { lang } = useLanguage();
-  const { allUserRoles, refreshAllUserRoles, hasRole } = useRoles();
+  const { allUserRoles, refreshAllUserRoles, hasRole, syncSessionAndRoles } =
+    useRoles();
 
   const isSuper = hasRole("super_admin");
   const isTenantAdmin = hasRole("tenant_admin");
@@ -47,7 +76,7 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
   const canUnbanFromOrg = isSuper || isTenantAdmin;
   const canUnbanFromRole = isSuper || isTenantAdmin;
 
-  const [banType, setBanType] = useState<BanType>("role");
+  const [banType, setBanType] = useState<BanCategoryOption>("role");
   const [notes, setNotes] = useState("");
   const [organizationId, setOrganizationId] = useState("");
   const [roleId, setRoleId] = useState("");
@@ -115,15 +144,15 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
     return Array.from(rolesWithBans.values());
   };
 
-  const getActiveBanTypes = useCallback((): BanType[] => {
-    const activeBanTypes = new Set<BanType>();
+  const getActiveBanTypes = useCallback((): BanCategoryOption[] => {
+    const activeBanTypes = new Set<BanCategoryOption>();
 
     activeBans.forEach((ban) => {
       if (!ban.unbanned_at && ban.action === "banned") {
-        if (ban.ban_type === "banForApp") activeBanTypes.add("application");
-        else if (ban.ban_type === "banForOrg")
-          activeBanTypes.add("organization");
-        else if (ban.ban_type === "banForRole") activeBanTypes.add("role");
+        const category = mapBanTypeToCategory(ban.ban_type);
+        if (category) {
+          activeBanTypes.add(category);
+        }
       }
     });
 
@@ -154,25 +183,25 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
         ban.organization_id,
     );
 
-  useEffect(() => {
-    const loadActiveBans = async () => {
-      setBansLoading(true);
-      try {
-        const bans = await userBanningApi.getUserBanHistory(user.id);
-        setActiveBans(bans);
-      } catch (error) {
-        console.error("Failed to load user ban history:", error);
-        toast.error(t.unbanUser.messages.failedLoadBanHistory[lang]);
-      } finally {
-        setBansLoading(false);
-      }
-    };
+  const loadActiveBans = useCallback(async () => {
+    setBansLoading(true);
+    try {
+      const bans = await userBanningApi.getUserBanHistory(user.id);
+      setActiveBans(bans);
+    } catch (error) {
+      console.error("Failed to load user ban history:", error);
+      toast.error(t.unbanUser.messages.failedLoadBanHistory[lang]);
+    } finally {
+      setBansLoading(false);
+    }
+  }, [lang, user.id]);
 
+  useEffect(() => {
     void loadActiveBans();
     if (!allUserRoles || allUserRoles.length === 0) {
       void refreshAllUserRoles();
     }
-  }, [user.id, allUserRoles, refreshAllUserRoles, lang]);
+  }, [user.id, allUserRoles, refreshAllUserRoles, loadActiveBans, refreshKey]);
 
   useEffect(() => {
     if (banType === "role" && organizationId) setRoleId("");
@@ -191,6 +220,8 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
         setOrganizationId("");
         setRoleId("");
       }
+    } else {
+      setBanType("role");
     }
   }, [activeBans, banType, getActiveBanTypes]);
 
@@ -235,7 +266,7 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
       const result = await dispatch(
         unbanUser({
           userId: user.id,
-          banType,
+          banType: mapCategoryToBanType(banType),
           organizationId: organizationId || undefined,
           roleId: roleId || undefined,
           notes: notes.trim() || undefined,
@@ -244,7 +275,12 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
 
       if (result.success) {
         toast.success(t.unbanUser.toast.unbanSuccess[lang]);
-        if (onSuccess) onSuccess();
+        await syncSessionAndRoles();
+        await loadActiveBans();
+        setOrganizationId("");
+        setRoleId("");
+        setNotes("");
+        if (onSuccess) await onSuccess();
       } else {
         toast.error(result.message || t.unbanUser.toast.unbanError[lang]);
       }
@@ -267,7 +303,7 @@ const UnbanUser = ({ user, onSuccess }: Props) => {
             <Label>{t.unbanUser.unban.fields.banTypeToRemove[lang]}</Label>
             <Select
               value={banType}
-              onValueChange={(value: BanType) => setBanType(value)}
+              onValueChange={(value: BanCategoryOption) => setBanType(value)}
             >
               <SelectTrigger>
                 <SelectValue />
