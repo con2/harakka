@@ -342,35 +342,35 @@ const UserPanel = () => {
                 {" "}
                 {t.userPanel.filters.categories[lang]}
               </label>
-               <div className="max-h-[60vh] overflow-y-auto pr-2"></div>
-              <CategoryTree
-                nodes={visibleCategories}
-                lang={lang}
-                selectedIds={new Set(filters.categories)}
-                onToggleSelect={(id) => {
-                  setFilters((prev) => {
-                    // Single-select: if clicking the same category, deselect it; otherwise select the new one
-                    const isCurrentlySelected = prev.categories.includes(id);
-                    if (isCurrentlySelected) {
-                      // Deselect - clear category
-                      return { ...prev, categories: [] };
-                    } else {
-                      // Select only this category (single selection)
-                      return { ...prev, categories: [id] };
-                    }
-                  });
-                  clearNavigationState();
-                }}
-                expandedIds={expandedCategories}
-                onToggleExpand={(id) => {
-                  setExpandedCategories((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(id)) next.delete(id);
-                    else next.add(id);
-                    return next;
-                  });
-                }}
-              />
+              <div className="max-h-[60vh] overflow-y-auto pr-2">
+                <CategoryTree
+                  nodes={visibleCategories}
+                  lang={lang}
+                  selectedIds={new Set(filters.categories)}
+                  onToggleSelect={(id) => {
+                    setFilters((prev) => {
+                      // Single-select: if clicking the same category, deselect it; otherwise select the new one
+                      const isCurrentlySelected = prev.categories.includes(id);
+                      if (isCurrentlySelected) {
+                        // Deselect - clear category
+                        return { ...prev, categories: [] };
+                      } else {
+                        // Select only this category (single selection)
+                        return { ...prev, categories: [id] };
+                      }
+                    });
+                    clearNavigationState();
+                  }}
+                  expandedIds={expandedCategories}
+                  onToggleExpand={(id) => {
+                    setExpandedCategories((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(id)) next.delete(id);
+                      else next.add(id);
+                      return next;
+                    });
+                  }}
+                />
               </div>
               {mappedCategories.length > MAX_VISIBLE && (
                 <Button
