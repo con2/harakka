@@ -1,5 +1,5 @@
 import * as React from "react";
-import { X, Check, CheckCheck, Bell } from "lucide-react";
+import { X, Check, CheckCheck, Bell, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -142,7 +142,7 @@ export const NotificationMobile: React.FC<Props> = ({
                   onClick={deleteAll}
                   className="h-9 w-9 p-1.5 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
                 >
-                  <X className="h-5 w-5" />
+                  <Trash2 className="h-5 w-5" />
                 </Button>
               )}
             </div>

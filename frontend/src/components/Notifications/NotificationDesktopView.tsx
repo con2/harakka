@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Bell, X, Check, CheckCheck } from "lucide-react";
+import { Bell, X, Check, CheckCheck, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -148,7 +148,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
                 onClick={deleteAll}
                 className="h-8 w-8 p-1 rounded-md hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
               >
-                <X className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
               </Button>
             )}
           </div>
