@@ -105,6 +105,7 @@
     "@types/glob": "^8.1.0",
     "@types/node": "^22.13.14",
     "@types/react": "^19.0.10",
+    "@types/react-csv": "^1.1.10",
     "@types/react-dom": "^19.0.4",
     "@types/react-easy-crop": "^1.16.0",
     "@types/react-star-ratings": "^2.3.3",
