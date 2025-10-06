@@ -479,6 +479,7 @@ declare
   v_payload jsonb;
   v_notes text := nullif(trim(p_notes), '');
   v_rows integer;
+  v_updated public.user_ban_history%rowtype;
 begin
   if p_ban_type not in ('banForRole', 'banForOrg', 'banForApp') then
     raise exception using errcode = '22023', message = 'Unsupported ban type.';
@@ -501,8 +502,8 @@ begin
     perform set_config('app.skip_ban_trigger', 'true', true);
 
     if p_ban_type = 'banForRole' then
-      if p_role_id is null or p_organization_id is null then
-        raise exception using errcode = '22023', message = 'Organization and role ids are required for role unban.';
+      if p_organization_id is null then
+        raise exception using errcode = '22023', message = 'Organization id is required for role unban.';
       end if;
 
       with affected as (
@@ -511,8 +512,8 @@ begin
             updated_at = now()
         where user_id = p_target_user
           and organization_id = p_organization_id
-          and role_id = p_role_id
           and is_active = false
+          and (p_role_id is null or role_id = p_role_id)
         returning id, organization_id, role_id
       )
       select jsonb_build_object(
@@ -588,7 +589,9 @@ begin
       raise exception using errcode = 'P0002', message = 'No inactive assignments matched the unban criteria.';
     end if;
 
-    with updated as (
+    v_rows := 0;
+
+    for v_updated in
       update public.user_ban_history
       set unbanned_at = now(),
           notes = case
@@ -609,14 +612,14 @@ begin
           end
         )
       returning *
-    )
-    select count(*) into v_rows from updated;
+    loop
+      v_rows := v_rows + 1;
+      return next v_updated;
+    end loop;
 
     if v_rows = 0 then
       raise exception using errcode = 'P0002', message = 'No matching ban records found to unban.';
     end if;
-
-    return query select * from updated;
 
   exception
     when others then
@@ -731,7 +734,7 @@ grant execute on function public.unban_user(uuid, text, uuid, uuid, text) to aut
 -- ===================================
 
 -- Example shown for public.storage_items
--- COMMENT OUT if the table doesn't exist in your DB.
+
 do $$
 begin
   if exists (
