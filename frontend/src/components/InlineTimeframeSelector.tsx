@@ -19,7 +19,7 @@ export default function InlineTimeframePicker({
   endDate,
   onChange,
   minDate = new Date(),
-  maxRangeDays = 14,
+  maxRangeDays = 42,
 }: Props) {
   const { lang } = useLanguage();
   const { formatDate } = useFormattedDate();
