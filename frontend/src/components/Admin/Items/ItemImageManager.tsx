@@ -229,6 +229,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
       display_order: highestOrder + 1,
       alt_text: altText,
       is_active: true,
+      object_fit: "cover" as "cover" | "contain",
     };
 
     setUploadProgress(10); // Start progress
@@ -341,9 +342,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
               </Label>
               <Select
                 value={imageType}
-                onValueChange={(val: "main" | "detail") =>
-                  setImageType(val)
-                }
+                onValueChange={(val: "main" | "detail") => setImageType(val)}
               >
                 <SelectTrigger>
                   <SelectValue
