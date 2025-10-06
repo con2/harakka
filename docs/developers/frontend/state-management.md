@@ -462,7 +462,7 @@ Don't duplicate the same data in multiple parts of the state. Use selectors to d
 
 When handling arrays of related entities, use deduplication patterns to ensure data consistency:
 
-```ts
+````typescript
 // Example from itemsSlice.ts - deduplicating tags
 if (updatedItem.storage_item_tags && updatedItem.storage_item_tags.length > 0) {
   updatedItem.storage_item_tags = Array.from(
@@ -471,7 +471,6 @@ if (updatedItem.storage_item_tags && updatedItem.storage_item_tags.length > 0) {
     ).values(),
   );
 }
-```
 
 ## Debugging
 
@@ -483,14 +482,14 @@ The Redux store is configured to work with the Redux DevTools Extension. Install
 
 Use selective console logging for debugging specific actions:
 
-```ts
+```typescript
 createOrder: async (orderData) => {
   console.log('Creating order with data:', orderData);
   const response = await api.post("/orders", orderData);
   console.log('Order created:', response);
   return response;
 },
-```
+````
 
 ### Common Issues
 
