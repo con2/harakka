@@ -36,12 +36,15 @@ export function Stepper({
   return (
     <div className="space-y-6">
       {/* Step Buttons */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-start md:items-center gap-4">
         {steps.map((step, idx) => {
           const stepNum = idx + 1;
           const isActive = stepNum === currentStep;
           return (
-            <div key={idx} className="flex gap-x-4 flex-wrap">
+            <div
+              key={idx}
+              className="flex gap-x-4 flex-wrap w-fit justify-center md:justify-start"
+            >
               <Button
                 variant={isActive ? "outline" : "default"}
                 size="lg"
