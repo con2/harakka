@@ -89,4 +89,8 @@ export const reports = {
       fi: "Päivitetty",
     },
   },
+  fetchReportTooltip: {
+    en: "To download a report for all your organization's items, select the columns and press this button.",
+    fi: "Lataa raportti kaikista organisaatiosi tuotteista valitsemalla sarakkeet ja painamalla tätä painiketta.",
+  },
 };

@@ -14,6 +14,11 @@ import { CSVLink } from "react-csv";
 import { itemsApi } from "@/api/services/items";
 import { t } from "@/translations";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type FlattenedItem = Record<string, string>;
 
@@ -255,15 +260,26 @@ const Reports: React.FC = () => {
           </div>
 
           {/* Fetch Report Button */}
-          <Button
-            onClick={handleFetchReport}
-            variant="outline"
-            disabled={isFetching}
-          >
-            {isFetching
-              ? t.reports.fetchingButton[lang]
-              : t.reports.fetchButton[lang]}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleFetchReport}
+                variant="outline"
+                disabled={isFetching}
+              >
+                {isFetching
+                  ? t.reports.fetchingButton[lang]
+                  : t.reports.fetchButton[lang]}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              align="start"
+              className="break-words w-fit max-w-[200px]"
+            >
+              {t.reports.fetchReportTooltip[lang]}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
