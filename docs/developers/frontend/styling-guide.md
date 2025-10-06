@@ -7,7 +7,6 @@ This document outlines the styling approach, design system, and best practices f
 - [Design System](#design-system)
 - [CSS Architecture](#css-architecture)
 - [Component Styling](#component-styling)
-- [Theme System](#theme-system)
 - [Typography](#typography)
 - [Layout & Responsiveness](#layout--responsiveness)
 - [Common UI Patterns](#common-ui-patterns)
@@ -22,32 +21,34 @@ Our application uses a consistent design system with predefined colors, typograp
 The application uses a defined color palette with variables for different UI elements:
 
 ```css
+/* index.css */
 :root {
-  --background: white;
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --primary: #2a2a2a;
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: #2f5D9E;
-  --secondary-foreground: oklch(0.205 0 0);
-  --highlight2: #3ec3ba;
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: #2f5D9E;
+  --main-font: "Lato", sans-serif;
+  --heading-font: "Roboto Slab", serif;
+
+  --radius: 0.625rem;
+
+  --snow-white: #fff;
+  --midnight-black: #0b0b0b;
+  --iridiscent-blue: #2f5d9e;
+  --iridiscent-blue-light: #6394d9ff;
+  --emerald-green: #267c6f;
+  --emerald-green-light: #40b3a2;
+  --steel-gray: #7a7d7f;
+  --silver-gleam: #c4c9cc;
+  --subtle-grey: oklch(0.97 0 0);
+
+  /* And more .... */
 }
 ```
 
 #### Core Colors
 
-- **Primary**: `#2a2a2a` - Used for main UI elements, text, and primary actions
-- **Secondary**: `#2f5D9E` (Purple) - Used for highlights, important UI elements
-- **Highlight**: `#3ec3ba` (Teal) - Used for secondary highlights and accents
+The core colours take inspiration from the magpie bird, which have teal and emerald shades in their feather reflection.
+
+- **Primary**: `#2a2a2a` - Mainly used as the text base colour
+- **Secondary**: `#2f5d9e` "Iridiscent Blue" - Used for highlights, important UI elements
+- **Highlight**: `#267c6f` "Emerald Green" - Used for secondary highlights and accents
 - **Destructive**: Used for error states, delete actions
 
 #### Usage Guidelines
@@ -55,6 +56,12 @@ The application uses a defined color palette with variables for different UI ele
 - Use semantic color variables (`--primary`, `--secondary`) rather than raw color values
 - Maintain sufficient contrast ratios for accessibility (at least 4.5:1 for normal text)
 - Limit color usage to the defined palette to maintain visual consistency
+
+**Example: **
+
+```tsx
+<span className="text-(--secondary)">This text is styled with a variable</span>
+```
 
 ### Spacing
 
@@ -81,8 +88,6 @@ The application uses a combination of:
 Our global styles are defined in `src/index.css`:
 
 ```css
-@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Roboto+Slab:wght@100..900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -171,23 +176,6 @@ const StatsCard = ({ title, value, icon }) => {
 };
 ```
 
-## Theme System
-
-The application will support light and dark modes through CSS variables:
-
-<!-- TODO: add dark theme later -->
-
-### Dark Mode
-
-```css
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  /* ...other dark mode variables */
-}
-```
-
 ### Implementing Theme-Aware Components
 
 When creating components, use the theme CSS variables instead of hard-coded colors:
@@ -255,6 +243,70 @@ Follow the Tailwind font size scale:
 
 ## Layout & Responsiveness
 
+This application applies styles mobile-first, meaning that the main style applied to an element should suit a mobile-sized screen, with additional classes that apply to larger screen sizes.
+
+This is done using tailwinds built in breakpoints prefixes.
+
+**Example:**
+
+```tsx
+<div className="text-left md:text-right lg:text-center">
+  This element is styled mobile-first, And has classes that apply to larger
+  screens.
+</div>
+```
+
+### Breakpoints
+We use tailwinds default breakpoints which are:
+|Prefix | Min width | CSS |
+|-|-|-|
+| **sm** | 40rem (640px) | @media (width >= 40rem) { ... }
+|**md** | 48rem (768px) | @media (width >= 48rem) { ... }
+| **lg** | 64rem (1024px) | @media (width >= 64rem) { ... }
+| **xl** | 80rem (1280px) | @media (width >= 80rem) { ... }
+| **2xl** | 96rem (1536px) |@media (width >= 96rem) { ... }
+
+We mainly use **md** and **lg**
+
+### useIsMobile hook
+
+To help us conditionally render content based on screen size, we created a custom hook [useIsMobile](/frontend/src/hooks/use-mobile.ts)
+
+This hook returns the following variables:
+| variable | data type | - |
+| - | - | - |
+**isMobile** | Boolean | True if screen size is <= 640px  
+**isTablet** | Boolean | True if screen size is > 640px and <= 1024px |
+**isDesktop** | Boolean | True if screen size is > 1024px |
+**width** | Number | Returns the current viewport width. This is particularly useful if you need to create a custom breakpoint.
+
+#### Usage
+
+```tsx
+import { useIsMobile } from "@/hooks/use-mobile";
+function Responsive() {
+  const { isMobile, isTablet } = useIsMobile();
+
+  if (isMobile) return <p>I show on mobile</p>;
+  else if (isTablet) return <p>I show on tablet</p>;
+  return <p>I show on desktop</p>;
+}
+```
+
+##### Custom breakpoint
+
+```tsx
+import { useIsMobile } from "@/hooks/use-mobile";
+
+function CustomBreakpoint() {
+  const { width } = useIsMobile();
+  const isMobile = width <= 700;
+
+  if (isMobile) return <p>I show on viewport width <= 700px</p>
+  return <p>I show on viewport width > 700px</p>
+}
+```
+
 ### Container Widths
 
 Use Tailwind's container class with responsive modifiers:
@@ -265,15 +317,6 @@ Use Tailwind's container class with responsive modifiers:
 </div>
 ```
 
-### Breakpoints
-
-Follow these standard breakpoints:
-
-- **sm**: 640px (Small devices)
-- **md**: 768px (Medium devices)
-- **lg**: 1024px (Large devices)
-- **xl**: 1280px (Extra large devices)
-- **2xl**: 1536px (2X large devices)
 
 ### Responsive Layout Patterns
 
@@ -411,7 +454,7 @@ Always use appropriate HTML elements for better accessibility:
 
 ```tsx
 // Good
-<button className="bg-primary text-white px-4 py-2 rounded">Click me</button>
+<button onClick={handleClick} className="bg-primary text-white px-4 py-2 rounded">Click me</button>
 
 // Avoid
 <div className="bg-primary text-white px-4 py-2 rounded" onClick={handleClick}>Click me</div>
