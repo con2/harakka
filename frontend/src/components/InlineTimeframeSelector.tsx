@@ -4,6 +4,7 @@ import DatePickerButton from "./ui/DatePickerButton";
 import { useRef, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
 
 type Props = {
   startDate: Date | null;
@@ -21,6 +22,7 @@ export default function InlineTimeframePicker({
   maxRangeDays = 14,
 }: Props) {
   const { lang } = useLanguage();
+  const { formatDate } = useFormattedDate();
   const endPopoverRef = useRef<HTMLButtonElement>(null);
   const [startOpen, setStartOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
@@ -35,7 +37,7 @@ export default function InlineTimeframePicker({
         <Popover open={startOpen} onOpenChange={setStartOpen}>
           <PopoverTrigger asChild>
             <DatePickerButton
-              value={startDate ? startDate.toLocaleDateString() : ""}
+              value={startDate ? formatDate(startDate, "d MMM yyyy") : ""}
               placeholder="Select start date"
             />
           </PopoverTrigger>
@@ -69,7 +71,7 @@ export default function InlineTimeframePicker({
           <PopoverTrigger asChild>
             <DatePickerButton
               ref={endPopoverRef}
-              value={endDate ? endDate.toLocaleDateString() : ""}
+              value={endDate ? formatDate(endDate, "d MMM yyyy") : ""}
               placeholder="Select end date"
             />
           </PopoverTrigger>
