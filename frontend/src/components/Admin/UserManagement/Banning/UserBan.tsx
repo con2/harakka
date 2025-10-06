@@ -29,7 +29,7 @@ import { selectActiveOrganizationId } from "@/store/slices/rolesSlice";
 
 interface Props {
   user: UserProfile;
-  onSuccess?: () => void;
+  onSuccess?: () => Promise<void> | void;
 }
 
 const UserBan = ({ user, onSuccess }: Props) => {
@@ -37,7 +37,8 @@ const UserBan = ({ user, onSuccess }: Props) => {
   const loading = useAppSelector(selectUserBanningLoading);
   const activeOrgId = useAppSelector(selectActiveOrganizationId);
   const { lang } = useLanguage();
-  const { allUserRoles, refreshAllUserRoles, hasRole } = useRoles();
+  const { allUserRoles, refreshAllUserRoles, hasRole, syncSessionAndRoles } =
+    useRoles();
   const { getBanPermissions } = useBanPermissions();
 
   const isSuper = hasRole("super_admin");
@@ -215,7 +216,16 @@ const UserBan = ({ user, onSuccess }: Props) => {
 
       if (result?.success) {
         toast.success(t.userBan.toast.success[lang]);
-        if (onSuccess) onSuccess();
+        setOrganizationId("");
+        setRoleAssignmentId("");
+        setSelectedBanReason("");
+        setCustomBanReason("");
+        setBanReason("");
+        setNotes("");
+        setIsPermanent(false);
+        setBanType(getDefaultBanType());
+        await syncSessionAndRoles();
+        if (onSuccess) await onSuccess();
       } else {
         toast.error(result?.message || t.userBan.toast.error[lang]);
       }
