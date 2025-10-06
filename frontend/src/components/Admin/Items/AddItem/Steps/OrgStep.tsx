@@ -66,7 +66,7 @@ function OrgStep() {
   /*---------------------render--------------------------------------------------*/
   return (
     <div className="bg-white flex flex-col flex-wrap rounded border mt-4 max-w-[900px]">
-      <div className="flex flex-col gap-2 flex-3  p-10">
+      <div className="flex flex-col gap-2 flex-3 p-8 md:p-10">
         <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-4 text-start text-primary font-main">
           {t.orgStep.heading.location[lang]}
         </h2>
@@ -165,7 +165,7 @@ function OrgStep() {
       <Separator />
 
       {/* Item Creations Choices: Manual or CSV Upload */}
-      <div className="p-10">
+      <div className="p-8 md:p-10">
         <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight w-full mb-4 text-start text-primary font-main">
           {t.orgStep.heading.method[lang]}
         </h2>

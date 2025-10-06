@@ -324,7 +324,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             {/* Item Details */}
             <AccordionItem
               value="details"
-              className="p-10 flex flex-wrap gap-x-6 justify-between"
+              className="p-8 md:p-10 flex flex-wrap gap-x-6 justify-between"
             >
               <AccordionTrigger
                 className="font-main w-full justify-between flex"
@@ -616,7 +616,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   control={form.control}
                   name="placement_description"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg p-4 gap-x-6 gap-y-1 w-full mt-5 flex-wrap">
+                    <FormItem className="flex sm:flex-row sm:items-center justify-between rounded-lg p-4 gap-x-6 gap-y-1 w-full mt-5 flex-wrap flex-col">
                       <div className="flex-1 min-w-fit">
                         <FormLabel>
                           {t.addItemForm.labels.placement[appLang]}
@@ -650,7 +650,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                           }}
                         />
                       </div>
-                      <FormControl className="flex-1 min-w-[280px]">
+                      <FormControl className="flex-1 sm:min-w-[280px]">
                         <Textarea
                           {...field}
                           className={
@@ -667,7 +667,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             </AccordionItem>
 
             {/* Tags Section */}
-            <AccordionItem value="tags" className="p-10 w-full">
+            <AccordionItem value="tags" className="p-8 md:p-10 w-full">
               <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
                 <div>
                   <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
@@ -758,7 +758,10 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             </AccordionItem>
 
             {/* Images */}
-            <AccordionItem value="images" className="p-10 w-full border-b-0">
+            <AccordionItem
+              value="images"
+              className="p-8 md:p-10 w-full border-b-0"
+            >
               <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
                 <div className="mb-6">
                   <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
@@ -777,6 +780,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                     form.watch("images") || { main: null, details: [] }
                   }
                   updateForm={form.setValue}
+                  errors={form.formState.errors.images}
                 />
                 <div className="flex-1 flex flex-col h-fit">
                   <h2 className="text-start font-main text-primary">
@@ -790,7 +794,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
               </AccordionContent>
             </AccordionItem>
 
-            <div className="p-10 pt-2 flex justify-end gap-4">
+            <div className="p-8 md:p-10 pt-2 flex justify-end gap-4">
               {!onUpdate && (
                 <>
                   <Button
