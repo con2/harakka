@@ -244,7 +244,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({
         data-cy="items-card"
         className={cn(
           "w-full h-full flex flex-col justify-between p-4 flex-[1_0_250px]",
-          preview && "shadow-none max-w-[350px]",
+          preview && "shadow-none max-w-[270px]",
         )}
       >
         {/* Image Section */}
