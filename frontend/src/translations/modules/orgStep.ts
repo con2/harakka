@@ -55,4 +55,18 @@ export const orgStep = {
       fi: "Organisaatiolle ei löytynyt sijainteja.",
     },
   },
+  messages: {
+    notACSV: {
+      en: "{file_name} is not a CSV file",
+      fi: "{file_name} ei ole CSV-tiedosto",
+    },
+    noFileSelected: {
+      en: "No file selected.",
+      fi: "Ei tiedostoa valittu.",
+    },
+    failedProcess: {
+      en: "Failed to process file. Try again and contact support if the problem persists.",
+      fi: "Tiedoston käsittely epäonnistui. Yritä uudelleen ja ota yhteyttä tukeen, jos ongelma jatkuu.",
+    },
+  },
 };
