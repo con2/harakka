@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   getItemById,
@@ -44,7 +44,11 @@ const ItemsDetails: React.FC = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { formatDate } = useFormattedDate();
+
+  // get page num from nav state (passed from ItemCard)
+  const fromPage = (location.state as { fromPage?: number } | null)?.fromPage;
 
   const item = useAppSelector(selectSelectedItem);
   const loading = useAppSelector(selectItemsLoading);
@@ -217,7 +221,14 @@ const ItemsDetails: React.FC = () => {
       {/* Back Button */}
       <div className="mb-3 mt-4 md:mt-0">
         <Button
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            // navigate back to storage with page state if available
+            if (fromPage) {
+              void navigate("/storage", { state: { fromPage } });
+            } else {
+              void navigate(-1);
+            }
+          }}
           className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
           data-cy="item-details-back-btn"
         >
