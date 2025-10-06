@@ -17,7 +17,7 @@ import { Category } from "@common/items/categories";
 import { ColumnDef } from "@tanstack/react-table";
 import { Plus, Search, Trash } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { t } from "@/translations";
 import { toastConfirm } from "@/components/ui/toastConfirm";
@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 function Categories() {
   const { lang } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const categories = useAppSelector(selectCategories);
   const loading = useAppSelector(selectCategoriesLoading);
@@ -35,7 +36,9 @@ function Categories() {
   // Local state
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebouncedValue(searchTerm);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    (location.state as { page?: number })?.page ?? 1,
+  );
   const [order, setOrder] = useState("");
   const [ascending, setAscending] = useState<boolean | null>(null);
 
@@ -180,7 +183,9 @@ function Categories() {
           style: { cursor: "pointer" },
           onClick: () => {
             void dispatch(setSelectedCategory(row.original));
-            void navigate(`/admin/categories/${row.original.id}`);
+            void navigate(`/admin/categories/${row.original.id}`, {
+              state: { page: currentPage },
+            });
           },
         })}
       />
