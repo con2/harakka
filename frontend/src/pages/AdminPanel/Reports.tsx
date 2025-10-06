@@ -248,15 +248,26 @@ const Reports: React.FC = () => {
         <h1 className="text-xl">{t.reports.title[lang]}</h1>
       </div>
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-4 items-center w-full">
           {/* Search Input */}
           <div className="relative w-full sm:max-w-xs bg-white rounded-md">
-            <Input
-              placeholder={t.reports.searchPlaceholder[lang]}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-9 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
-            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Input
+                  placeholder={t.reports.searchPlaceholder[lang]}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-9 rounded-md w-full focus:outline-none focus:ring-0 focus:ring-secondary focus:border-secondary focus:bg-white"
+                />
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                align="start"
+                className="break-words w-fit max-w-[300px]"
+              >
+                {t.reports.searchTooltip[lang]}
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Fetch Report Button */}

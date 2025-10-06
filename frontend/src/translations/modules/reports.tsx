@@ -4,8 +4,8 @@ export const reports = {
     fi: "Tuoteraportti",
   },
   searchPlaceholder: {
-    en: "Search items...",
-    fi: "Hae tuotteita...",
+    en: "Apply search query to the fetching...",
+    fi: "Käytä hakukyselyä haussa...",
   },
   fetchButton: {
     en: "Fetch Report",
@@ -92,5 +92,9 @@ export const reports = {
   fetchReportTooltip: {
     en: "To download a report for all your organization's items, select the columns and press this button.",
     fi: "Lataa raportti kaikista organisaatiosi tuotteista valitsemalla sarakkeet ja painamalla tätä painiketta.",
+  },
+  searchTooltip: {
+    en: "You can search by item name, type, category, description, or location.",
+    fi: "Voit hakea tuotteen nimellä, tyypillä, kategorialla, kuvauksella tai sijainnilla.",
   },
 };
