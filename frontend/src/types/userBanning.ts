@@ -1,8 +1,18 @@
 import { Database } from "@common/supabase.types";
 
 // Import Json type for use in our interfaces
-type Json =
-  Database["public"]["Tables"]["user_ban_history"]["Row"]["affected_assignments"];
+export type BanAssignmentChange = {
+  id?: string;
+  role_assignment_id?: string;
+  organization_id?: string;
+  role_id?: string;
+  was_active?: boolean;
+  now_active?: boolean;
+};
+
+export interface BanAffectedAssignments {
+  assignments?: BanAssignmentChange[];
+}
 
 // Supabase table types
 export type UserBanHistoryRow =
@@ -61,7 +71,7 @@ export interface BanHistoryItem {
   is_permanent: boolean | null;
   role_assignment_id?: string | null;
   organization_id?: string | null;
-  affected_assignments?: Json | null;
+  affected_assignments?: BanAffectedAssignments | null;
   banned_at: string | null;
   unbanned_at?: string | null;
   notes?: string | null;
@@ -128,7 +138,7 @@ export interface SimpleBanHistoryItem {
   is_permanent?: boolean | null;
   role_assignment_id?: string | null;
   organization_id?: string | null;
-  affected_assignments?: Json | null;
+  affected_assignments?: BanAffectedAssignments | null;
   banned_at?: string | null;
   unbanned_at?: string | null;
   notes?: string | null;
