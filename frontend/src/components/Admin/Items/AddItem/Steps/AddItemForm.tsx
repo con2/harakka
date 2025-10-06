@@ -673,7 +673,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                     {t.addItemForm.headings.assignTags[appLang]}
                   </h2>
-                  <p className="text-sm leading-none font-medium">
+                  <p className="text-sm md:leading-none font-medium">
                     {t.addItemForm.paragraphs.tagPrompt[appLang]}
                   </p>
                 </div>
@@ -767,7 +767,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                     {t.addItemForm.headings.addImages[appLang]}
                   </h2>
-                  <p className="text-sm leading-none font-medium">
+                  <p className="text-sm md:leading-none font-medium">
                     {t.addItemForm.paragraphs.imagePrompt[appLang]}
                   </p>
                 </div>
