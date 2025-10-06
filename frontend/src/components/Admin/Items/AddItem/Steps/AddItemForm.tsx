@@ -133,18 +133,14 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
     if (firstError) {
       const { field, type } = firstError;
       if (field) {
-        if (type) {
-          return toast.error(
-            t.addItemForm.messages.validation[field as "item_name"][
-              type as "too_small"
-            ][appLang],
-          );
-        }
-        toast.error(
-          t.addItemForm.messages.validation.invalid_type[appLang].replace(
-            "{field}",
-            field,
-          ),
+        return toast.error(
+          t.addItemForm.messages.validation?.[field as "item_name"]?.[
+            type as "too_small"
+          ]?.[appLang] ||
+            t.addItemForm.messages.validation.invalid_type[appLang].replace(
+              "{field}",
+              field,
+            ),
         );
       }
     } else if (form.formState.errors.images) {
