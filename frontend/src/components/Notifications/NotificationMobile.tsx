@@ -80,7 +80,7 @@ export const NotificationMobile: React.FC<Props> = ({
               <Button
                 variant="ghost"
                 onClick={() => setPanelOpen(false)}
-                className="text-base font-medium p-0 h-auto text-left justify-start hover:underline"
+                className="text-base font-medium px-2 py-1 h-auto text-left justify-start hover:underline"
               >
                 {common.close[lang]}
               </Button>
@@ -153,7 +153,7 @@ export const NotificationMobile: React.FC<Props> = ({
               {t.navigation.notifications.none[lang]}
             </p>
           ) : (
-            <ScrollArea className="max-h-[80vh]">
+            <ScrollArea className="h-[70vh] sm:h-[80vh]">
               {visibleFeed.map((n) => {
                 const tpl =
                   (

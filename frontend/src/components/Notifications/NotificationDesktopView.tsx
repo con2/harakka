@@ -161,7 +161,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
             {t.navigation.notifications.none[lang]}
           </p>
         ) : (
-          <ScrollArea className="max-h-[70vh]">
+          <ScrollArea className="h-[70vh] sm:h-[80vh]">
             {visibleFeed.map((n) => {
               // ———————————— Translate Title / Message ————————————
               const tpl = // Translation template for this notification type
