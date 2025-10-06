@@ -34,9 +34,29 @@ interface ItemsCardProps {
     images?: { main: ImageSchemaType };
   };
   preview?: boolean;
+  currentPage?: number;
 }
 
-const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
+// Utility function to sanitize image URLs
+function sanitizeImageUrl(url: string | undefined, fallback: string): string {
+  if (!url || typeof url !== "string") return fallback;
+  // Only allow http(s) URLs or relative (starting with / or .)
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("/") ||
+    url.startsWith(".")
+  ) {
+    return url;
+  }
+  return fallback;
+}
+
+const ItemCard: React.FC<ItemsCardProps> = ({
+  item,
+  preview = false,
+  currentPage,
+}) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const itemImages = useAppSelector(selectItemImages);
@@ -96,36 +116,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
 
   // Set the image URL just once when it changes
   useEffect(() => {
-    const { image_url } = stableImage;
-    if (image_url && !failedImageUrlsRef.current.has(image_url)) {
-      // Clear any existing timeout
-      if (imageLoadingTimeoutRef.current) {
-        clearTimeout(imageLoadingTimeoutRef.current);
-      }
-
-      setCurrentImage(stableImage);
-      setIsImageLoading(true);
-      setLoadFailed(false);
-
-      // Set a timeout to prevent infinite loading
-      imageLoadingTimeoutRef.current = setTimeout(() => {
-        setIsImageLoading(false);
-        failedImageUrlsRef.current.add(stableImage.image_url); // Mark as failed due to timeout
-        console.warn(`Image loading timed out for ${stableImage.image_url}`);
-      }, 5000); // 5 seconds timeout
-    } else {
-      // If no URL or URL previously failed
-      setCurrentImage(stableImage);
-      setIsImageLoading(false);
-      setLoadFailed(true);
-    }
-
-    // Cleanup function to clear timeout
-    return () => {
-      if (imageLoadingTimeoutRef.current) {
-        clearTimeout(imageLoadingTimeoutRef.current);
-      }
-    };
+    setCurrentImage(stableImage);
   }, [stableImage]);
 
   // Fetch images only once per item
@@ -143,7 +134,9 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
   // Navigate to the item's detail page
   const handleItemClick = (itemId: string) => {
     void dispatch(getItemById(itemId)); // Fetch the item by ID when clicked
-    void navigate(`/storage/items/${itemId}`);
+    void navigate(`/storage/items/${itemId}`, {
+      state: { fromPage: currentPage },
+    });
   };
 
   const handleUpdateCart = () => {
@@ -232,13 +225,20 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
     (existingCartItem && existingCartItem.quantity === quantity);
 
   return (
-    <button
+    <div
+      role="button"
       aria-label={t.itemCard.aria.labels.viewDetails[lang].replace(
         "{item_name}",
         item.translations[lang].item_name,
       )}
       onClick={() => handleItemClick(item.id)}
-      className="hover:[&_h2]:text-muted-foreground"
+      className="hover:[&_h2]:text-muted-foreground cursor-pointer"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          handleItemClick(item.id);
+        }
+      }}
     >
       <Card
         data-cy="items-card"
@@ -258,11 +258,10 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
             </div>
           )}
           <img
-            src={
-              item.images?.main?.url ||
-              currentImage.image_url ||
-              imagePlaceholder
-            }
+            src={sanitizeImageUrl(
+              item.images?.main?.url || currentImage.image_url,
+              imagePlaceholder,
+            )}
             alt={itemContent?.item_name || "Tuotteen kuva"}
             className={cn(
               "w-full h-full transition-opacity duration-300",
@@ -459,7 +458,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({ item, preview = false }) => {
           </Tooltip>
         </div>
       </Card>
-    </button>
+    </div>
   );
 };
 
