@@ -753,10 +753,10 @@ export type ApiSingleResponse<T> = PostgrestSingleResponse<T> & {
 };
 ```
 
-1. **ApiResponse<T>**
+1. **ApiResponse**
    Returns an object with the same properties as a PostgrestResponse as well as an optional metadata. Will always return an array of the type, no need to explicitly say that the expected data will be an array.
 
-2. **ApiSingleResponse<T>**
+2. **ApiSingleResponse**
    This type should be used the exact same way as the ApiResponse. Will always return a singular entity of the expected type, no arrays.
 
 ### Usage
