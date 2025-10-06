@@ -72,7 +72,7 @@ export const NotificationMobile: React.FC<Props> = ({
       </Button>
       {/* Notification Panel */}
       <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
-        <SheetContent side="top" hideClose className="w-[90vw] sm:max-w-sm p-0">
+        <SheetContent side="top" hideClose className="w-full max-w-none p-0">
           {/* Header */}
           <div className="p-3 border-b flex items-center justify-between gap-2 flex-wrap">
             {/* Notifications title (SheetTitle for accessibility) */}
