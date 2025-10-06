@@ -4,6 +4,9 @@ import { Database } from "@common/supabase.types";
 type BanType =
   Database["public"]["Tables"]["user_ban_history"]["Row"]["ban_type"];
 
+type UserBanHistoryRow =
+  Database["public"]["Tables"]["user_ban_history"]["Row"];
+
 export interface BanForRoleDto {
   userId: string;
   organizationId: string;
@@ -40,13 +43,29 @@ export interface UnbanDto {
 export interface BanOperationResult {
   success: boolean;
   message: string;
-  data?: unknown;
+  banRecord?: UserBanHistoryRow;
+  banRecords?: UserBanHistoryRow[];
+  ban_history_id?: string;
 }
 
 // User ban status check type
 export interface UserBanStatusCheck {
   userId: string;
-  isBannedFromApp: boolean;
-  bannedFromOrganizations: string[];
-  bannedFromRoles: string[];
+  isBanned: boolean;
+  isBannedForApp: boolean;
+  bannedFromOrganizations: Array<{
+    organizationId: string;
+    organizationName: string | null;
+  }>;
+  bannedFromRoles: Array<{
+    organizationId: string;
+    organizationName: string | null;
+    roleId: string;
+    roleName: string | null;
+  }>;
+  banReason: string | null;
+  latestBanType: string | null;
+  latestAction: string | null;
+  bannedAt: string | null;
+  isPermanent: boolean | null;
 }
