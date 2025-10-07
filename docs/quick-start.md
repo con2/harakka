@@ -2,7 +2,7 @@
 
 ## Database Setup
 
-If you start without database seed data, you should insert several rows manually in Supabase UI or via Supabase CLI.
+If you start without database seed data (all db tables are empty), you should insert several rows manually in Supabase UI or via Supabase CLI.
 
 ### Insert essential data into the database
 
@@ -29,26 +29,30 @@ INSERT INTO public.organizations (id, name, slug, description, is_active, is_del
 
 ## Run the application locally
 
-1. **Clone the repository:**
+### Clone the repository
 
 ```sh
 git clone https://github.com/con2/harakka.git
 cd <root folder>
 ```
 
-1. **Set up environment variables:**
+### Set up environment variables
+
+Run this script to create `.env.local` file from template
 
 ```sh
 ./scripts/setup.sh
 ```
 
-2. **Install dependencies:**
+Insert required env values into `../.env.local`
+
+### Install dependencies
 
 ```sh
 npm run install-all
 ```
 
-3. **Run the application:**
+### Run the application
 
 ```sh
 npm run dev
@@ -60,12 +64,12 @@ npm run dev
 
 ## Setup initial super_admin user
 
-You can create the initial super_admin user manually in Supabase UI or via Supabase CLI.
+To manage your admins team you need super_admin user role. You can create the initial super_admin role manually in Supabase UI or via Supabase CLI.
 
 ### Assign a super_admin user
 
 By default any new user on the first "SIGNED_IN" event is assigned to the "user" role in the "Global" organization.
-To get super_admin rights (manages all users roles), you need to update the user's roles directly in the database.
+To get super_admin rights, you need to update this user's roles directly in the database.
 So, the steps are:
 
 1. Sign up a new user via the frontend.
