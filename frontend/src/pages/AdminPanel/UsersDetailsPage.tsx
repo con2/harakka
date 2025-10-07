@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { formatSnakeCase } from "@/utils/format";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Clipboard, RefreshCw } from "lucide-react";
+import { ChevronLeft, Clipboard } from "lucide-react";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import {
   Accordion,
@@ -44,6 +44,10 @@ import { ViewUserRolesWithDetails } from "@common/role.types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileTable from "@/components/ui/MobileTable";
 import { ColumnDef, Row } from "@tanstack/react-table";
+import {
+  fetchUserBanHistory,
+  checkUserBanStatus,
+} from "@/store/slices/userBanningSlice";
 
 const UsersDetailsPage = () => {
   const { id } = useParams();
@@ -98,6 +102,7 @@ const UsersDetailsPage = () => {
   const [activeTab, setActiveTab] = useState<"history" | "ban" | "unban">(
     "history",
   );
+  const [banRefreshKey, setBanRefreshKey] = useState(0);
   const lastRoleEntry = roleAssignments[roleAssignments.length - 1];
   const isAssigningRole =
     roleAssignments.length > 0 &&
@@ -172,6 +177,13 @@ const UsersDetailsPage = () => {
       void dispatch(fetchAllOrganizations({ page: 1, limit: 30 }));
     }
   }, [organizations.length, dispatch]);
+
+  const handleBanStateChange = useCallback(async () => {
+    if (!user?.id) return;
+    await dispatch(fetchUserBanHistory(user.id));
+    await dispatch(checkUserBanStatus(user.id));
+    setBanRefreshKey((prev) => prev + 1);
+  }, [dispatch, user?.id]);
 
   const handleRoleAssignmentChange = (
     index: number,
@@ -750,29 +762,6 @@ const UsersDetailsPage = () => {
             </Label>
 
             <div className="flex items-center gap-2">
-              {/* Add refresh button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  try {
-                    await refreshSupabaseSession();
-                    await refreshAllUserRoles(true);
-                    toast.success(
-                      t.usersDetailsPage.toasts.roleRefreshSuccess[lang],
-                    );
-                  } catch (err) {
-                    console.error("Failed to refresh roles:", err);
-                    toast.error(
-                      t.usersDetailsPage.toasts.roleRefreshError[lang],
-                    );
-                  }
-                }}
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                {t.usersDetailsPage.buttons.refresh[lang]}
-              </Button>
-
               {isSuperAdmin && (
                 <Button
                   variant="outline"
@@ -968,7 +957,10 @@ const UsersDetailsPage = () => {
 
                       <TabsContent value="history">
                         <div className="max-h-64 overflow-y-auto">
-                          <UserBanHistory user={user} />
+                          <UserBanHistory
+                            user={user}
+                            refreshKey={banRefreshKey}
+                          />
                         </div>
                       </TabsContent>
 
@@ -976,7 +968,10 @@ const UsersDetailsPage = () => {
                         <div className="pt-2">
                           <UserBan
                             user={user}
-                            onSuccess={() => setActiveTab("history")}
+                            onSuccess={async () => {
+                              await handleBanStateChange();
+                              setActiveTab("history");
+                            }}
                           />
                         </div>
                       </TabsContent>
@@ -985,7 +980,11 @@ const UsersDetailsPage = () => {
                         <div className="pt-2">
                           <UnbanUser
                             user={user}
-                            onSuccess={() => setActiveTab("history")}
+                            refreshKey={banRefreshKey}
+                            onSuccess={async () => {
+                              await handleBanStateChange();
+                              setActiveTab("history");
+                            }}
                           />
                         </div>
                       </TabsContent>

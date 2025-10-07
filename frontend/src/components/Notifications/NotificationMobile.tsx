@@ -1,5 +1,5 @@
 import * as React from "react";
-import { X, Check, CheckCheck, Bell } from "lucide-react";
+import { X, Check, CheckCheck, Bell, Trash2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,8 +9,15 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { t } from "@/translations";
 import { DBTables } from "@common/database.types";
+import { common } from "@/translations/modules/common";
 
 type NotificationRow = DBTables<"notifications">;
 
@@ -49,6 +56,8 @@ export const NotificationMobile: React.FC<Props> = ({
   removeNotification,
   onOpenRow,
 }) => {
+  const [tooltipOpen, setTooltipOpen] = React.useState(false);
+
   // Mobile: slide-in panel with larger tap targets
   return (
     <>
@@ -71,18 +80,22 @@ export const NotificationMobile: React.FC<Props> = ({
       </Button>
       {/* Notification Panel */}
       <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
-        <SheetContent
-          side="right"
-          hideClose
-          className="w-[90vw] sm:max-w-sm p-0"
-        >
+        <SheetContent side="top" hideClose className="w-full max-w-none p-0">
+          {/* Header */}
           <div className="p-3 border-b flex items-center justify-between gap-2 flex-wrap">
             {/* Notifications title (SheetTitle for accessibility) */}
             <div className="flex flex-col min-w-0">
-              <SheetTitle className="text-base font-medium truncate">
+              <Button
+                variant="ghost"
+                onClick={() => setPanelOpen(false)}
+                className="text-base font-medium px-2 py-1 h-auto text-left justify-start hover:underline"
+              >
+                {common.close[lang]}
+              </Button>
+              {/* Visually hidden description to satisfy Dialog a11y */}
+              <SheetTitle className="sr-only">
                 {t.navigation.notifications.label[lang]}
               </SheetTitle>
-              {/* Visually hidden description to satisfy Dialog a11y */}
               <SheetDescription className="sr-only">
                 View and manage your notifications.
               </SheetDescription>
@@ -98,7 +111,6 @@ export const NotificationMobile: React.FC<Props> = ({
                   >
                     {t.navigation.notifications.viewActive[lang]}
                   </button>
-
                   {/* All */}
                   <button
                     className={`px-2 py-1 text-xs ${viewAll ? "bg-(--subtle-grey)" : ""}`}
@@ -107,6 +119,42 @@ export const NotificationMobile: React.FC<Props> = ({
                   >
                     {t.navigation.notifications.viewAll[lang]}
                   </button>
+                  {/* Tooltip */}
+                  <TooltipProvider>
+                    <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="ml-1 h-6 w-6 p-0 hover:bg-transparent"
+                          onClick={() => setTooltipOpen(!tooltipOpen)}
+                        >
+                          <Info className="h-3 w-3 text-muted-foreground" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        align="end"
+                        className="max-w-[280px] z-50"
+                        sideOffset={8}
+                      >
+                        <div className="flex flex-col gap-2">
+                          <p className="text-xs leading-relaxed">
+                            {t.navigation.notifications.tooltip?.[lang] ||
+                              "Click 'All' to see and delete all notifications across all contexts"}
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => setTooltipOpen(false)}
+                          >
+                            OK
+                          </Button>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               )}
               {showToggle && !viewAll && otherUnread > 0 && (
@@ -137,7 +185,7 @@ export const NotificationMobile: React.FC<Props> = ({
                   onClick={deleteAll}
                   className="h-9 w-9 p-1.5 rounded-md hover:bg-black/10 text-(--midnight-black) transition-colors"
                 >
-                  <X className="h-5 w-5" />
+                  <Trash2 className="h-5 w-5" />
                 </Button>
               )}
             </div>
@@ -148,7 +196,7 @@ export const NotificationMobile: React.FC<Props> = ({
               {t.navigation.notifications.none[lang]}
             </p>
           ) : (
-            <ScrollArea className="max-h-[80vh]">
+            <ScrollArea className="h-[70vh] sm:h-[80vh]">
               {visibleFeed.map((n) => {
                 const tpl =
                   (

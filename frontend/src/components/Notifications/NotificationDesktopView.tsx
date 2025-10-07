@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Bell, X, Check, CheckCheck } from "lucide-react";
+import { Bell, X, Check, CheckCheck, Trash2, Info } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -8,11 +8,18 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { t } from "@/translations";
 import { DBTables } from "@common/database.types";
+import { common } from "@/translations/modules/common";
 
 type NotificationRow = DBTables<"notifications">;
 
@@ -47,8 +54,10 @@ export const NotificationDesktopView: React.FC<Props> = ({
   removeNotification,
   onOpenRow,
 }) => {
+  const [open, setOpen] = React.useState(false);
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         {/* Notification bell */}
         <Button
@@ -62,6 +71,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
           <Bell
             aria-hidden="true"
             className="!h-4.5 !w-5 text-(--midnight-black)"
+            onClick={() => setOpen(!open)}
           />
           {/* Notification count badge */}
           {unseen > 0 && (
@@ -79,38 +89,82 @@ export const NotificationDesktopView: React.FC<Props> = ({
       <DropdownMenuContent className="w-80 md:w-96" align="end">
         {/* Top part of container */}
         <DropdownMenuLabel className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {/* "Notifications" */}
-            <span>{t.navigation.notifications.label[lang]}</span>
+          {/* Close button */}
+          <div className="flex items-center">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+              className="h-8 px-2 text-xs font-medium"
+            >
+              {common.close[lang]}
+            </Button>
+          </div>
+
+          {/* centered toggle-area */}
+          <div className="flex-1 flex items-center justify-center gap-2">
+            {/* Hidden title for accessibility */}
+            <span className="sr-only">
+              {t.navigation.notifications.label[lang]}
+            </span>
+
             {showToggle && (
-              <div className="ml-2 inline-flex rounded border border-(--subtle-grey) overflow-hidden">
-                {/* "Active" */}
-                <button
-                  className={`px-2 py-0.5 text-xs ${!viewAll ? "bg-(--subtle-grey)" : ""}`}
-                  onClick={() => setViewAll(false)}
-                  title={t.navigation.notifications.viewActive[lang]}
-                >
-                  {t.navigation.notifications.viewActive[lang]}
-                </button>
-                {/* "All" */}
-                <button
-                  className={`px-2 py-0.5 text-xs ${viewAll ? "bg-(--subtle-grey)" : ""}`}
-                  onClick={() => setViewAll(true)}
-                  title={t.navigation.notifications.viewAll[lang]}
-                >
-                  {t.navigation.notifications.viewAll[lang]}
-                </button>
+              <div className="flex items-center gap-2">
+                <div className="inline-flex rounded border border-(--subtle-grey) overflow-hidden">
+                  {/* "Active" */}
+                  <button
+                    className={`px-2 py-0.5 text-xs ${!viewAll ? "bg-(--subtle-grey)" : ""}`}
+                    onClick={() => setViewAll(false)}
+                    title={t.navigation.notifications.viewActive[lang]}
+                  >
+                    {t.navigation.notifications.viewActive[lang]}
+                  </button>
+                  {/* "All" */}
+                  <button
+                    className={`px-2 py-0.5 text-xs ${viewAll ? "bg-(--subtle-grey)" : ""}`}
+                    onClick={() => setViewAll(true)}
+                    title={t.navigation.notifications.viewAll[lang]}
+                  >
+                    {t.navigation.notifications.viewAll[lang]}
+                  </button>
+                </div>
+                {/* Tooltip*/}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0 hover:bg-transparent flex-shrink-0"
+                      >
+                        <Info className="h-3 w-3 text-muted-foreground" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      align="center"
+                      className="max-w-xs"
+                    >
+                      <p className="text-xs">
+                        {t.navigation.notifications.tooltip?.[lang] ||
+                          "Click 'All' to see and delete all notifications across all contexts"}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
-            {/* "Other" */}
+
+            {/* "Other" count */}
             {showToggle && !viewAll && otherUnread > 0 && (
-              <span className="ml-1 text-[0.7rem] text-muted-foreground">
+              <span className="text-[0.7rem] text-muted-foreground ml-1">
                 {t.navigation.notifications.otherContextsPrefix[lang]}{" "}
                 {otherUnread}
               </span>
             )}
           </div>
-          {/* Actions */}
+
+          {/* Actions - feste Breite rechts */}
           <div className="flex items-center gap-1">
             {(viewAll ? unseen > 0 : visibleUnseen > 0) && (
               // Mark All as Read
@@ -124,6 +178,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
                 <CheckCheck className="h-4 w-4" />
               </Button>
             )}
+
             {visibleFeed.length > 0 && (
               // Delete All
               <Button
@@ -133,7 +188,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
                 onClick={deleteAll}
                 className="h-8 w-8 p-1 rounded-md hover:bg-(--subtle-grey) hover:text-(--midnight-black) text-(--midnight-black)"
               >
-                <X className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
               </Button>
             )}
           </div>
@@ -146,7 +201,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
             {t.navigation.notifications.none[lang]}
           </p>
         ) : (
-          <ScrollArea className="max-h-[70vh]">
+          <ScrollArea className="h-[70vh] sm:h-[80vh]">
             {visibleFeed.map((n) => {
               // ———————————— Translate Title / Message ————————————
               const tpl = // Translation template for this notification type

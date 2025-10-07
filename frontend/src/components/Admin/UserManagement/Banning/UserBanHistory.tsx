@@ -20,9 +20,10 @@ import { useRoles } from "@/hooks/useRoles";
 
 interface Props {
   user: UserProfile;
+  refreshKey?: number;
 }
 
-const UserBanHistory = ({ user }: Props) => {
+const UserBanHistory = ({ user, refreshKey = 0 }: Props) => {
   const dispatch = useAppDispatch();
   const banHistory = useAppSelector(selectBanHistory);
   const loading = useAppSelector(selectUserBanningLoading);
@@ -36,7 +37,7 @@ const UserBanHistory = ({ user }: Props) => {
         void refreshAllUserRoles();
       }
     }
-  }, [dispatch, user?.id, allUserRoles, refreshAllUserRoles]);
+  }, [dispatch, user?.id, allUserRoles, refreshAllUserRoles, refreshKey]);
 
   const getOrganizationName = (organizationId?: string | null) => {
     if (!organizationId) return "-";
