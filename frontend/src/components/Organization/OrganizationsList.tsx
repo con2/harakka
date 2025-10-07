@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-import { formatRoleName } from "@/utils/format";
+import { formatSnakeCase } from "@/utils/format";
 
 const OrganizationsList = () => {
   const dispatch = useAppDispatch();
@@ -128,7 +128,7 @@ const OrganizationsList = () => {
                   <div className="flex items-center gap-1 text-sm text-green-600 font-medium">
                     <Users className="h-4 w-4" />
                     <span>
-                      {formatRoleName(userOrgRoles[org.id][0])}
+                      {formatSnakeCase(userOrgRoles[org.id][0])}
                       {userOrgRoles[org.id].length > 1 &&
                         ` +${userOrgRoles[org.id].length - 1}`}
                     </span>

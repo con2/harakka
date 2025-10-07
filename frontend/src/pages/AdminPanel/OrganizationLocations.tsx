@@ -72,7 +72,9 @@ const OrganizationLocations = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-3 mb-0">
-        <h1 className="text-xl">{t.organizationLocations.title[lang]}</h1>
+        <h1 className="text-2xl md:text-xl mb-2">
+          {t.organizationLocations.title[lang]}
+        </h1>
       </div>
 
       {/* Error State */}
