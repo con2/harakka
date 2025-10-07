@@ -94,10 +94,24 @@ function AddCategory() {
           ? t.addCategory.messages.update.success[lang]
           : t.addCategory.messages.create.success[lang];
       },
-      error: () =>
-        selectedCategory
+      error: (error) => {
+        const fallback = selectedCategory
           ? t.addCategory.messages.update.fail[lang]
-          : t.addCategory.messages.create.fail[lang],
+          : t.addCategory.messages.create.fail[lang];
+
+        const reason =
+          typeof error === "string"
+            ? error
+            : error instanceof Error
+              ? error.message
+              : undefined;
+
+        if (!reason || reason === fallback) {
+          return fallback;
+        }
+
+        return `${fallback}: ${reason}`;
+      },
     });
   };
 
