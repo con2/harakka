@@ -160,7 +160,7 @@ The application implements a sophisticated token refresh strategy:
 
 Supabase access tokens have a configured expiration time of **3600 seconds (1 hour)**. This setting determines how long a JWT remains valid before requiring renewal:
 
-![JWT expiration settings in Supabase UI](image.png)
+![JWT expiration settings in Supabase UI](./assets/jwt-and-roles-token-expirity-time.png)
 
 ```
 ┌─────────────────┐     ┌───────────────────────────┐
@@ -225,7 +225,7 @@ The role version tracking system:
 
 ## Edge Cases
 
-**New Users**: Initially have no roles in JWT, triggering DB fallback which assigns them to "user" role in "General" org.
+**New Users**: Initially have no roles in JWT, triggering DB fallback which assigns them to "user" role in "Global" org.
 **Role Changes**: if user's role was changed by admins user will get toast notification about it
 **Session Expiry**: Handled by automatic token refresh in API interceptors
 **403 Errors**: Permission issues trigger automatic role refresh before retrying the request
