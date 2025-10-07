@@ -17,11 +17,19 @@ import {
 } from "@/store/slices/userBanningSlice";
 import { UserProfile } from "@common/user.types";
 import { useRoles } from "@/hooks/useRoles";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ColumnDef, Row } from "@tanstack/react-table";
+import { SimpleBanHistoryItem } from "@/types";
+import MobileTable from "@/components/ui/MobileTable";
 
 interface Props {
   user: UserProfile;
   refreshKey?: number;
 }
+
+// isMobile/md size is too small for this component
+// The table will not fit properly unless a slightly bigger size is used
+const LOCAL_IS_MOBILE = 950;
 
 const UserBanHistory = ({ user, refreshKey = 0 }: Props) => {
   const dispatch = useAppDispatch();
@@ -29,6 +37,10 @@ const UserBanHistory = ({ user, refreshKey = 0 }: Props) => {
   const loading = useAppSelector(selectUserBanningLoading);
   const { lang } = useLanguage();
   const { allUserRoles, refreshAllUserRoles } = useRoles();
+
+  // Responsive sizing
+  const { width } = useIsMobile();
+  const isMobile = width <= LOCAL_IS_MOBILE;
 
   useEffect(() => {
     if (user?.id) {
@@ -47,6 +59,88 @@ const UserBanHistory = ({ user, refreshKey = 0 }: Props) => {
     return userRole?.organization_name || organizationId;
   };
 
+  const columns: ColumnDef<SimpleBanHistoryItem>[] = [
+    {
+      header: t.userBanHistory.status.action[lang],
+      cell: ({ row }: { row: Row<SimpleBanHistoryItem> }) => {
+        const { action } = row.original;
+
+        return (
+          <span
+            className={
+              action === "banned"
+                ? "text-red-600 font-medium"
+                : "text-green-600 font-medium"
+            }
+          >
+            {action === "banned"
+              ? t.userBanHistory.status.banned[lang]
+              : t.userBanHistory.status.unbanned[lang]}
+          </span>
+        );
+      },
+    },
+    {
+      header: t.userBanHistory.status.status[lang],
+      cell: ({ row }: { row: Row<SimpleBanHistoryItem> }) => {
+        const { unbanned_at, action } = row.original;
+        return (
+          <span
+            className={
+              unbanned_at
+                ? "text-green-600"
+                : action === "banned"
+                  ? "text-red-600"
+                  : "text-gray-500"
+            }
+          >
+            {unbanned_at
+              ? t.userBanHistory.status.lifted[lang]
+              : action === "banned"
+                ? t.userBanHistory.status.active[lang]
+                : "N/A"}
+          </span>
+        );
+      },
+    },
+    {
+      header: t.userBanHistory.columns.banType[lang],
+      cell: ({ row }: { row: Row<SimpleBanHistoryItem> }) =>
+        row.original.ban_type,
+    },
+    {
+      header: t.userBanHistory.columns.orgName[lang],
+      cell: ({ row }: { row: Row<SimpleBanHistoryItem> }) =>
+        getOrganizationName(row.original.organization_id),
+    },
+    {
+      header: t.userBanHistory.columns.reason[lang],
+      cell: ({ row }: { row: Row<SimpleBanHistoryItem> }) =>
+        row.original.ban_reason || "-",
+    },
+    {
+      header: t.userBanHistory.status.date[lang],
+      cell: ({ row }: { row: Row<SimpleBanHistoryItem> }) => {
+        const { action, created_at, unbanned_at } = row.original;
+
+        return action === "banned"
+          ? created_at
+            ? new Date(created_at).toLocaleDateString()
+            : "-"
+          : unbanned_at
+            ? new Date(unbanned_at).toLocaleDateString()
+            : "-";
+      },
+    },
+    {
+      header: t.userBanHistory.columns.isPermanent[lang],
+      cell: ({ row }: { row: Row<SimpleBanHistoryItem> }) =>
+        row.original.is_permanent
+          ? t.userBanHistory.columns.permanent[lang]
+          : t.userBanHistory.columns.notPermanent[lang],
+    },
+  ];
+
   if (loading) {
     return (
       <div className="flex justify-center py-4">
@@ -62,6 +156,8 @@ const UserBanHistory = ({ user, refreshKey = 0 }: Props) => {
       </div>
     );
   }
+
+  if (isMobile) return <MobileTable columns={columns} data={banHistory} />;
 
   return (
     <Table>
@@ -103,9 +199,9 @@ const UserBanHistory = ({ user, refreshKey = 0 }: Props) => {
                 }
               >
                 {ban.unbanned_at
-                  ? "Lifted"
+                  ? t.userBanHistory.status.lifted[lang]
                   : ban.action === "banned"
-                    ? "Active"
+                    ? t.userBanHistory.status.active[lang]
                     : "N/A"}
               </span>
             </TableCell>
