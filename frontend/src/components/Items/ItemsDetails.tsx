@@ -217,7 +217,10 @@ const ItemsDetails: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4" data-cy="item-details-root">
+    <div
+      className="container mx-auto px-4 max-w-full overflow-x-hidden"
+      data-cy="item-details-root"
+    >
       {/* Back Button */}
       <div className="mb-3 mt-4 lg:mt-0">
         <Button
@@ -235,12 +238,15 @@ const ItemsDetails: React.FC = () => {
           <ChevronLeft /> {t.itemDetails.buttons.back[lang]}
         </Button>
       </div>
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-8">
         {/* Item Images - Positioned Left */}
-        <div className="md:w-2/5 lg:w-2/5 w-full" data-cy="item-details-images">
+        <div
+          className="md:w-2/5 lg:w-2/5 w-full max-w-full"
+          data-cy="item-details-images"
+        >
           {/* Main Image */}
           <div
-            className="relative mb-4 h-[300px] group w-full max-w-md mx-auto md:max-w-none aspect-[4/3]"
+            className="relative mb-4 h-[250px] sm:h-[300px] group w-full max-w-full sm:max-w-md mx-auto md:max-w-none aspect-[4/3]"
             data-cy="item-details-main-image"
           >
             {/* Main Image Container */}
@@ -469,10 +475,13 @@ const ItemsDetails: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="flex flex-row" data-cy="item-details-no-dates">
-              <Info className="mr-1 text-secondary size-4" />{" "}
-              <div>
-                {t.itemDetails.info.noDates[lang]}
+            <div
+              className="flex flex-row items-start gap-1"
+              data-cy="item-details-no-dates"
+            >
+              <Info className="shrink-0 text-secondary size-4 mt-0.5" />{" "}
+              <div className="flex-1">
+                <span>{t.itemDetails.info.noDates[lang]}</span>
                 <Link
                   to="/storage"
                   className="ml-1 text-secondary underline"
@@ -480,6 +489,7 @@ const ItemsDetails: React.FC = () => {
                 >
                   {t.itemDetails.info.here[lang]}
                 </Link>
+                .
               </div>
             </div>
           )}
