@@ -979,7 +979,7 @@ const UsersDetailsPage = () => {
                       </TabsList>
 
                       <TabsContent value="history">
-                        <div className="max-h-64 overflow-y-auto">
+                        <div className="md:max-h-64 md:overflow-y-auto">
                           <UserBanHistory
                             user={user}
                             refreshKey={banRefreshKey}
