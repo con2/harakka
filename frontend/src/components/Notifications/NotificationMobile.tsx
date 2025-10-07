@@ -56,6 +56,8 @@ export const NotificationMobile: React.FC<Props> = ({
   removeNotification,
   onOpenRow,
 }) => {
+  const [tooltipOpen, setTooltipOpen] = React.useState(false);
+
   // Mobile: slide-in panel with larger tap targets
   return (
     <>
@@ -109,7 +111,6 @@ export const NotificationMobile: React.FC<Props> = ({
                   >
                     {t.navigation.notifications.viewActive[lang]}
                   </button>
-
                   {/* All */}
                   <button
                     className={`px-2 py-1 text-xs ${viewAll ? "bg-(--subtle-grey)" : ""}`}
@@ -120,12 +121,13 @@ export const NotificationMobile: React.FC<Props> = ({
                   </button>
                   {/* Tooltip */}
                   <TooltipProvider>
-                    <Tooltip>
+                    <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
                       <TooltipTrigger asChild>
                         <Button
                           size="sm"
                           variant="ghost"
                           className="ml-1 h-6 w-6 p-0 hover:bg-transparent"
+                          onClick={() => setTooltipOpen(!tooltipOpen)}
                         >
                           <Info className="h-3 w-3 text-muted-foreground" />
                         </Button>
@@ -133,12 +135,23 @@ export const NotificationMobile: React.FC<Props> = ({
                       <TooltipContent
                         side="bottom"
                         align="end"
-                        className="max-w-xs"
+                        className="max-w-[280px] z-50"
+                        sideOffset={8}
                       >
-                        <p className="text-xs">
-                          {t.navigation.notifications.tooltip?.[lang] ||
-                            "Click 'All' to see and delete all notifications across all contexts"}
-                        </p>
+                        <div className="flex flex-col gap-2">
+                          <p className="text-xs leading-relaxed">
+                            {t.navigation.notifications.tooltip?.[lang] ||
+                              "Click 'All' to see and delete all notifications across all contexts"}
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => setTooltipOpen(false)}
+                          >
+                            OK
+                          </Button>
+                        </div>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
