@@ -80,6 +80,10 @@ export const navigation = {
       en: "Others",
       fi: "Muut",
     },
+    tooltip: {
+      en: "Click 'All' to see and delete all notifications across all contexts",
+      fi: "Klikkaa 'Kaikki' nähdäksesi ja poistaaksesi kaikki ilmoitukset kaikista konteksteista",
+    },
     toasts: {
       switchedContext: {
         en: "Switched to {role} in {org} to open this booking.",

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { X, Check, CheckCheck, Bell, Trash2 } from "lucide-react";
+import { X, Check, CheckCheck, Bell, Trash2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,6 +9,12 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { t } from "@/translations";
 import { DBTables } from "@common/database.types";
 import { common } from "@/translations/modules/common";
@@ -112,6 +118,30 @@ export const NotificationMobile: React.FC<Props> = ({
                   >
                     {t.navigation.notifications.viewAll[lang]}
                   </button>
+                  {/* Tooltip */}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="ml-1 h-6 w-6 p-0 hover:bg-transparent"
+                        >
+                          <Info className="h-3 w-3 text-muted-foreground" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        align="end"
+                        className="max-w-xs"
+                      >
+                        <p className="text-xs">
+                          {t.navigation.notifications.tooltip?.[lang] ||
+                            "Click 'All' to see and delete all notifications across all contexts"}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               )}
               {showToggle && !viewAll && otherUnread > 0 && (

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Bell, X, Check, CheckCheck, Trash2 } from "lucide-react";
+import { Bell, X, Check, CheckCheck, Trash2, Info } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -8,6 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -103,23 +109,49 @@ export const NotificationDesktopView: React.FC<Props> = ({
             </span>
 
             {showToggle && (
-              <div className="inline-flex rounded border border-(--subtle-grey) overflow-hidden">
-                {/* "Active" */}
-                <button
-                  className={`px-2 py-0.5 text-xs ${!viewAll ? "bg-(--subtle-grey)" : ""}`}
-                  onClick={() => setViewAll(false)}
-                  title={t.navigation.notifications.viewActive[lang]}
-                >
-                  {t.navigation.notifications.viewActive[lang]}
-                </button>
-                {/* "All" */}
-                <button
-                  className={`px-2 py-0.5 text-xs ${viewAll ? "bg-(--subtle-grey)" : ""}`}
-                  onClick={() => setViewAll(true)}
-                  title={t.navigation.notifications.viewAll[lang]}
-                >
-                  {t.navigation.notifications.viewAll[lang]}
-                </button>
+              <div className="relative">
+                <div className="inline-flex rounded border border-(--subtle-grey) overflow-hidden">
+                  {/* "Active" */}
+                  <button
+                    className={`px-2 py-0.5 text-xs ${!viewAll ? "bg-(--subtle-grey)" : ""}`}
+                    onClick={() => setViewAll(false)}
+                    title={t.navigation.notifications.viewActive[lang]}
+                  >
+                    {t.navigation.notifications.viewActive[lang]}
+                  </button>
+                  {/* "All" */}
+                  <button
+                    className={`px-2 py-0.5 text-xs ${viewAll ? "bg-(--subtle-grey)" : ""}`}
+                    onClick={() => setViewAll(true)}
+                    title={t.navigation.notifications.viewAll[lang]}
+                  >
+                    {t.navigation.notifications.viewAll[lang]}
+                  </button>
+                </div>
+                {/* Tooltip*/}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="absolute -right-6 top-0 h-full w-5 p-0 hover:bg-transparent"
+                      >
+                        <Info className="h-3 w-3 text-muted-foreground" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="right"
+                      align="start"
+                      className="max-w-xs"
+                    >
+                      <p className="text-xs">
+                        {t.navigation.notifications.tooltip?.[lang] ||
+                          "Click 'All' to see and delete all notifications across all contexts"}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
 
