@@ -47,13 +47,13 @@ cd <root folder>
 
 ### Set up environment variables
 
-Run this script to create `.env.local` file from the template:
+Run this script from root folder to create `.env.local` file from the template:
 
 ```sh
 ./scripts/setup.sh
 ```
 
-Insert required env values into `../.env.local`
+After running the script, open the `.env.local` file and fill in the required values.
 
 ### Install dependencies
 
@@ -101,3 +101,8 @@ By default, any new user on the first "SIGNED_IN" event is assigned to the "user
 7. Verify the user has super_admin rights by signing in to the Harakka application and accessing the user menu:
    user menu > Change organization > SuperAdmin
    ![user menu with Super Admin option](image-1.png)
+
+## Additional Resources
+
+- [Supabase Documentation](https://supabase.com/docs) - Learn more about managing your database and authentication.
+- [Harakka GitHub Repository](https://github.com/con2/harakka) - Explore the source code and contribute to the project.
