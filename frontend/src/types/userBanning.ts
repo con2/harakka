@@ -1,8 +1,18 @@
 import { Database } from "@common/supabase.types";
 
 // Import Json type for use in our interfaces
-type Json =
-  Database["public"]["Tables"]["user_ban_history"]["Row"]["affected_assignments"];
+export type BanAssignmentChange = {
+  id?: string;
+  role_assignment_id?: string;
+  organization_id?: string;
+  role_id?: string;
+  was_active?: boolean;
+  now_active?: boolean;
+};
+
+export interface BanAffectedAssignments {
+  assignments?: BanAssignmentChange[];
+}
 
 // Supabase table types
 export type UserBanHistoryRow =
@@ -23,15 +33,6 @@ export type ViewUserBanStatusRow =
 // Extract specific types from table definitions
 export type BanType = UserBanHistoryRow["ban_type"];
 export type BanAction = UserBanHistoryRow["action"];
-
-export type BanForRoleRequest = {
-  userId: string;
-  organizationId: string;
-  roleId: string; // This is the actual role_id from the role table (not role_assignment_id)
-  banReason: string;
-  isPermanent?: boolean;
-  notes?: string;
-};
 
 export type BanForOrgRequest = {
   userId: string;
@@ -70,7 +71,7 @@ export interface BanHistoryItem {
   is_permanent: boolean | null;
   role_assignment_id?: string | null;
   organization_id?: string | null;
-  affected_assignments?: Json | null;
+  affected_assignments?: BanAffectedAssignments | null;
   banned_at: string | null;
   unbanned_at?: string | null;
   notes?: string | null;
@@ -102,18 +103,28 @@ export interface BanOperationResult {
   success: boolean;
   message: string;
   ban_history_id?: string;
+  banRecord?: UserBanHistoryRow;
+  banRecords?: UserBanHistoryRow[];
+}
+
+export interface BanOperationSummary {
+  success: boolean;
+  message: string;
 }
 
 export interface UserBanStatusCheck {
   userId: string;
   isBanned: boolean;
-  banType?: string;
-  banReason?: string;
-  bannedAt?: Date;
-  isPermanent?: boolean;
-  isBannedForApp?: boolean;
-  bannedOrganizations?: string[];
-  bannedRoles?: Array<{ organizationId: string; roleId: string }>;
+  isBannedForApp: boolean;
+  bannedFromOrganizations: Array<{
+    organizationId: string;
+    organizationName: string | null;
+  }>;
+  banReason: string | null;
+  latestBanType: string | null;
+  latestAction: string | null;
+  bannedAt: string | null;
+  isPermanent: boolean | null;
 }
 
 // Simplified ban history interface for state management
@@ -127,6 +138,7 @@ export interface SimpleBanHistoryItem {
   is_permanent?: boolean | null;
   role_assignment_id?: string | null;
   organization_id?: string | null;
+  affected_assignments?: BanAffectedAssignments | null;
   banned_at?: string | null;
   unbanned_at?: string | null;
   notes?: string | null;
@@ -140,5 +152,5 @@ export interface UserBanningState {
   banHistory: SimpleBanHistoryItem[];
   banStatuses: BanStatusItem[];
   userBanStatuses: Record<string, UserBanStatusCheck>;
-  lastOperation: BanOperationResult | null;
+  lastOperation: BanOperationSummary | null;
 }

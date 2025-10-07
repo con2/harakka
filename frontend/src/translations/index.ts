@@ -25,6 +25,7 @@ import { common } from "./modules/common";
 import { contactForm } from "./modules/contactForm";
 import { currentUserRoles } from "./modules/currentUserRoles";
 import { deleteLocationButton } from "./modules/deleteLocationButton";
+import { devTeam } from "./modules/devTeam";
 import { editLocationPage } from "./modules/editLocationPage";
 import { error } from "./modules/error";
 import { footer } from "./modules/footer";
@@ -62,6 +63,7 @@ import { pagination } from "./modules/pagination";
 import { passwordReset } from "./modules/passwordReset";
 import { privacyPolicy } from "./modules/privacyPolicy";
 import { profilePicUploader } from "./modules/profilePicUploader";
+import { reports } from "./modules/reports";
 import { requestDetailsPage } from "./modules/requestDetailsPage";
 import { requests } from "./modules/requests";
 import { roleManagement } from "./modules/roleManagement";
@@ -116,6 +118,7 @@ export const t = {
   contactForm,
   currentUserRoles,
   deleteLocationButton,
+  devTeam,
   editLocationPage,
   error,
   footer,
@@ -150,6 +153,7 @@ export const t = {
   passwordReset,
   privacyPolicy,
   profilePicUploader,
+  reports,
   requests,
   requestDetailsPage,
   roleManagement,

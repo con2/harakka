@@ -12,6 +12,11 @@ type TagTranslations = {
   fi: { name: string };
 };
 
+export type Translation = {
+  en: string;
+  fi: string;
+};
+
 /* ── Strongly‑typed notification metadata ────────────────────────────── */
 
 import type { Database as SupaBase } from "@common/supabase.types";
@@ -71,7 +76,10 @@ type NotificationFallbackType = Exclude<
   SupaBase["public"]["Enums"]["notification_type"],
   keyof NotificationMetadataByType
 >;
-type NotificationRowFallback = Omit<BaseNotificationRow, "type" | "metadata"> & {
+type NotificationRowFallback = Omit<
+  BaseNotificationRow,
+  "type" | "metadata"
+> & {
   type: NotificationFallbackType;
   metadata: Record<string, unknown>;
 };

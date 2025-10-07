@@ -45,12 +45,13 @@ import {
   fetchFilteredTags,
   selectAllTags,
   selectTagsLoading,
+  selectTagsTotal,
 } from "@/store/slices/tagSlice";
 import { setNextStep } from "@/store/slices/uiSlice";
 import { createItemDto } from "@/store/utils/validate";
 import { t } from "@/translations";
 import { Item, ItemFormTag } from "@/types";
-import { getFirstErrorMessage } from "@/utils/validate";
+import { countDeepestFields, getErrors } from "@/utils/validate";
 import { CreateItemType } from "@common/items/form.types";
 import { ErrorMessage } from "@hookform/error-message";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -91,9 +92,12 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   const { location: storage, org } = useAppSelector(selectItemCreation);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector(selectTagsLoading);
+  const tagsTotal = useAppSelector(selectTagsTotal);
   const categories = useAppSelector(selectCategories);
   const categoriesLoading = useAppSelector(selectCategoriesLoading);
   const isEditing = useAppSelector(selectIsEditing);
+  const [tagPage, setTagPage] = useState(1);
+  const tagsPerPage = 10;
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
     defaultValues:
@@ -116,19 +120,31 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   };
 
   const onInvalidSubmit: SubmitErrorHandler<CreateItemType> = (errors) => {
-    const firstErrorKey = getFirstErrorMessage(errors);
+    const firstError = getErrors(errors);
+    const errorsLength = countDeepestFields(errors);
 
-    if (
-      firstErrorKey &&
-      t.addItemForm.messages.validation[
-        firstErrorKey as keyof typeof t.addItemForm.messages.validation
-      ]
-    ) {
-      toast.error(
-        t.addItemForm.messages.validation[
-          firstErrorKey as keyof typeof t.addItemForm.messages.validation
-        ][appLang],
+    if (errorsLength && errorsLength > 1)
+      return toast.error(
+        t.addItemForm.messages.validation.multipleErrors[appLang].replace(
+          "{amount}",
+          errorsLength.toString(),
+        ),
       );
+    if (firstError) {
+      const { field, type } = firstError;
+      if (field) {
+        return toast.error(
+          t.addItemForm.messages.validation?.[field as "item_name"]?.[
+            type as "too_small"
+          ]?.[appLang] ||
+            t.addItemForm.messages.validation.invalid_type[appLang].replace(
+              "{field}",
+              field,
+            ),
+        );
+      }
+    } else if (form.formState.errors.images) {
+      toast.error(t.addItemForm.messages.validation.images[appLang]);
     } else {
       toast.error(t.addItemForm.messages.error.fallbackFormError[appLang]);
     }
@@ -214,16 +230,35 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   }, [storage, form]);
 
   useEffect(() => {
+    setTagPage(1);
     void dispatch(
       fetchFilteredTags({
         page: 1,
-        limit: 20,
+        limit: tagsPerPage,
         sortBy: "assigned_to",
         sortOrder: "desc",
         search: tagSearch,
+        append: false, // don't append on new search
       }),
     );
   }, [tagSearch, dispatch]);
+
+  const handleLoadMoreTags = () => {
+    const nextPage = tagPage + 1;
+    setTagPage(nextPage);
+    void dispatch(
+      fetchFilteredTags({
+        page: nextPage,
+        limit: tagsPerPage,
+        sortBy: "assigned_to",
+        sortOrder: "desc",
+        search: tagSearch,
+        append: true, // append when loading more
+      }),
+    );
+  };
+
+  const remainingTags = tagsTotal - tags.length;
 
   useEffect(() => {
     if ((editItem as CreateItemType)?.tags && tags.length > 0) {
@@ -263,7 +298,12 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
 
   /*------------------render-------------------------------------------------*/
   return (
-    <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px]">
+    <div
+      className={cn(
+        "bg-white flex flex-wrap rounded border max-w-[900px]",
+        onUpdate && "mt-4",
+      )}
+    >
       <Form {...form}>
         <form
           id="add-item-form"
@@ -280,7 +320,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             {/* Item Details */}
             <AccordionItem
               value="details"
-              className="p-10 flex flex-wrap gap-x-6 justify-between"
+              className="p-8 md:p-10 flex flex-wrap gap-x-6 justify-between"
             >
               <AccordionTrigger
                 className="font-main w-full justify-between flex"
@@ -347,15 +387,24 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                               <ErrorMessage
                                 errors={form.formState.errors}
                                 name={nameValue}
-                                render={({ message }) => (
-                                  <p className="text-[0.8rem] font-medium text-destructive">
-                                    {
-                                      t.addItemForm.messages.validation[
-                                        message as keyof typeof t.addItemForm.messages.validation
-                                      ][appLang]
-                                    }
-                                  </p>
-                                )}
+                                render={() => {
+                                  const error =
+                                    form.formState?.errors?.translations?.[
+                                      fieldLang as "en"
+                                    ]?.[fieldKey as "item_name"];
+                                  if (!error || !error.message || !error.type)
+                                    return;
+                                  const { message, type } = error;
+                                  return (
+                                    <p className="text-[0.8rem] font-medium text-destructive">
+                                      {t.addItemForm.messages.validation?.[
+                                        message as "item_name"
+                                      ]?.[type as "too_small"]?.[appLang] ||
+                                        t.addItemForm.messages.validation
+                                          .invalid_input[appLang]}
+                                    </p>
+                                  );
+                                }}
                               />
                             </FormItem>
                           )}
@@ -365,12 +414,12 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   })}
                 </div>
                 {/* Category | Total Quantity | Location | Is active */}
-                <div className="gap-4 flex w-full mb-10">
+                <div className="gap-x-4 gap-y-8 flex w-full mb-10 flex-wrap">
                   <FormField
                     name="category_id"
                     control={form.control}
                     render={({ field }) => (
-                      <div className="w-full">
+                      <div className="flex-1 min-w-[230px]">
                         <FormItem>
                           <FormLabel>
                             {t.addItemForm.labels.category[appLang]}
@@ -450,7 +499,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                     name="quantity"
                     control={form.control}
                     render={({ field }) => (
-                      <div className="w-full">
+                      <div className="flex-1 min-w-[180px]">
                         <FormItem>
                           <FormLabel>
                             {t.addItemForm.labels.totalQuantity[appLang]}
@@ -473,15 +522,22 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                           <ErrorMessage
                             errors={form.formState.errors}
                             name="quantity"
-                            render={({ message }) => (
-                              <p className="text-[0.8rem] font-medium text-destructive">
-                                {
-                                  t.addItemForm.messages.validation[
-                                    message as keyof typeof t.addItemForm.messages.validation
-                                  ][appLang]
-                                }
-                              </p>
-                            )}
+                            render={() => {
+                              const error = form.formState.errors.quantity;
+                              const { message, type } = error as {
+                                message: string;
+                                type: string;
+                              };
+                              return (
+                                <p className="text-[0.8rem] font-medium text-destructive">
+                                  {t.addItemForm.messages.validation[
+                                    message as "quantity"
+                                  ]?.[type as "too_small"]?.[appLang] ||
+                                    t.addItemForm.messages.validation
+                                      .invalid_input[appLang]}
+                                </p>
+                              );
+                            }}
                           />
                         </FormItem>
                       </div>
@@ -491,22 +547,25 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                     name="location"
                     control={form.control}
                     render={({ field }) => (
-                      <div className="w-full">
+                      <div className="flex-1 min-w-[180px]">
                         <FormItem>
                           <FormLabel>
                             {t.addItemForm.labels.location[appLang]}
                           </FormLabel>
                           <Select
-                            defaultValue={field?.value?.id ?? ""}
+                            defaultValue={field?.value?.id || "---"}
                             onValueChange={handleLocationChange}
-                            disabled={!onUpdate || storage === null}
+                            disabled={storage !== null}
                           >
-                            <SelectTrigger className="border shadow-none border-grey w-full">
-                              <SelectValue
-                                className="border shadow-none border-grey"
-                                placeholder={""}
-                              >
-                                {field?.value?.name ?? ""}
+                            <SelectTrigger
+                              className={cn(
+                                "border shadow-none border-grey w-full",
+                                form.formState.errors.location &&
+                                  "!border-(--destructive)",
+                              )}
+                            >
+                              <SelectValue className="border shadow-none border-grey">
+                                {field?.value?.name || "---"}
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
@@ -553,8 +612,8 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                   control={form.control}
                   name="placement_description"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg p-4 gap-6 w-full mt-5">
-                      <div className="space-y-0.5 flex-1">
+                    <FormItem className="flex sm:flex-row sm:items-center justify-between rounded-lg p-4 gap-x-6 gap-y-1 w-full mt-5 flex-wrap flex-col">
+                      <div className="flex-1 min-w-fit">
                         <FormLabel>
                           {t.addItemForm.labels.placement[appLang]}
                         </FormLabel>
@@ -565,8 +624,29 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                             ]
                           }
                         </FormDescription>
+                        <ErrorMessage
+                          errors={form.formState.errors}
+                          name="placement_description"
+                          render={() => {
+                            const error =
+                              form.formState.errors.placement_description;
+                            const { message, type } = error as {
+                              message: string;
+                              type: string;
+                            };
+                            return (
+                              <p className="text-[0.8rem] mt-3 font-medium text-destructive">
+                                {t.addItemForm.messages.validation[
+                                  message as "placement_description"
+                                ]?.[type as "too_small"]?.[appLang] ||
+                                  t.addItemForm.messages.validation
+                                    .invalid_input[appLang]}
+                              </p>
+                            );
+                          }}
+                        />
                       </div>
-                      <FormControl className="flex-1">
+                      <FormControl className="flex-1 sm:min-w-[280px]">
                         <Textarea
                           {...field}
                           className={
@@ -583,13 +663,13 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             </AccordionItem>
 
             {/* Tags Section */}
-            <AccordionItem value="tags" className="p-10 w-full">
+            <AccordionItem value="tags" className="p-8 md:p-10 w-full">
               <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
                 <div>
                   <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                     {t.addItemForm.headings.assignTags[appLang]}
                   </h2>
-                  <p className="text-sm leading-none font-medium">
+                  <p className="text-sm md:leading-none font-medium">
                     {t.addItemForm.paragraphs.tagPrompt[appLang]}
                   </p>
                 </div>
@@ -621,6 +701,17 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                           </Badge>
                         );
                       })}
+                    {!tagsLoading && remainingTags > 0 && (
+                      <Button
+                        type="button"
+                        variant="default"
+                        onClick={handleLoadMoreTags}
+                        className="h-auto rounded-md border px-2 py-0.5 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+                      >
+                        +{remainingTags}{" "}
+                        {t.addItemForm.buttons.loadMoreTags[appLang]}
+                      </Button>
+                    )}
                     {tagsLoading && (
                       <div className="flex flex-wrap gap-x-2">
                         {Array(20)
@@ -665,14 +756,14 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             {/* Images */}
             <AccordionItem
               value="images"
-              className="p-10 w-full border-b-0 w-full"
+              className="p-8 md:p-10 w-full border-b-0"
             >
               <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
                 <div className="mb-6">
                   <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">
                     {t.addItemForm.headings.addImages[appLang]}
                   </h2>
-                  <p className="text-sm leading-none font-medium">
+                  <p className="text-sm md:leading-none font-medium">
                     {t.addItemForm.paragraphs.imagePrompt[appLang]}
                   </p>
                 </div>
@@ -685,6 +776,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                     form.watch("images") || { main: null, details: [] }
                   }
                   updateForm={form.setValue}
+                  errors={form.formState.errors.images}
                 />
                 <div className="flex-1 flex flex-col h-fit">
                   <h2 className="text-start font-main text-primary">
@@ -698,7 +790,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
               </AccordionContent>
             </AccordionItem>
 
-            <div className="p-10 pt-2 flex justify-end gap-4">
+            <div className="p-8 md:p-10 pt-2 flex justify-end gap-4">
               {!onUpdate && (
                 <>
                   <Button

@@ -13,6 +13,7 @@ import { TagService } from "./tag.service";
 import { ExtendedTag, TagRow, TagUpdate } from "@common/items/tag.types";
 import { ApiResponse } from "../../../../common/response.types";
 import { Public, Roles } from "src/decorators/roles.decorator";
+import { AuthRequest } from "@src/middleware/interfaces/auth-request.interface";
 
 @Controller("tags")
 export class TagController {
@@ -50,7 +51,10 @@ export class TagController {
   @Roles(["storage_manager", "tenant_admin"], {
     match: "any",
   })
-  async createTag(@Req() req, @Body() tagData: TagRow): Promise<TagRow> {
+  async createTag(
+    @Req() req: AuthRequest,
+    @Body() tagData: TagRow,
+  ): Promise<TagRow> {
     return this.tagService.createTag(req, tagData);
   }
 
@@ -59,7 +63,7 @@ export class TagController {
     match: "any",
   })
   async assignTagsToItem(
-    @Req() req,
+    @Req() req: AuthRequest,
     @Param("itemId") itemId: string,
     @Body("tagIds") tagIds: string[],
   ): Promise<void> {
@@ -71,7 +75,7 @@ export class TagController {
     match: "any",
   })
   async updateTag(
-    @Req() req,
+    @Req() req: AuthRequest,
     @Param("id") id: string,
     @Body() tagData: TagUpdate,
   ): Promise<TagRow> {
@@ -82,7 +86,10 @@ export class TagController {
   @Roles(["storage_manager", "tenant_admin"], {
     match: "any",
   })
-  async deleteTag(@Req() req, @Param("id") id: string): Promise<void> {
+  async deleteTag(
+    @Req() req: AuthRequest,
+    @Param("id") id: string,
+  ): Promise<void> {
     return this.tagService.deleteTag(req, id);
   }
 
@@ -91,7 +98,7 @@ export class TagController {
     match: "any",
   })
   async removeTagFromItem(
-    @Req() req,
+    @Req() req: AuthRequest,
     @Param("itemId") itemId: string,
     @Param("tagId") tagId: string,
   ): Promise<void> {

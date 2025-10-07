@@ -5,6 +5,7 @@ import * as tz from "dayjs/plugin/timezone";
 import { SupabaseService } from "../supabase/supabase.service";
 import { MailService } from "../mail/mail.service";
 import BookingReminderEmail from "../../emails/BookingReminderEmail";
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 dayjs.extend(utc);
 dayjs.extend(tz);
@@ -34,7 +35,7 @@ export class RemindersService {
     const supabase = this.supabaseService.getServiceClient();
 
     // 1) Find candidate booking_ids with items due today or overdue
-    const activeStatuses = ["confirmed", "picked_up"]; // items still out
+    const activeStatuses = ["picked_up"]; // remind users only about previously picked up items
 
     const dueTodayPromise = (async () => {
       if (scope === "overdue") return [] as string[];
@@ -44,7 +45,18 @@ export class RemindersService {
         .in("status", activeStatuses)
         .gte("end_date", startOfTodayUtc)
         .lte("end_date", endOfTodayUtc);
-      if (error) throw error;
+      if (error)
+        handleSupabaseError(error, {
+          messageOverrides: {
+            badRequest: "Failed to fetch bookings due today",
+            internal: "Failed to fetch bookings due today",
+            forbidden: "Failed to fetch bookings due today",
+          },
+          loggerContext: {
+            scope: "RemindersService.dueTodayQuery",
+            date: todayStr,
+          },
+        });
       type BookingIdRow = { booking_id: string };
       const rows = (data ?? []) as BookingIdRow[];
       const ids = Array.from(new Set(rows.map((r) => r.booking_id)));
@@ -58,7 +70,18 @@ export class RemindersService {
         .select("booking_id")
         .in("status", activeStatuses)
         .lt("end_date", startOfTodayUtc);
-      if (error) throw error;
+      if (error)
+        handleSupabaseError(error, {
+          messageOverrides: {
+            badRequest: "Failed to fetch overdue bookings",
+            internal: "Failed to fetch overdue bookings",
+            forbidden: "Failed to fetch overdue bookings",
+          },
+          loggerContext: {
+            scope: "RemindersService.overdueQuery",
+            date: todayStr,
+          },
+        });
       type BookingIdRow = { booking_id: string };
       const rows = (data ?? []) as BookingIdRow[];
       const ids = Array.from(new Set(rows.map((r) => r.booking_id)));
@@ -87,7 +110,17 @@ export class RemindersService {
       .from("view_bookings_with_user_info")
       .select("id, booking_number, email")
       .in("id", allIds);
-    if (bookErr) throw bookErr;
+    if (bookErr)
+      handleSupabaseError(bookErr, {
+        messageOverrides: {
+          badRequest: "Failed to fetch booking recipients",
+          internal: "Failed to fetch booking recipients",
+        },
+        loggerContext: {
+          scope: "RemindersService.fetchBookings",
+          date: todayStr,
+        },
+      });
 
     // Map bookingId -> recipient email + booking number
     const byBooking = new Map<
@@ -115,7 +148,17 @@ export class RemindersService {
       .in("booking_id", allIds)
       .eq("reminder_date", todayStr)
       .eq("status", "sent");
-    if (sentErr) throw sentErr;
+    if (sentErr)
+      handleSupabaseError(sentErr, {
+        messageOverrides: {
+          badRequest: "Failed to fetch reminder logs",
+          internal: "Failed to fetch reminder logs",
+        },
+        loggerContext: {
+          scope: "RemindersService.fetchSentLogs",
+          date: todayStr,
+        },
+      });
     const alreadySent = new Set<string>(
       (sentRows as SentLogRow[] | null | undefined)?.map(
         (r) => `${r.booking_id}|${r.recipient_email}|${r.type}`,
@@ -138,7 +181,17 @@ export class RemindersService {
         .in("status", activeStatuses)
         .order("end_date", { ascending: true })
         .limit(1);
-      if (error) throw error;
+      if (error)
+        handleSupabaseError(error, {
+          messageOverrides: {
+            badRequest: "Failed to resolve booking due date",
+            internal: "Failed to resolve booking due date",
+          },
+          loggerContext: {
+            scope: "RemindersService.earliestDueFor",
+            bookingId,
+          },
+        });
       type EndDateRow = { end_date: string };
       const rows = (data ?? []) as EndDateRow[];
       return rows.length > 0 ? rows[0].end_date : null;
@@ -162,7 +215,7 @@ export class RemindersService {
         return;
       }
 
-      const { data } = await supabase
+      const { data, error: upsertError } = await supabase
         .from("reminder_logs")
         .upsert(
           [
@@ -181,6 +234,19 @@ export class RemindersService {
           },
         )
         .select("id");
+
+      if (upsertError)
+        handleSupabaseError(upsertError, {
+          messageOverrides: {
+            badRequest: "Failed to claim reminder",
+            internal: "Failed to claim reminder",
+          },
+          loggerContext: {
+            scope: "RemindersService.claimAndSend.upsert",
+            bookingId,
+            type,
+          },
+        });
 
       let logId: string | null = null;
       if (Array.isArray(data) && data.length > 0) {
@@ -202,7 +268,18 @@ export class RemindersService {
           .eq("reminder_date", todayStr)
           .eq("type", type)
           .maybeSingle();
-        if (selErr) throw selErr;
+        if (selErr)
+          handleSupabaseError(selErr, {
+            messageOverrides: {
+              badRequest: "Failed to fetch reminder log",
+              internal: "Failed to fetch reminder log",
+            },
+            loggerContext: {
+              scope: "RemindersService.claimAndSend.fetchExistingLog",
+              bookingId,
+              type,
+            },
+          });
         const row = existing as ExistingLog | null;
         if (!row || row.sent_at || row.status === "sent") {
           skipped++;

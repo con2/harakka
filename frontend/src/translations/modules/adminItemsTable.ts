@@ -156,6 +156,28 @@ export const adminItemsTable = {
       en: "pcs",
     },
   },
+  sorting: {
+    recentlyCreated: {
+      en: "Recently Created",
+      fi: "Äskettäin luotu",
+    },
+    name: {
+      en: "Item Name",
+      fi: "Tuotteen nimi",
+    },
+    quantity: {
+      en: "Quantity",
+      fi: "Määrä",
+    },
+    currentlyAvailable: {
+      en: "Currently In Stock",
+      fi: "Tällä hetkellä varastossa",
+    },
+    activityStatus: {
+      en: "Is Active",
+      fi: "On aktiivinen",
+    },
+  },
   aria: {
     labels: {
       statusFilter: {

@@ -1802,6 +1802,81 @@ export type Database = {
           total_quantity: number
         }[]
       }
+      ban_user_for_app: {
+        Args: {
+          p_is_permanent?: boolean
+          p_notes?: string
+          p_reason?: string
+          p_target_user: string
+        }
+        Returns: {
+          action: string
+          affected_assignments: Json | null
+          ban_reason: string | null
+          ban_type: string
+          banned_at: string | null
+          banned_by: string
+          created_at: string | null
+          id: string
+          is_permanent: boolean | null
+          notes: string | null
+          organization_id: string | null
+          role_assignment_id: string | null
+          unbanned_at: string | null
+          user_id: string
+        }
+      }
+      ban_user_for_org: {
+        Args: {
+          p_is_permanent?: boolean
+          p_notes?: string
+          p_organization_id: string
+          p_reason?: string
+          p_target_user: string
+        }
+        Returns: {
+          action: string
+          affected_assignments: Json | null
+          ban_reason: string | null
+          ban_type: string
+          banned_at: string | null
+          banned_by: string
+          created_at: string | null
+          id: string
+          is_permanent: boolean | null
+          notes: string | null
+          organization_id: string | null
+          role_assignment_id: string | null
+          unbanned_at: string | null
+          user_id: string
+        }
+      }
+      ban_user_for_role: {
+        Args: {
+          p_is_permanent?: boolean
+          p_notes?: string
+          p_organization_id: string
+          p_reason?: string
+          p_role_id: string
+          p_target_user: string
+        }
+        Returns: {
+          action: string
+          affected_assignments: Json | null
+          ban_reason: string | null
+          ban_type: string
+          banned_at: string | null
+          banned_by: string
+          created_at: string | null
+          id: string
+          is_permanent: boolean | null
+          notes: string | null
+          organization_id: string | null
+          role_assignment_id: string | null
+          unbanned_at: string | null
+          user_id: string
+        }
+      }
       calculate_storage_item_total: {
         Args: { item_id: string }
         Returns: number
@@ -2401,6 +2476,31 @@ export type Database = {
       types_are: {
         Args: { "": unknown[] }
         Returns: string
+      }
+      unban_user: {
+        Args: {
+          p_ban_type: string
+          p_notes?: string
+          p_organization_id?: string
+          p_role_id?: string
+          p_target_user: string
+        }
+        Returns: {
+          action: string
+          affected_assignments: Json | null
+          ban_reason: string | null
+          ban_type: string
+          banned_at: string | null
+          banned_by: string
+          created_at: string | null
+          id: string
+          is_permanent: boolean | null
+          notes: string | null
+          organization_id: string | null
+          role_assignment_id: string | null
+          unbanned_at: string | null
+          user_id: string
+        }[]
       }
       users_are: {
         Args: { "": unknown[] }

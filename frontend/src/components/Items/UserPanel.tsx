@@ -277,13 +277,13 @@ const UserPanel = () => {
   }, [isFilterVisible]);
 
   return (
-    <div className="flex min-h-screen w-full overflow-y-auto justify-around pt-4 md:pt-0 gap-4">
+    <div className="flex min-h-screen w-full overflow-y-auto justify-center pt-4 lg:pt-0 gap-4 max-w-screen-2xl mx-auto">
       {/* Sidebar: Filters Panel */}
       <aside
         ref={filterRef}
         className={`${
           isFilterVisible ? "block" : "hidden"
-        } md:flex pr-0 md:flex-col md:min-h-[calc(100vh-60px)] w-full md:w-76 p-4 bg-white md:pb-10 fixed inset-0 z-40 md:static transition-all duration-300 ease-in-out md:overflow-visible overflow-y-auto`}
+        } lg:flex pr-0 lg:flex-col lg:min-h-[calc(100vh-60px)] w-full lg:w-76 lg:max-w-sm p-4 bg-white lg:pb-10 fixed inset-0 z-40 lg:static transition-all duration-300 ease-in-out lg:overflow-visible overflow-y-auto`}
         style={{
           top: "60px",
           backgroundColor: "#fff",
@@ -323,10 +323,10 @@ const UserPanel = () => {
                 <div className="text-xs text-muted-foreground">
                   {countActiveFilters()} {t.userPanel.filters.active[lang]}
                 </div>
-                {/* SlidersIcon as a close button (only in mobile view) */}
+                {/* SlidersIcon as a close button (only in mobile/tablet view) */}
                 <Button
                   onClick={() => setIsFilterVisible(false)}
-                  className="md:hidden p-1 rounded hover:bg-slate-100 transition-colors"
+                  className="lg:hidden p-1 rounded hover:bg-slate-100 transition-colors"
                   aria-label={t.userPanel.filters.closeFilters[lang]}
                 >
                   <SlidersIcon className="w-5 h-5 text-highlight2" />
@@ -611,7 +611,7 @@ const UserPanel = () => {
             )}
 
             {/* Close Filter Button */}
-            <div className="md:hidden text-center mt-4">
+            <div className="lg:hidden text-center mt-4">
               <Button
                 onClick={() => setIsFilterVisible(false)}
                 variant="ghost"
@@ -625,9 +625,9 @@ const UserPanel = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 md:p-4 relative  lg:max-w-[calc(100vw-25%)] px-4 md:px-0">
-        {/* Filter Button visible on mobile */}
-        <div className="md:hidden absolute top-2 left-2 z-10">
+      <div className="flex-1 lg:p-4 relative px-4 lg:px-0">
+        {/* Filter Button visible on mobile/tablet */}
+        <div className="lg:hidden absolute left-2 z-10">
           <Button
             onClick={() => setIsFilterVisible(true)}
             variant="outline"

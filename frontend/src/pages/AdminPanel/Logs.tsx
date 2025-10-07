@@ -9,7 +9,7 @@ import {
 } from "@/store/slices/logsSlice";
 import { t } from "@/translations";
 import { LogMessage } from "@/types";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 
 // Backend log level constants - these values come from the API and should not be translated
 const LOG_LEVELS = {
@@ -27,6 +27,7 @@ import {
   Info,
   LoaderCircle,
   RefreshCw,
+  Search,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +47,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatDate } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileTable from "@/components/ui/MobileTable";
+import { Input } from "@/components/ui/input";
 
 const Logs: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -64,6 +69,7 @@ const Logs: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLog, setSelectedLog] = useState<LogMessage | null>(null);
   const [showLogDetails, setShowLogDetails] = useState(false);
+  const { isTablet, isMobile } = useIsMobile();
 
   // track page number and size
   const [pageIndex, setPageIndex] = useState(0);
@@ -154,22 +160,28 @@ const Logs: React.FC = () => {
   };
 
   const columns: ColumnDef<LogMessage>[] = [
-    {
-      id: "level-icon",
-      size: 40,
-      enableSorting: true,
-      cell: ({ row }) => getLevelIcon(row.original.level),
-      header: () => <div className="px-2"></div>,
-    },
+    ...(isTablet || isMobile
+      ? []
+      : [
+          {
+            id: "level-icon",
+            size: 40,
+            enableSorting: true,
+            cell: ({ row }: { row: Row<LogMessage> }) =>
+              getLevelIcon(row.original.level),
+            header: () => <div className="px-2"></div>,
+          },
+        ]),
     {
       accessorKey: "timestamp",
-      size: 150,
+      maxSize: 50,
       header: () => <span>{t.logs.columns.timestamp[lang]}</span>,
       cell: ({ row }) => {
         const date = new Date(row.original.timestamp);
         return (
-          <div className="whitespace-nowrap p-2">
-            {date.toLocaleDateString()} {date.toLocaleTimeString()}
+          <div className="whitespace-nowrap p-2 flex flex-col">
+            <span>{formatDate(date, "d MMM yyyy")}</span>
+            <span>{date.toLocaleTimeString()}</span>
           </div>
         );
       },
@@ -217,7 +229,7 @@ const Logs: React.FC = () => {
         const isDbSource = source.startsWith("DB:");
 
         return (
-          <div className="flex items-center">
+          <div className="flex items-center justify-self-end lg:justify-self-start">
             {isDbSource && <FileText className="mr-1 h-4 w-4 text-blue-500" />}
             <span className={isDbSource ? "text-blue-600 font-medium" : ""}>
               {source}
@@ -229,13 +241,17 @@ const Logs: React.FC = () => {
     },
     {
       accessorKey: "message",
+      minSize: 200,
+      maxSize: 300,
       header: () => (
-        <span className="whitespace-nowrap p-2">
+        <span className="whitespace-nowrap p-2  max-w-[300px]">
           {t.logs.columns.message[lang]}
         </span>
       ),
       cell: ({ row }) => (
-        <div className="max-w-xl truncate p-2">{row.original.message}</div>
+        <div className="max-w-xl truncate p-2 text-wrap  max-w-[300px] min-w-[160px]">
+          {row.original.message}
+        </div>
       ),
     },
     {
@@ -245,9 +261,10 @@ const Logs: React.FC = () => {
           variant="ghost"
           size="sm"
           onClick={() => handleViewLogDetails(row.original)}
-          className="flex items-center"
+          className="flex items-center justify-self-end gap-2 lg:gap-0"
         >
           <Eye className="h-4 w-4" />
+          {(isMobile || isTablet) && "View details"}
         </Button>
       ),
       header: "",
@@ -305,18 +322,21 @@ const Logs: React.FC = () => {
 
       {/* Filters - styled like AdminItemsTable */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-4 items-center flex-wrap">
           {/* Search by log message/source */}
-          <input
-            id="search-logs"
-            placeholder={
-              t.logs.filters.searchPlaceholder[lang] ||
-              "Search in message or source..."
-            }
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-sm p-2 bg-white rounded-md sm:max-w-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
-          />
+          <div className="flex gap-4 items-center relative sm:max-w-xs min-w-[300px] w-full">
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4"
+              aria-hidden
+            />
+            <Input
+              id="search-logs"
+              placeholder={t.logs.filters.searchPlaceholder[lang]}
+              value={searchQuery}
+              className="pl-10"
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
 
           {/* Filter by log type */}
           <Select
@@ -327,7 +347,7 @@ const Logs: React.FC = () => {
           >
             <SelectTrigger
               id="log-type-filter"
-              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] w-[180px]"
+              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] w-[180px] flex-1 md:flex-0"
             >
               <SelectValue />
             </SelectTrigger>
@@ -358,7 +378,7 @@ const Logs: React.FC = () => {
           >
             <SelectTrigger
               id="level-filter"
-              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] w-[180px]"
+              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)] w-[180px] flex-1 md:flex-0"
             >
               <SelectValue />
             </SelectTrigger>
@@ -400,13 +420,27 @@ const Logs: React.FC = () => {
         </div>
       </div>
 
-      {logs.length === 0 ? (
+      {/* Mobile Table */}
+      {(isMobile || isTablet) && (
+        <MobileTable
+          columns={columns}
+          data={logs}
+          pageIndex={pageIndex}
+          pageCount={totalPages}
+          onPageChange={setPageIndex}
+        />
+      )}
+
+      {/* Desktop Table */}
+      {!isMobile && !isTablet && logs.length === 0 && (
         <div className="p-8 text-center text-muted-foreground">
           {searchQuery || logTypeFilter !== "all" || levelFilter !== "all"
             ? t.logs.noFilteredData[lang] || "No logs match your filters"
             : t.logs.noData[lang]}
         </div>
-      ) : (
+      )}
+
+      {!isMobile && !isTablet && logs.length > 0 && (
         <div>
           <PaginatedDataTable
             columns={columns}
@@ -421,7 +455,7 @@ const Logs: React.FC = () => {
       {/* Log Details Dialog - remains unchanged */}
       {selectedLog && (
         <Dialog open={showLogDetails} onOpenChange={setShowLogDetails}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-h-[80vh] overflow-y-auto max-w-[90vw]">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 {getLevelIcon(selectedLog.level)}
@@ -459,7 +493,7 @@ const Logs: React.FC = () => {
                   <h3 className="text-sm font-medium">
                     {t.logs.details.metadata[lang] || "Additional Data"}
                   </h3>
-                  <pre className="text-xs bg-slate-50 p-2 rounded border overflow-x-auto">
+                  <pre className="text-xs bg-slate-50 p-2 rounded border overflow-x-auto text-wrap">
                     {JSON.stringify(selectedLog.metadata, null, 2)}
                   </pre>
                 </div>

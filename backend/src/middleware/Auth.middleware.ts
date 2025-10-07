@@ -276,7 +276,10 @@ export class AuthMiddleware implements NestMiddleware {
    */
   private createRoleSignature(roles: ViewUserRolesWithDetails[]): string {
     return roles
-      .map((r) => `${r.role_name ?? ""}@${r.organization_id ?? ""}`)
+      .map(
+        (r) =>
+          `${r.role_name ?? ""}@${r.organization_id ?? ""}#${r.is_active ? 1 : 0}`,
+      )
       .sort()
       .join(",");
   }

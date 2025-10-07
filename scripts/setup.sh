@@ -17,8 +17,8 @@ echo "============================================="
 echo ""
 echo "💻 Setting up for local development..."
 
-ENV_FILE="../.env.local"
-TEMPLATE_FILE="../.env.local.template"
+ENV_FILE="./.env.local"
+TEMPLATE_FILE="./.env.local.template"
 
 echo ""
 
@@ -77,6 +77,7 @@ check_env_var "STORAGE_EMAIL" "$ENV_FILE" || ((failed_vars++))
 check_env_var "STORAGE_EMAIL_PASSWORD" "$ENV_FILE" || ((failed_vars++))
 check_env_var "CRON_SECRET" "$ENV_FILE" || ((failed_vars++))
 check_env_var "CRON_URL" "$ENV_FILE" || ((failed_vars++))
+
 
 if [ $failed_vars -gt 0 ]; then
   echo ""

@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from "@nestjs/common";
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  Logger,
+} from "@nestjs/common";
 import {
   PostgrestMaybeSingleResponse,
   PostgrestResponse,
@@ -680,24 +685,38 @@ export class StorageItemsService {
       // Insert item data
       const { error }: PostgrestMaybeSingleResponse<StorageItem> =
         await supabase.from("storage_items").insert(itemsToInsert);
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error)
+        handleSupabaseError(error, {
+          messageOverrides: {
+            badRequest: "Failed to create storage items",
+            conflict: "Failed to create storage items",
+            internal: "Failed to create storage items",
+          },
+          loggerContext: {
+            scope: "StorageItemsService.createItems.insert",
+            count: itemsToInsert.length,
+          },
+        });
 
       // Insert item tags
       const mappedTags = mapTagLinks(payload);
-      const tagResult = await this.tagService.assignTagsToBulk(req, mappedTags);
-      if (tagResult) {
-        throw new Error(tagResult.message);
-      }
+      await this.tagService.assignTagsToBulk(req, mappedTags);
 
       // Insert item images
       const { error: imageError } = await supabase
         .from("storage_item_images")
         .insert(mappedImageData);
-      if (imageError) {
-        throw new Error(imageError.message);
-      }
+      if (imageError)
+        handleSupabaseError(imageError, {
+          messageOverrides: {
+            badRequest: "Failed to attach item images",
+            internal: "Failed to attach item images",
+          },
+          loggerContext: {
+            scope: "StorageItemsService.createItems.images",
+            count: mappedImageData.length,
+          },
+        });
 
       // return status and item details
       return { status: 201, error: null, items: itemsToInsert };
@@ -709,9 +728,31 @@ export class StorageItemsService {
         supabase.from("storage_items").delete().in("id", item_ids),
       ]);
 
+      if (error instanceof HttpException) {
+        const status = error.getStatus();
+        const response = error.getResponse();
+        let message: string | undefined;
+        if (typeof response === "string") {
+          message = response;
+        } else if (response && typeof response === "object") {
+          const maybeMessage = (response as { message?: unknown }).message;
+          if (Array.isArray(maybeMessage)) {
+            message = maybeMessage[0] as string | undefined;
+          } else if (typeof maybeMessage === "string") {
+            message = maybeMessage;
+          }
+        }
+        return {
+          status,
+          error: message ?? "An unexpected error occurred",
+        };
+      }
+
       return {
-        status: error?.code ?? 500,
-        error: error?.message ?? "An unexpected error occurred",
+        status: (error as { code?: number })?.code ?? 500,
+        error:
+          (error as { message?: string })?.message ??
+          "An unexpected error occurred",
       };
     }
   }
@@ -753,14 +794,22 @@ export class StorageItemsService {
       .select(`*, storage_locations(*)`)
       .single();
 
-    if (updateError) {
-      throw new Error(updateError.message);
-    }
+    if (updateError)
+      handleSupabaseError(updateError, {
+        messageOverrides: {
+          badRequest: "Failed to update storage item",
+          conflict: "Failed to update storage item",
+          internal: "Failed to update storage item",
+        },
+        loggerContext: {
+          scope: "StorageItemsService.updateItem.update",
+          item_id,
+          org_id,
+        },
+      });
 
     if (!updatedItem)
-      throw new BadRequestException(
-        updateError || "Failed to update storage item",
-      );
+      throw new BadRequestException("Failed to update storage item");
 
     // Update tag relationships
     if (tags && tags.length > 0)
@@ -795,7 +844,7 @@ export class StorageItemsService {
   ): Promise<{ success: boolean; id: string }> {
     const supabase = req.supabase;
     if (!item_id) {
-      throw new Error("No item ID provided for deletion");
+      throw new BadRequestException("No item ID provided for deletion");
     }
 
     try {
@@ -809,9 +858,17 @@ export class StorageItemsService {
           .select("id, storage_path")
           .eq("item_id", item_id);
 
-      if (imagesError) {
-        throw new Error(`Failed to get images: ${imagesError.message}`);
-      }
+      if (imagesError)
+        handleSupabaseError(imagesError, {
+          messageOverrides: {
+            badRequest: "Failed to load item images",
+            internal: "Failed to load item images",
+          },
+          loggerContext: {
+            scope: "StorageItemsService.deleteItem.images",
+            item_id,
+          },
+        });
 
       // Update the storage_items data
       // Set is_deleted to true and is_active to false
@@ -823,9 +880,17 @@ export class StorageItemsService {
         .eq("id", item_id)
         .eq("org_id", org_id);
       if (itemUpdateError)
-        throw new Error(
-          `Failed to update org items: ${itemUpdateError.message}`,
-        );
+        handleSupabaseError(itemUpdateError, {
+          messageOverrides: {
+            badRequest: "Failed to deactivate storage item",
+            internal: "Failed to deactivate storage item",
+          },
+          loggerContext: {
+            scope: "StorageItemsService.deleteItem.update",
+            item_id,
+            org_id,
+          },
+        });
 
       // Delete any found images
       if (images && images.length > 0) {
@@ -838,11 +903,17 @@ export class StorageItemsService {
           .delete()
           .eq("item_id", item_id);
 
-        if (deleteImagesError) {
-          throw new Error(
-            `Failed to delete item images: ${deleteImagesError.message}`,
-          );
-        }
+        if (deleteImagesError)
+          handleSupabaseError(deleteImagesError, {
+            messageOverrides: {
+              badRequest: "Failed to delete item images",
+              internal: "Failed to delete item images",
+            },
+            loggerContext: {
+              scope: "StorageItemsService.deleteItem.deleteImages",
+              item_id,
+            },
+          });
       }
 
       // Step 2: Delete related tags from the join table
@@ -851,11 +922,17 @@ export class StorageItemsService {
         .delete()
         .eq("item_id", item_id);
 
-      if (tagDeleteError) {
-        throw new Error(
-          `Failed to delete related tags: ${tagDeleteError.message}`,
-        );
-      }
+      if (tagDeleteError)
+        handleSupabaseError(tagDeleteError, {
+          messageOverrides: {
+            badRequest: "Failed to remove item tags",
+            internal: "Failed to remove item tags",
+          },
+          loggerContext: {
+            scope: "StorageItemsService.deleteItem.deleteTags",
+            item_id,
+          },
+        });
     } catch (error) {
       this.logger.error(`Failed to delete item ${item_id}`, error);
       return { success: false, id: item_id };
