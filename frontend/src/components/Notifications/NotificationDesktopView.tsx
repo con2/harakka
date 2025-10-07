@@ -109,7 +109,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
             </span>
 
             {showToggle && (
-              <div className="relative">
+              <div className="flex items-center gap-2">
                 <div className="inline-flex rounded border border-(--subtle-grey) overflow-hidden">
                   {/* "Active" */}
                   <button
@@ -135,14 +135,14 @@ export const NotificationDesktopView: React.FC<Props> = ({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="absolute -right-6 top-0 h-full w-5 p-0 hover:bg-transparent"
+                        className="h-6 w-6 p-0 hover:bg-transparent flex-shrink-0"
                       >
                         <Info className="h-3 w-3 text-muted-foreground" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent
-                      side="right"
-                      align="start"
+                      side="top"
+                      align="center"
                       className="max-w-xs"
                     >
                       <p className="text-xs">
@@ -157,7 +157,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
 
             {/* "Other" count */}
             {showToggle && !viewAll && otherUnread > 0 && (
-              <span className="text-[0.7rem] text-muted-foreground">
+              <span className="text-[0.7rem] text-muted-foreground ml-1">
                 {t.navigation.notifications.otherContextsPrefix[lang]}{" "}
                 {otherUnread}
               </span>
