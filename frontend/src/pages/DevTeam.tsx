@@ -18,7 +18,7 @@ const DevTeam = () => {
       role: { fi: "Full Stack -kehittäjä", en: "Full Stack Developer" },
       linkedin: "https://www.linkedin.com/in/stefanie-jana-a0b094a8/",
       github: "https://github.com/stabjana",
-      image: "", // Add image
+      image: "https://avatars.githubusercontent.com/u/162564271?v=4", // Add image
     },
     {
       name: "Athina Kantis",
