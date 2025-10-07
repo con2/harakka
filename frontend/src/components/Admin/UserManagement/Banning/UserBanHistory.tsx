@@ -27,14 +27,20 @@ interface Props {
   refreshKey?: number;
 }
 
+// isMobile/md size is too small for this component
+// The table will not fit properly unless a slightly bigger size is used
+const LOCAL_IS_MOBILE = 950;
+
 const UserBanHistory = ({ user, refreshKey = 0 }: Props) => {
   const dispatch = useAppDispatch();
   const banHistory = useAppSelector(selectBanHistory);
   const loading = useAppSelector(selectUserBanningLoading);
   const { lang } = useLanguage();
   const { allUserRoles, refreshAllUserRoles } = useRoles();
+
+  // Responsive sizing
   const { width } = useIsMobile();
-  const isMobile = width <= 950;
+  const isMobile = width <= LOCAL_IS_MOBILE;
 
   useEffect(() => {
     if (user?.id) {
@@ -189,9 +195,9 @@ const UserBanHistory = ({ user, refreshKey = 0 }: Props) => {
                 }
               >
                 {ban.unbanned_at
-                  ? "Lifted"
+                  ? t.userBanHistory.status.lifted[lang]
                   : ban.action === "banned"
-                    ? "Active"
+                    ? t.userBanHistory.status.active[lang]
                     : "N/A"}
               </span>
             </TableCell>
