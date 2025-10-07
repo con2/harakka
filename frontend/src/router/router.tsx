@@ -34,6 +34,7 @@ import MyProfile from "@/pages/MyProfile";
 import MyBookingsPage from "@/pages/MyBookingsPage";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import TermsOfUse from "../pages/TermsOfUse";
+import DevTeam from "../pages/DevTeam";
 import Unauthorized from "../components/Unauthorized";
 import ItemsList from "../components/Items/ItemsList";
 import ItemDetails from "../components/Items/ItemsDetails";
@@ -381,6 +382,10 @@ export const router = createBrowserRouter([
       {
         path: "/terms-of-use",
         element: <TermsOfUse />,
+      },
+      {
+        path: "/dev-team",
+        element: <DevTeam />,
       },
       {
         path: "/unauthorized",
