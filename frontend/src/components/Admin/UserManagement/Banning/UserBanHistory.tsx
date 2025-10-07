@@ -94,7 +94,11 @@ const UserBanHistory = ({ user, refreshKey = 0 }: Props) => {
                   : "text-gray-500"
             }
           >
-            {unbanned_at ? "Lifted" : action === "banned" ? "Active" : "N/A"}
+            {unbanned_at
+              ? t.userBanHistory.status.lifted[lang]
+              : action === "banned"
+                ? t.userBanHistory.status.active[lang]
+                : "N/A"}
           </span>
         );
       },
