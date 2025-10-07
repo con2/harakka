@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -83,6 +83,7 @@ const UsersDetailsPage = () => {
     permanentDeleteRole,
     hasRole,
     refreshAllUserRoles,
+    refreshAvailableRoles,
     syncSessionAndRoles,
   } = useRoles();
   const organizations = useAppSelector(selectOrganizations);
@@ -613,7 +614,29 @@ const UsersDetailsPage = () => {
     }
   };
 
-  // Handle user data loading
+  // Split the effects - one for initial roles refresh and one for user data loading
+
+  // First useEffect: One-time roles refresh on mount with a ref to prevent loops
+  const hasRefreshedRoles = useRef(false);
+
+  useEffect(() => {
+    if (!id) return;
+
+    if (!hasRefreshedRoles.current) {
+      hasRefreshedRoles.current = true;
+
+      if (canManageRoles) {
+        Promise.all([
+          refreshAllUserRoles(true),
+          refreshAvailableRoles(true),
+        ]).catch((err) => {
+          console.error("Failed to refresh role data:", err);
+        });
+      }
+    }
+  }, [id, canManageRoles, refreshAllUserRoles, refreshAvailableRoles]);
+
+  // Second useEffect: Handle user data loading separately
   useEffect(() => {
     if (!id) return;
 
