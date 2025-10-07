@@ -42,8 +42,11 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { BookingPreview } from "@common/bookings/booking.types";
 import { formatBookingStatus } from "@/utils/format";
 import { BookingStatus } from "@/types";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileTable from "@/components/ui/MobileTable";
 
 const AdminDashboard = () => {
+  const { isMobile } = useIsMobile();
   const dispatch = useAppDispatch();
   const items = useAppSelector(selectAllItems);
   const bookings = useAppSelector(selectAllBookings);
@@ -179,9 +182,13 @@ const AdminDashboard = () => {
       cell: ({ row }) => {
         const email = row.original.email;
         return (
-          (typeof email === "string" ? email : "") ||
-          t.uiComponents.dataTable.emptyCell[lang] ||
-          "—"
+          (typeof email === "string" ? (
+            <div className="text-wrap max-w-[200px] md:max-w-full wrap-break-word justify-self-end md:justify-self-start">
+              {email}
+            </div>
+          ) : (
+            ""
+          )) || t.uiComponents.dataTable.emptyCell[lang]
         );
       },
     },
@@ -309,22 +316,37 @@ const AdminDashboard = () => {
       </div>
       {/* Recent section - users for super_admin, bookings for others */}
       <div className="mb-8">
-        {isSuperAdmin ? (
+        {isSuperAdmin && (
           <>
-            <h2 className="text-left">
+            <h2 className="text2xl md:text-xl text-left">
               {t.adminDashboard.sections.recentUsers[lang]}
             </h2>
-            <DataTable
-              rowClick={(row) =>
-                navigate(`/admin/users/${String(row.original.id)}`)
-              }
-              columns={userColumns}
-              data={[...usersList].sort(
-                (a, b) =>
-                  new Date(b.created_at || "").getTime() -
-                  new Date(a.created_at || "").getTime(),
-              )}
-            />
+
+            {isMobile ? (
+              <MobileTable
+                columns={userColumns}
+                data={[...usersList].sort(
+                  (a, b) =>
+                    new Date(b.created_at || "").getTime() -
+                    new Date(a.created_at || "").getTime(),
+                )}
+                rowClick={(row) =>
+                  navigate(`/admin/users/${String(row.original.id)}`)
+                }
+              />
+            ) : (
+              <DataTable
+                rowClick={(row) =>
+                  navigate(`/admin/users/${String(row.original.id)}`)
+                }
+                columns={userColumns}
+                data={[...usersList].sort(
+                  (a, b) =>
+                    new Date(b.created_at || "").getTime() -
+                    new Date(a.created_at || "").getTime(),
+                )}
+              />
+            )}
             <div className="flex items-center justify-center mt-4">
               <Button
                 variant={"secondary"}
@@ -336,15 +358,28 @@ const AdminDashboard = () => {
               </Button>
             </div>
           </>
-        ) : (
+        )}
+        {!isSuperAdmin && (
           <>
-            <h2 className="text-left">
+            <h2 className="!text-2xl !md:text-xl text-left">
               {t.adminDashboard.sections.recentBookings[lang]}
             </h2>
             {bookingsLoading ? (
               <div className="flex justify-center items-center py-6">
                 <LoaderCircle className="animate-spin" />
               </div>
+            ) : isMobile ? (
+              <MobileTable
+                rowClick={(row) =>
+                  navigate(`/admin/bookings/${row.original.id}`)
+                }
+                columns={bookingColumns}
+                data={[...bookings].sort(
+                  (a, b) =>
+                    new Date(b.created_at || "").getTime() -
+                    new Date(a.created_at || "").getTime(),
+                )}
+              />
             ) : (
               <DataTable
                 rowClick={(row) =>

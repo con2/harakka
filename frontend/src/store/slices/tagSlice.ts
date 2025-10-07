@@ -82,6 +82,7 @@ export const fetchFilteredTags = createAsyncThunk(
       assignmentFilter = "all",
       sortBy = "created_at",
       sortOrder = "desc",
+      append = false,
     }: {
       page?: number;
       limit?: number;
@@ -89,12 +90,13 @@ export const fetchFilteredTags = createAsyncThunk(
       assignmentFilter?: string;
       sortBy?: string;
       sortOrder?: "desc" | "asc";
+      append?: boolean;
     },
     { rejectWithValue },
   ) => {
     try {
       // Pass all parameters to the backend API
-      return await tagsApi.getAllTags(
+      const result = await tagsApi.getAllTags(
         page,
         limit,
         search,
@@ -102,6 +104,7 @@ export const fetchFilteredTags = createAsyncThunk(
         sortBy,
         sortOrder,
       );
+      return { ...result, append };
     } catch (error: unknown) {
       return rejectWithValue(
         extractErrorMessage(error, "Failed to fetch filtered tags"),
@@ -243,7 +246,17 @@ export const tagSlice = createSlice({
       })
       .addCase(fetchFilteredTags.fulfilled, (state, action) => {
         state.loading = false;
-        state.tags = action.payload.data;
+        // If append is true, add new tags to existing ones, otherwise replace
+        if (action.payload.append) {
+          // Filter out duplicates by checking if tag.id already exists
+          const existingIds = new Set(state.tags.map((tag) => tag.id));
+          const newTags = action.payload.data.filter(
+            (tag) => !existingIds.has(tag.id),
+          );
+          state.tags = [...state.tags, ...newTags];
+        } else {
+          state.tags = action.payload.data;
+        }
         state.total = action.payload.metadata.total;
         state.page = action.payload.metadata.page;
         state.totalPages = action.payload.metadata.totalPages;
