@@ -361,7 +361,6 @@ Skip local files entirely and run with Infisical secrets:
 npm run dev:infisical              # Full stack
 npm run frontend:infisical         # Frontend only
 npm run backend:infisical          # Backend only
-npm run s:start:infisical          # Supabase with Infisical
 ```
 
 **Benefits:**
