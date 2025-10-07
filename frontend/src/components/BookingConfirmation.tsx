@@ -12,7 +12,6 @@ import {
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { LoaderCircle, Calendar, Package } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
@@ -133,7 +132,7 @@ const BookingConfirmation: React.FC = () => {
   return (
     <div className="container mx-auto p-8 max-w-2xl">
       <Card className="overflow-hidden">
-        <CardHeader className="text-center space-y-2">
+        <CardHeader className="text-center space-y-2 mb-6">
           <div className="flex items-center gap-4 justify-center">
             <CalendarSend className="w-30 h-30 *:stroke-blue-400" />
           </div>
@@ -263,9 +262,7 @@ const BookingConfirmation: React.FC = () => {
             </div>
           )}
 
-          <Separator className="my-6" />
-
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center mt-8">
             <Button
               onClick={() =>
                 navigate(BOOKED_BY_ORG ? "/admin/requests" : "/my-bookings")

@@ -69,6 +69,24 @@ export const tagList = {
       en: "Edit Tag",
     },
   },
+  sorting: {
+    recentlyCreated: {
+      en: "Recently Created",
+      fi: "Äskettäin luotu",
+    },
+    name: {
+      en: "Name",
+      fi: "Nimi",
+    },
+    assignmentCount: {
+      en: "Assigned Count",
+      fi: "Määrättyjen lukumäärä",
+    },
+    popularity: {
+      en: "Popularity",
+      fi: "Suosio",
+    },
+  },
   aria: {
     labels: {
       clearSearch: {

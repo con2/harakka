@@ -111,8 +111,17 @@ describe("RolesGuard", () => {
     expect(guard.canActivate(ctxMatch)).toBe(true);
   });
 
-  it("bypasses checks for super_admin", () => {
+  it("does not bypass required roles for super_admin", () => {
     const meta: RolesMeta = { roles: ["tenant_admin"] };
+    const ctx = mockContext({
+      meta,
+      userRoles: [{ role_name: "super_admin", organization_id: null }],
+    });
+    expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
+  });
+
+  it("allows when route explicitly requires super_admin", () => {
+    const meta: RolesMeta = { roles: ["super_admin"] };
     const ctx = mockContext({
       meta,
       userRoles: [{ role_name: "super_admin", organization_id: null }],

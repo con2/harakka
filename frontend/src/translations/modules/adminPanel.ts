@@ -8,13 +8,13 @@ export const adminPanel = {
       fi: "Kojelauta",
       en: "Dashboard",
     },
-    bookings: {
-      fi: "Tilaukset",
-      en: "Bookings",
+    bookingsIn: {
+      fi: "Saapuvat varaukset",
+      en: "Incoming Bookings",
     },
-    requests: {
-      fi: "Pyynnöt",
-      en: "Requests",
+    bookingsOut: {
+      fi: "Lähtevät varaukset",
+      en: "Outgoing Bookings",
     },
     items: {
       fi: "Tuotteet",
@@ -51,6 +51,10 @@ export const adminPanel = {
     locations: {
       fi: "Sijainti",
       en: "Locations",
+    },
+    reports: {
+      fi: "Raportit",
+      en: "Reports",
     },
   },
 };

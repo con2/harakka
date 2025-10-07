@@ -45,6 +45,7 @@ import {
   fetchFilteredTags,
   selectAllTags,
   selectTagsLoading,
+  selectTagsTotal,
 } from "@/store/slices/tagSlice";
 import { setNextStep } from "@/store/slices/uiSlice";
 import { createItemDto } from "@/store/utils/validate";
@@ -91,9 +92,12 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   const { location: storage, org } = useAppSelector(selectItemCreation);
   const tags = useAppSelector(selectAllTags);
   const tagsLoading = useAppSelector(selectTagsLoading);
+  const tagsTotal = useAppSelector(selectTagsTotal);
   const categories = useAppSelector(selectCategories);
   const categoriesLoading = useAppSelector(selectCategoriesLoading);
   const isEditing = useAppSelector(selectIsEditing);
+  const [tagPage, setTagPage] = useState(1);
+  const tagsPerPage = 10;
   const form = useForm<z.infer<typeof createItemDto>>({
     resolver: zodResolver(createItemDto),
     defaultValues:
@@ -214,20 +218,35 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
   }, [storage, form]);
 
   useEffect(() => {
-    if (tagSearch)
-      void dispatch(
-        fetchFilteredTags({ page: 1, limit: 20, search: tagSearch }),
-      );
-    else if (tags.length < 1)
-      void dispatch(
-        fetchFilteredTags({
-          page: 1,
-          limit: 20,
-          sortBy: "assigned_to",
-          sortOrder: "desc",
-        }),
-      );
+    setTagPage(1);
+    void dispatch(
+      fetchFilteredTags({
+        page: 1,
+        limit: tagsPerPage,
+        sortBy: "assigned_to",
+        sortOrder: "desc",
+        search: tagSearch,
+        append: false, // don't append on new search
+      }),
+    );
   }, [tagSearch, dispatch]);
+
+  const handleLoadMoreTags = () => {
+    const nextPage = tagPage + 1;
+    setTagPage(nextPage);
+    void dispatch(
+      fetchFilteredTags({
+        page: nextPage,
+        limit: tagsPerPage,
+        sortBy: "assigned_to",
+        sortOrder: "desc",
+        search: tagSearch,
+        append: true, // append when loading more
+      }),
+    );
+  };
+
+  const remainingTags = tagsTotal - tags.length;
 
   useEffect(() => {
     if ((editItem as CreateItemType)?.tags && tags.length > 0) {
@@ -625,6 +644,17 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
                           </Badge>
                         );
                       })}
+                    {!tagsLoading && remainingTags > 0 && (
+                      <Button
+                        type="button"
+                        variant="default"
+                        onClick={handleLoadMoreTags}
+                        className="h-auto rounded-md border px-2 py-0.5 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+                      >
+                        +{remainingTags}{" "}
+                        {t.addItemForm.buttons.loadMoreTags[appLang]}
+                      </Button>
+                    )}
                     {tagsLoading && (
                       <div className="flex flex-wrap gap-x-2">
                         {Array(20)
@@ -667,10 +697,7 @@ function AddItemForm({ onUpdate, initialData }: AddItemFromProps) {
             </AccordionItem>
 
             {/* Images */}
-            <AccordionItem
-              value="images"
-              className="p-10 w-full border-b-0 w-full"
-            >
+            <AccordionItem value="images" className="p-10 w-full border-b-0">
               <AccordionTrigger className="w-full" iconProps="!w-5 h-auto">
                 <div className="mb-6">
                   <h2 className="text-2xl font-semibold tracking-tight w-full text-start font-main text-primary">

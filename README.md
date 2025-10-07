@@ -1,4 +1,4 @@
-# FullStack Storage & Booking Application
+# Harakka Application
 
 A comprehensive platform for managing and booking storage items across multiple locations. This application allows users to browse available storage options, make reservations, and manage their bookings through an intuitive interface.
 
@@ -36,7 +36,7 @@ A comprehensive platform for managing and booking storage items across multiple 
 
 Comprehensive documentation is available in the `docs` directory:
 
-- [Getting Started Guide](docs/developers/getting-started.md) - Setup instructions
+- [Setup Script Guide](docs/developers/workflows/scripts/setup.md) - Setup Script Guide
 - [Project Overview](docs/developers/overview.md) - Architectural overview
 - [Project Structure](docs/developers/project-structure.md) - Directory organization
 - [Lessons Learned](docs/developers/lessons-learned.md) - Technical insights and knowledge gained
@@ -60,92 +60,5 @@ Comprehensive documentation is available in the `docs` directory:
 
 - [Development Cycle](docs/developers/workflows/development-cycle.md) - Git workflow
 - [Testing](docs/developers/workflows/testing.md) - Testing practices
-- [Default Deployment](docs/developers/workflows/default-deployment.md) - Default Production deployment
-- [Docker Deployment](docs/developers/workflows/docker-deployment.md) - Docker Deployment
+- [Default Deployment](docs/developers/workflows/default-deployment.md) - Default Production deployment (Azure)
 - [Contribution Guide](docs/developers/workflows/contribution-guide.md) - How to contribute
-
-## Prerequisites
-
-- **Node.js**: v18 or higher
-- **Supabase Account**: Free tier works for development
-
-## Quick Start
-
-1. **Clone the repository:**
-
-```sh
-git clone https://github.com/Ermegilius/FullStack_Storage_and_Booking_App.git
-cd FullStack_Storage_and_Booking_App
-```
-
-1. **Set up environment variables:**
-
-```sh
-./scripts/setup.sh
-# Choose option 2 for Local Development
-```
-
-1. **Install dependencies:**
-
-```sh
-npm run install-all
-```
-
-1. **Run the application:**
-
-```sh
-# Terminal 1: Start backend
-cd backend && npm run start:dev
-
-# Terminal 2: Start frontend  
-cd frontend && npm run dev
-```
-
-1. **Access the application:**
-   - Frontend: <http://localhost:5180>
-   - Backend API: <http://localhost:3000>
-
-## Deployment
-
-For production deployment options, see:
-
-- [Docker Deployment Guide](docs/developers/workflows/docker-deployment.md) -  Containerized deployment
-- [Default Deployment Guide](docs/developers/workflows/default-deployment.md) - Traditional deployment
-
-## Project Structure
-
-```sh
-FullStack_Storage_and_Booking_App/
-├── backend/                # NestJS application
-│   ├── src/                # Source code
-│   └── dbSetStatements/    # Database setup SQL
-├── frontend/               # React application
-│   └── src/                # Source code
-└── docs/                   # Documentation
-    └── developers/         # Developer guides
-```
-
-For a more detailed breakdown, see the [Project Structure](docs/developers/project-structure.md) documentation.
-
-## Development Workflow
-
-We follow a Git Flow-inspired branching strategy:
-
-- `main`: Production-ready code
-- `develop`: Integration branch
-- `feature/*`: For new features
-- `deployment`: For deployment configuration
-
-See the [Development Cycle](docs/developers/workflows/development-cycle.md) guide for details.
-
-## Contributing
-
-Contributions are welcome! Please read our [Contribution Guide](docs/developers/workflows/contribution-guide.md) before submitting changes.
-
-## License
-
-This project is licensed under the **FullStack Storage and Booking App Non-Commercial License v1.0**.  
-See the [LICENSE](./LICENSE) file for details.
-
-Commercial use is prohibited without a separate agreement.  
-To request permission for commercial use or to contact the team, please open an issue or reach out via our GitHub organization page: <404internsfound@gmail.com>

@@ -44,22 +44,24 @@ export const footer = {
         },
       },
     },
-    stayUpdated: {
+    theTeam: {
       title: {
-        fi: "PYSY AJAN TASALLA",
-        en: "STAY UP TO DATE",
+        en: "THE TEAM",
+        fi: "TIIMI",
       },
-      description: {
-        fi: "Ole ensimmäinen, joka tietää uusista LARP-tapahtumista, tuotteista tai paikoista Suomessa:",
-        en: "Be the first to know about new LARP events, products, or venues in Finland:",
+      devTeam: {
+        en: "Dev team",
+        fi: "Kehitystiimi",
       },
-      newsletter: {
-        fi: "Tilaa uutiskirjeemme",
-        en: "Subscribe to our newsletter",
-      },
-      followUs: {
-        fi: "SEURAA MEITÄ",
-        en: "FOLLOW US ON",
+      photographer: {
+        prefix: {
+          en: "Big thank you to photographer",
+          fi: "Suuri kiitos valokuvaajalle",
+        },
+        suffix: {
+          en: "for allowing use of his images",
+          fi: "hänen kuvien käytöstä",
+        },
       },
     },
   },

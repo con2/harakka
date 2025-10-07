@@ -59,6 +59,10 @@ export const itemCard = {
           fi: "Anna määrä. Nykyinen määrä {number}.",
         },
       },
+      viewDetails: {
+        en: "View details of {item_name}",
+        fi: "Näytä tuotteen {item_name} tiedot",
+      },
     },
   },
   updateQuantity: {
