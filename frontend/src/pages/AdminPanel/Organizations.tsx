@@ -19,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDate } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileTable from "@/components/ui/MobileTable";
 
 const Organizations = () => {
   const dispatch = useAppDispatch();
@@ -27,6 +29,7 @@ const Organizations = () => {
   const organizations = useAppSelector(selectOrganizations);
   const loading = useAppSelector(selectOrganizationLoading);
   const totalPages = useAppSelector((state) => state.organizations.totalPages);
+  const { isMobile } = useIsMobile();
 
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
@@ -96,7 +99,7 @@ const Organizations = () => {
     {
       header: t.organizations.columns.logo[lang],
       cell: ({ row }) => (
-        <div className="flex justify-start">
+        <div className="flex justify-end md:justify-start">
           <Avatar className="w-10 h-10">
             <AvatarImage
               src={row.original.logo_picture_url ?? undefined}
@@ -114,7 +117,7 @@ const Organizations = () => {
       accessorKey: "name",
       cell: ({ row }) => (
         <button
-          className="text-primary hover:underline font-medium text-left"
+          className="text-primary hover:underline font-medium text-left text-wrap truncate min-w-[70px] text-right md:text-left"
           onClick={() => openDetailsPage(row.original)}
           aria-label={t.organizations.accessibility.viewDetails[lang].replace(
             "{orgName}",
@@ -129,15 +132,6 @@ const Organizations = () => {
     {
       header: t.organizations.columns.slug[lang],
       accessorKey: "slug",
-    },
-    {
-      header: t.organizations.columns.description[lang],
-      accessorKey: "description",
-      cell: ({ row }) => (
-        <div className="max-w-xs break-words whitespace-normal">
-          {row.original.description || "—"}
-        </div>
-      ),
     },
     {
       header: t.organizations.columns.isActive[lang],
@@ -190,7 +184,7 @@ const Organizations = () => {
         </div>
       </div>
 
-      {loading ? (
+      {loading && (
         <div
           className="flex justify-center p-8"
           role="status"
@@ -204,6 +198,17 @@ const Organizations = () => {
             {t.organizations.accessibility.loading[lang]}
           </span>
         </div>
+      )}
+
+      {isMobile ? (
+        <MobileTable
+          columns={columns}
+          data={organizations}
+          pageIndex={currentPage - 1}
+          pageCount={totalPages}
+          onPageChange={(page) => handlePageChange(page + 1)}
+          rowClick={(row) => openDetailsPage(row.original)}
+        />
       ) : (
         <PaginatedDataTable
           columns={columns}

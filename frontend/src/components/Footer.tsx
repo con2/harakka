@@ -8,9 +8,9 @@ const Footer = () => {
 
   return (
     <footer className="bg-secondary text-white py-6 mt-auto">
-      <div className="max-w-4xl mx-auto px-4 text-center">
-        <div className="flex justify-center gap-8 mt-4 text-left text-sm group group-hover:[&_a]:underline">
-          <div className="flex flex-col flex-1">
+      <div className="max-w-4xl mx-auto px-8 text-center">
+        <div className="flex justify-center gap-8 mt-4 text-left text-sm group group-hover:[&_a]:underline flex-wrap">
+          <div className="flex flex-col flex-1 min-w-[120px]">
             <h3>{t.footer.sections.shop.title[lang]}</h3>
             <ul className="text-left">
               <li>
@@ -36,7 +36,7 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-col flex-1 min-w-[120px]">
             <h3>{t.footer.sections.about.title[lang]}</h3>
             <ul className="text-left">
               <li>
@@ -65,7 +65,7 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-col flex-1 min-w-[200px]">
             <h3>{t.footer.sections.theTeam.title[lang]}</h3>
             <div className="flex flex-col gap-2">
               <Link to="" className="hover:underline underline-offset-2">

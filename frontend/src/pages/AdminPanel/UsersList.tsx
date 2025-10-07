@@ -27,7 +27,7 @@ import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { PaginatedDataTable } from "@/components/ui/data-table-paginated";
-import { formatRoleName } from "@/utils/format";
+import { formatSnakeCase } from "@/utils/format";
 import { refreshSupabaseSession } from "@/store/utils/refreshSupabaseSession";
 import { toast } from "sonner";
 import {
@@ -37,6 +37,15 @@ import {
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import Spinner from "@/components/Spinner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileTable from "@/components/ui/MobileTable";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const UsersList = () => {
   // ————————————— Hooks & Selectors —————————————
@@ -75,7 +84,8 @@ const UsersList = () => {
     useState<string>("user");
   const [assigningRole, setAssigningRole] = useState(false);
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 500);
-
+  const { isMobile, width } = useIsMobile();
+  const isTablet = width <= 1140;
   // ————————————— Derived Values —————————————
   const isAuthorized = hasAnyRole(["tenant_admin", "super_admin"]);
   const isSuper = hasRole("super_admin");
@@ -339,6 +349,28 @@ const UsersList = () => {
     }
   };
 
+  const handlePageChange = (page: number) => {
+    // Determine the org filter to send to backend
+    let backendOrgFilter = getOrgFilter();
+
+    // For super admin, if org filter is selected, use that for backend filtering
+    if (isSuper && orgFilter !== "all") {
+      backendOrgFilter = orgFilter;
+    }
+
+    void dispatch(
+      fetchAllOrderedUsers({
+        org_filter: backendOrgFilter,
+        page: page + 1,
+        limit: 10,
+        ascending: true,
+        ordered_by: "created_at",
+        searchquery: debouncedSearchQuery || undefined,
+        selected_role: roleFilter !== "all" ? roleFilter : undefined,
+      }),
+    );
+  };
+
   // clear previous search results when opening the panel
   const toggleAddUser = useCallback(() => {
     if (!showAddUser) {
@@ -383,23 +415,27 @@ const UsersList = () => {
 
   // ————————————— Columns —————————————
   const columns: ColumnDef<UserProfile>[] = [
-    {
-      accessorKey: "profile_picture_url",
-      header: "",
-      size: 50,
-      cell: ({ row }) => {
-        const url = row.original.profile_picture_url;
-        return url && url.trim() ? (
-          <img
-            src={url}
-            alt="Profile"
-            className="h-8 w-8 rounded-full object-cover"
-          />
-        ) : (
-          <CircleUser className="h-8 w-8 text-gray-300 items-center justify-center" />
-        );
-      },
-    },
+    ...(!isTablet && !isMobile
+      ? [
+          {
+            accessorKey: "profile_picture_url",
+            header: "",
+            size: 50,
+            cell: ({ row }) => {
+              const url = row.original.profile_picture_url;
+              return url && url.trim() ? (
+                <img
+                  src={url}
+                  alt="Profile"
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              ) : (
+                <CircleUser className="h-8 w-8 text-gray-300 items-center justify-center" />
+              );
+            },
+          } as ColumnDef<UserProfile>,
+        ]
+      : []),
     {
       accessorKey: "full_name",
       header: t.usersList.columns.name[lang],
@@ -419,7 +455,6 @@ const UsersList = () => {
     {
       accessorKey: "email",
       header: t.usersList.columns.email[lang],
-      size: 350,
       cell: ({ row }) => {
         const email = row.original.email;
         return email ? (
@@ -481,7 +516,7 @@ const UsersList = () => {
 
               // Multiple orgs - show first few with overflow indicator
               return (
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1 justify-end lg:justify-start">
                   {orgArray.slice(0, 2).map((org, index) => (
                     <span
                       key={index}
@@ -529,7 +564,7 @@ const UsersList = () => {
               const primaryRole = displayRoles[0];
               return (
                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                  {formatRoleName(primaryRole.role || "user")}
+                  {formatSnakeCase(primaryRole.role || "user")}
                 </span>
               );
             },
@@ -555,7 +590,7 @@ const UsersList = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl">
+          <h1 className="text-2xl md:text-xl">
             {isSuper
               ? t.usersList.titleSuper[lang]
               : t.usersList.titleOrg[lang].replace(
@@ -590,7 +625,7 @@ const UsersList = () => {
 
       {error && <p className="text-red-500">Error: {error}</p>}
 
-      <div className="flex flex-wrap items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-y-4">
         <div className="flex flex-wrap gap-4">
           <div className="flex gap-4 items-center relative sm:max-w-xs min-w-[250px]">
             <Search
@@ -608,39 +643,56 @@ const UsersList = () => {
 
           {/* Org filter for super admin */}
           {isSuper && (
-            <select
+            <Select
               aria-label={t.usersList.aria.labels.filters.orgFilter[lang]}
               value={orgFilter}
-              onChange={(e) => {
-                setOrgFilter(e.target.value);
+              onValueChange={(val) => {
+                setOrgFilter(val);
                 setRoleFilter("all"); // reset role filter when org changes
               }}
-              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
             >
-              <option value="all">{t.usersList.filters.orgFilter[lang]}</option>
-              {availableOrganizations.map((org) => (
-                <option key={org.id} value={org.id}>
-                  {org.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue>
+                  {
+                    availableOrganizations?.find((o) => o.id === orgFilter)
+                      ?.name
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  {t.usersList.filters.orgFilter[lang]}
+                </SelectItem>
+                {availableOrganizations.map((org) => (
+                  <SelectItem value={org.id} key={org.id}>
+                    {org.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
 
           {/* Role filter - always for tenant admin, only after org is selected for super admins */}
           {(!isSuper || orgFilter !== "all") && (
-            <select
+            <Select
               aria-label={t.usersList.aria.labels.filters.roleFilter[lang]}
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="select bg-white text-sm p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--secondary)] focus:border-[var(--secondary)]"
+              onValueChange={(val) => setRoleFilter(val)}
             >
-              <option value="all">{t.usersList.filters.roles.all[lang]}</option>
-              {availableRoles.map((role) => (
-                <option key={role.id} value={role.role}>
-                  {formatRoleName(role.role)}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue>{formatSnakeCase(roleFilter)}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  {t.usersList.filters.roles.all[lang]}
+                </SelectItem>
+                {availableRoles.map((role) => (
+                  <SelectItem value={role.role} key={role.id}>
+                    {formatSnakeCase(role.role)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
 
           {(searchQuery ||
@@ -833,37 +885,28 @@ const UsersList = () => {
         </div>
       </div>
 
-      <PaginatedDataTable
-        columns={columns}
-        data={displayedUsers}
-        pageIndex={Math.max(0, (users.metadata?.page ?? 1) - 1)}
-        pageCount={users.metadata?.totalPages || 1}
-        onPageChange={(page) => {
-          // Determine the org filter to send to backend
-          let backendOrgFilter = getOrgFilter();
-
-          // For super admin, if org filter is selected, use that for backend filtering
-          if (isSuper && orgFilter !== "all") {
-            backendOrgFilter = orgFilter;
-          }
-
-          void dispatch(
-            fetchAllOrderedUsers({
-              org_filter: backendOrgFilter,
-              page: page + 1,
-              limit: 10,
-              ascending: true,
-              ordered_by: "created_at",
-              searchquery: debouncedSearchQuery || undefined,
-              selected_role: roleFilter !== "all" ? roleFilter : undefined,
-            }),
-          );
-        }}
-        rowProps={(row) => ({
-          onClick: () => navigate(`/admin/users/${row.original.id}`),
-          className: "cursor-pointer",
-        })}
-      />
+      {isTablet || isMobile ? (
+        <MobileTable
+          columns={columns}
+          data={displayedUsers}
+          rowClick={(row) => navigate(`/admin/users/${row.original.id}`)}
+          pageIndex={Math.max(0, (users.metadata?.page ?? 1) - 1)}
+          pageCount={users.metadata?.totalPages || 1}
+          onPageChange={handlePageChange}
+        />
+      ) : (
+        <PaginatedDataTable
+          columns={columns}
+          data={displayedUsers}
+          pageIndex={Math.max(0, (users.metadata?.page ?? 1) - 1)}
+          pageCount={users.metadata?.totalPages || 1}
+          onPageChange={handlePageChange}
+          rowProps={(row) => ({
+            onClick: () => navigate(`/admin/users/${row.original.id}`),
+            className: "cursor-pointer",
+          })}
+        />
+      )}
     </div>
   );
 };

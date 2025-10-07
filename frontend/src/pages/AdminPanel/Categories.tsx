@@ -15,17 +15,29 @@ import {
 } from "@/store/slices/categoriesSlice";
 import { Category } from "@common/items/categories";
 import { ColumnDef } from "@tanstack/react-table";
-import { Plus, Search, Trash } from "lucide-react";
+import { ArrowUpDown, ListFilter, Plus, Search, Trash } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { t } from "@/translations";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import { Input } from "@/components/ui/input";
+import MobileTable from "@/components/ui/MobileTable";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function Categories() {
+  const { width } = useIsMobile();
+  const isMobile = width <= 600;
   const { lang } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const categories = useAppSelector(selectCategories);
   const loading = useAppSelector(selectCategoriesLoading);
@@ -35,7 +47,9 @@ function Categories() {
   // Local state
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebouncedValue(searchTerm);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    (location.state as { page?: number })?.page ?? 1,
+  );
   const [order, setOrder] = useState("");
   const [ascending, setAscending] = useState<boolean | null>(null);
 
@@ -74,6 +88,14 @@ function Categories() {
     );
   }, [currentPage, dispatch, debouncedSearchTerm, order, ascending]);
 
+  const SORT_BY = [
+    { label: t.categories.table.name, value: "name" },
+    { label: t.categories.table.assignedTo, value: "assigned_to" },
+  ];
+  const SORT_ORDERS = [
+    { label: t.common.filters.ascending, value: true },
+    { label: t.common.filters.descending, value: false },
+  ];
   const categoryColumns: ColumnDef<Category>[] = [
     {
       id: "name",
@@ -141,7 +163,7 @@ function Categories() {
         {t.categories.headings.manageCategories[lang]}
       </h1>
 
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-wrap md:justify-between items-center mb-4 gap-4">
         <div className="flex gap-4 items-center relative sm:max-w-xs min-w-[250px]">
           <Search
             aria-hidden
@@ -156,6 +178,53 @@ function Categories() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        {isMobile && (
+          <>
+            <Select onValueChange={(val) => setOrder(val)} value={order}>
+              <SelectTrigger>
+                <ListFilter />
+                <SelectValue placeholder={t.common.filters.sortBy[lang]}>
+                  {SORT_BY.find((o) => o.value === order)?.label[lang] ||
+                    t.common.filters.sortBy[lang]}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_BY.map((order) => {
+                  const { value, label } = order;
+                  return (
+                    <SelectItem value={value} key={`sort-${value}`}>
+                      {label[lang]}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <Select
+              onValueChange={(val) => setAscending(val === "true")}
+              value={ascending ? "true" : "false"}
+            >
+              <SelectTrigger>
+                <ArrowUpDown />
+                <SelectValue placeholder={t.common.filters.sortOrder[lang]}>
+                  {SORT_ORDERS.find((o) => o.value === ascending)?.label[lang]}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_ORDERS.map((order) => {
+                  const { value, label } = order;
+                  return (
+                    <SelectItem
+                      key={`sort-order-${value}`}
+                      value={value.toString()}
+                    >
+                      {label[lang]}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </>
+        )}
         <Button
           variant="outline"
           className="gap-2"
@@ -166,24 +235,42 @@ function Categories() {
         </Button>
       </div>
 
-      <PaginatedDataTable
-        columns={categoryColumns}
-        data={categories}
-        pageIndex={currentPage - 1}
-        pageCount={totalPages}
-        handleAscending={handleAscending}
-        handleOrder={handleSortOrder}
-        order={order}
-        ascending={ascending}
-        onPageChange={(page) => handlePageChange(page + 1)}
-        rowProps={(row) => ({
-          style: { cursor: "pointer" },
-          onClick: () => {
+      {isMobile ? (
+        <MobileTable
+          columns={categoryColumns}
+          data={categories}
+          pageIndex={currentPage - 1}
+          pageCount={totalPages}
+          onPageChange={(page) => handlePageChange(page + 1)}
+          rowClick={(row) => {
             void dispatch(setSelectedCategory(row.original));
-            void navigate(`/admin/categories/${row.original.id}`);
-          },
-        })}
-      />
+            void navigate(`/admin/categories/${row.original.id}`, {
+              state: { page: currentPage },
+            });
+          }}
+        />
+      ) : (
+        <PaginatedDataTable
+          columns={categoryColumns}
+          data={categories}
+          pageIndex={currentPage - 1}
+          pageCount={totalPages}
+          handleAscending={handleAscending}
+          handleOrder={handleSortOrder}
+          order={order}
+          ascending={ascending}
+          onPageChange={(page) => handlePageChange(page + 1)}
+          rowProps={(row) => ({
+            style: { cursor: "pointer" },
+            onClick: () => {
+              void dispatch(setSelectedCategory(row.original));
+              void navigate(`/admin/categories/${row.original.id}`, {
+                state: { page: currentPage },
+              });
+            },
+          })}
+        />
+      )}
     </>
   );
 }
