@@ -112,7 +112,7 @@ const UserBanHistory = ({ user, refreshKey = 0 }: Props) => {
     {
       header: t.userBanHistory.columns.reason[lang],
       cell: ({ row }: { row: Row<SimpleBanHistoryItem> }) =>
-        row.original.ban_reason || "---",
+        row.original.ban_reason || "-",
     },
     {
       header: t.userBanHistory.status.date[lang],
