@@ -100,8 +100,10 @@ By default, any new user on the first "SIGNED_IN" event is assigned to the "user
    ```
 
 7. Verify the user has super_admin rights by signing in to the Harakka application and accessing the user menu:
+
    user menu > Change organization > SuperAdmin
-   ![user menu with Super Admin option](image-1.png)
+
+   ![user menu with Super Admin option](./assets/quick-start-super-admin-check.png)
 
 ## Additional Resources
 

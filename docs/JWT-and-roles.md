@@ -160,7 +160,7 @@ The application implements a sophisticated token refresh strategy:
 
 Supabase access tokens have a configured expiration time of **3600 seconds (1 hour)**. This setting determines how long a JWT remains valid before requiring renewal:
 
-![JWT expiration settings in Supabase UI](image.png)
+![JWT expiration settings in Supabase UI](./assets/jwt-and-roles-token-expirity-time.png)
 
 ```
 ┌─────────────────┐     ┌───────────────────────────┐
