@@ -20,7 +20,7 @@ import {
   toggleIsEditing,
 } from "@/store/slices/itemsSlice";
 import { setPrevStep, setStepper } from "@/store/slices/uiSlice";
-import { ItemFormData } from "@common/items/form.types";
+import { CreateItemType, ItemFormData } from "@common/items/form.types";
 import { CircleAlert, ClipboardPen, Loader2Icon, Trash } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -31,6 +31,10 @@ import {
   TooltipTrigger,
   Tooltip,
 } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import MobileTable from "@/components/ui/MobileTable";
+import { getItemColumns } from "../add-item.columns";
 
 function Summary() {
   const form = useAppSelector(selectItemCreation);
@@ -40,6 +44,7 @@ function Summary() {
   const loading = useAppSelector(selectItemsLoading);
   const uploadError = useAppSelector(selectItemsError);
   const navigate = useNavigate();
+  const { isMobile } = useIsMobile();
 
   const createNext = () => dispatch(setPrevStep());
   const editItem = (id: string) => {
@@ -47,33 +52,42 @@ function Summary() {
     void dispatch(editLocalItem(id));
     dispatch(setPrevStep());
   };
-  const handleSubmit = async () => {
-    try {
-      await dispatch(createItem(form as ItemFormData)).unwrap();
-      if (uploadError) throw new Error(uploadError);
-      toast.success("Your items were created!");
-      const newItems = items.flatMap((item) => item.id);
-      void dispatch(setStepper(1));
-      void dispatch(clearOrgLocations());
-      void navigate("/admin/items", {
-        state: {
-          ascending: false,
-          newItems: newItems,
-          highlight: Array.from({ length: newItems.length }, (_, i) => i),
-        },
-      });
-    } catch (error) {
-      toast.error(
-        typeof error === "string"
-          ? error
-          : "Items could not be created. Contact support if the error persists.",
-      );
-    }
+  const handleDelete = (item: CreateItemType) =>
+    dispatch(removeFromItemCreation(item.id));
+  const columns = getItemColumns(editItem, handleDelete);
+  const handleSubmit = () => {
+    toast.promise(
+      (async () => {
+        const result = await dispatch(
+          createItem(form as ItemFormData),
+        ).unwrap();
+        if (uploadError) throw new Error(uploadError);
+
+        const newItems = items.flatMap((item) => item.id);
+
+        void dispatch(setStepper(1));
+        void dispatch(clearOrgLocations());
+        void navigate("/admin/items", {
+          state: {
+            ascending: false,
+            newItems,
+            highlight: Array.from({ length: newItems.length }, (_, i) => i),
+          },
+        });
+
+        return result;
+      })(),
+      {
+        loading: t.itemSummary.messages.toastPromise.loading[lang],
+        success: t.itemSummary.messages.toastPromise.success[lang],
+        error: t.itemSummary.messages.toastPromise.error[lang],
+      },
+    );
   };
 
   return (
     <>
-      <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px] flex-col p-10 gap-4">
+      <div className="bg-white flex flex-wrap rounded border mt-4 max-w-[900px] flex-col p-8 md:p-10 gap-4">
         <p className="scroll-m-20 text-2xl font-semibold tracking-tight w-full">
           {t.itemSummary.headings[lang]}
         </p>
@@ -88,8 +102,15 @@ function Summary() {
             </p>
           </div>
         )}
-        {/* Items */}
-        {items.length > 0 ? (
+        {/* Items - Mobile */}
+        {isMobile && items.length > 0 && (
+          <MobileTable
+            columns={columns}
+            data={items}
+            rowClick={(row) => editItem(row.original.id)}
+          />
+        )}
+        {items.length > 0 && !isMobile && (
           <>
             <OriginalTable>
               <OriginalTableHeader>
@@ -112,7 +133,7 @@ function Summary() {
                 {items.map((item) => (
                   <OriginalTableRow key={item.id}>
                     <OriginalTableCell
-                      width="250"
+                      width={cn(isMobile ? "150" : "250")}
                       className="font-medium max-w-[250px] truncate min-h-[49px] gap-2 flex items-center"
                     >
                       {form.errors?.[item.id] && (
@@ -197,32 +218,34 @@ function Summary() {
                 </OriginalTableRow>
               </OriginalTableFooter>
             </OriginalTable>
-
-            {/* Summary Actions */}
-            <div className="flex justify-end gap-4">
-              {/* Create another */}
-              <Button variant="default" disabled={loading} onClick={createNext}>
-                {t.itemSummary.buttons.createAnother[lang]}
-              </Button>
-
-              {/* Upload Items */}
-              {loading ? (
-                <Button variant="outline" disabled>
-                  <Loader2Icon className="animate-spin mr-2" />
-                  {t.itemSummary.buttons.uploading[lang]}
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  disabled={loading || Object.entries(form.errors).length > 0}
-                  onClick={handleSubmit}
-                >
-                  {t.itemSummary.buttons.uploadItems[lang]}
-                </Button>
-              )}
-            </div>
           </>
-        ) : (
+        )}
+        {/* Summary Actions */}
+        {items.length > 0 && (
+          <div className="flex justify-end gap-4 flex-wrap mt-4">
+            {/* Create another */}
+            <Button variant="default" disabled={loading} onClick={createNext}>
+              {t.itemSummary.buttons.createAnother[lang]}
+            </Button>
+
+            {/* Upload Items */}
+            {loading ? (
+              <Button variant="outline" disabled>
+                <Loader2Icon className="animate-spin mr-2" />
+                {t.itemSummary.buttons.uploading[lang]}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                disabled={loading || Object.entries(form.errors).length > 0}
+                onClick={handleSubmit}
+              >
+                {t.itemSummary.buttons.uploadItems[lang]}
+              </Button>
+            )}
+          </div>
+        )}
+        {items.length === 0 && (
           <div className="text-center my-6">
             <p className="font-semibold mb-2">
               {t.itemSummary.paragraphs.noItems[lang]}

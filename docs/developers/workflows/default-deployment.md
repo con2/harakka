@@ -2,248 +2,152 @@
 
 This document outlines the process for deploying the application.
 
-## Table of Contents
+## Overview
 
-- [Prerequisites](#prerequisites)
-- [Environment Configuration](#environment-configuration)
-  - [Setting Environment Variables](#setting-environment-variables)
-- [Deployment Configuration with YAML](#deployment-configuration-with-yaml)
-  - [Backend Deployment](#backend-deployment)
-  - [Frontend Deployment](#frontend-deployment)
-- [Database Setup](#database-setup)
-- [Post-Deployment Verification](#post-deployment-verification)
+This guide documents production deployment of the Harakka application to Azure.
+
+| Layer     | Stack        | Azure Resource                            |
+| --------- | ------------ | ----------------------------------------- |
+| Frontend  | React + Vite | Static Web App `booking-app-frontend`     |
+| Backend   | NestJS API   | App Service (Linux) `booking-app-backend` |
+| Data/Auth | Supabase     | Managed PostgreSQL + Auth                 |
+
+GitHub Actions workflows orchestrate deployments:
+
+- **Backend** – `.github/workflows/deployment-back.yml`
+- **Frontend** – `.github/workflows/deployment-front.yml`
+
+## Azure Resource Configuration
+
+> **Note**: For detailed step-by-step instructions on creating these Azure resources with screenshots, refer to the [Azure Resource Setup Guide](./Azure-instances-creation.md).
+
+### Backend – App Service (Linux)
+
+- Plan: Basic SKU, 1 worker, AlwaysOn disabled
+- Runtime: `NODE|20-lts`
+- HTTPS enforced; client certificates required.
+- Linked Application Insights: `booking-app-backend`
+- Health endpoint: `/health`
+- SSH enabled for diagnostics.
+- Slots currently **not** configured.
+
+### Frontend – Static Web App
+
+- SKU: Standard
+- Default hostname: `agreeable-grass-049dc8010.6.azurestaticapps.net`
+- Deployment token auth with GitHub-integrated CI.
+- Staging environments enabled (per Pull Request).
+- Custom domains not configured.
 
 ## Prerequisites
 
-Before deployment, ensure you have:
+1. **Accounts & Access**
+   - Azure subscription with Contributor rights to the target resources.
+   - GitHub repository access with permission to manage Actions secrets and environments.
+2. **Tooling**
 
-- **Node.js**: v20 or higher
-- **Git CLI**: Installed and configured
-- **Supabase Account**: Remote instance with production-ready configuration
-- **Azure Account**: For managing Azure deployment
+   - Node.js ≥ 20 (local verification).
+   - Git CLI.
+   - Azure CLI (optional for manual verification).
+   - Postman or similar for endpoint testing.
 
-## Environment Configuration
+3. **Supabase**
+
+- Production Supabase URL, anon key, service role key, and JWT secret.
+
+4. **Azure Resources**
+
+- Resource Group, App Service, and Static Web App configured as described in the [Azure Resource Setup Guide](./Azure-instances-creation.md).
+
+## Secrets & Configuration
 
 The project uses a `.env.local` file for development.
 For production deployment build stage, we use YAML configuration files rather than separate environment files. These are managed securely via CI/CD secrets in GitHub Actions. Runtime env variables are stored in Azure.
+
+| Secret                                                      | Location                                         | Used By           | Purpose                            |
+| ----------------------------------------------------------- | ------------------------------------------------ | ----------------- | ---------------------------------- |
+| `AZURE_WEBAPP_PUBLISH_PROFILE`                              | GitHub Secrets                                   | Backend workflow  | App Service deployment credentials |
+| `SUPABASE_URL`                                              | GitHub Secrets → App Service                     | Backend           | DB endpoint                        |
+| `SUPABASE_SERVICE_ROLE_KEY`                                 | GitHub Secrets → App Service                     | Backend           | Service role key                   |
+| `SUPABASE_ANON_KEY`                                         | GitHub Secrets → App Service & Static Web App    | Both              | Public key                         |
+| `SUPABASE_JWT_SECRET`                                       | GitHub Secrets → App Service                     | Backend           | JWT signing                        |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_GRASS_049DC8010` | GitHub Secrets                                   | Frontend workflow | Static Web App deployment token    |
+| `VITE_API_URL`                                              | Static Web App configuration (`.env.production`) | Frontend          | Backend base URL                   |
+| `ALLOWED_ORIGINS`                                           | App Service app settings                         | Backend           | CORS whitelist                     |
 
 ### Setting Environment Variables
 
 - **GitHub Actions**: Add these variables to your repository's `Secrets` under **Settings > Secrets and Variables > Actions**.
 - **Local Development**: Use `.env.local` files for development.
 
-## Deployment Configuration with YAML
+## CI/CD Workflow Details
 
-Our deployment configurations are maintained in YAML files.
+### Backend – `deployment-back.yml`
 
-### Backend Deployment
+1. Trigger: push to `main` or manual dispatch.
+2. Steps:
+   - Checkout repo.
+   - Setup Node 20 with npm cache.
+   - Install `common` package types, then backend dependencies (`npm ci`).
+   - Build (`npm run build`) with increased memory limit.
+   - Stage deployment bundle without dev dependencies.
+   - Deploy via `azure/webapps-deploy@v2` using publish profile.
+   - Inject runtime variables during deployment.
+   - Post-deploy health check (`curl /health`).
 
-The backend deployment configuration is located at [Backend yaml](../../github/workflows/deployment-back.yml`)
+> Ensure corresponding App Service **Configuration > Application settings** contains the same env variables as the workflow to keep runtime and redeploy parity.
 
-The CI/CD pipelines are triggered automatically on:
+### Frontend – `deployment-front.yml`
 
-- Push events to the `main` branch.
-- Pull request events for `main`.
+1. Trigger: push to `main` and PR lifecycle.
+2. Steps:
+   - Checkout with submodules.
+   - Install shared `common` package and frontend deps (`npm install` after removing stale lock file).
+   - Remove circular symlinks that confuse `npm`.
 
-```yaml
-   name: Deploy Backend to Azure
+- Generate `.env.production` with Supabase + API vars.
+- Build Vite app.
+- Ensure `staticwebapp.config.json` is copied into `dist`.
+- Deploy prebuilt artifacts with `Azure/static-web-apps-deploy@v1` (`skip_app_build: true`).
+- Run env variable diagnostics.
 
-   permissions:
-   contents: read
+PR builds provision staging environments automatically; closing the PR triggers cleanup.
 
-   on:
-   push:
-      branches: [main]
-   workflow_dispatch:
+## Deployment Procedure
 
-   jobs:
-   build-and-deploy:
-      runs-on: ubuntu-latest
+1. Merge changes into `main`.
+2. Monitor GitHub Actions for both workflows:
+   - Backend job `azure/webapps-deploy@v2`.
+   - Frontend job `Azure/static-web-apps-deploy@v1`.
+3. Confirm backend availability:
 
-      steps:
-         - uses: actions/checkout@v4
+   ```bash
+   curl -sf https://<backend>/health
+   ```
 
-         - name: Set up Node.js
-         uses: actions/setup-node@v3
-         with:
-            node-version: "20.x"
-            cache: "npm"
-            cache-dependency-path: "backend/package-lock.json"
+4. Validate frontend at `https://agreeable-grass-049dc8010.6.azurestaticapps.net`.
+5. Check Azure Portal:
+   - App Service → Deployment Center for latest deployment.
+   - Static Web App → Environments for production status.
+   - Application Insights → Failures/Live Metrics for backend health.
 
-         - name: Install common dependencies (common types folder)
-         run: |
-            cd common
-            npm ci
+## Environment Management
 
-         - name: Install dependencies
-         run: |
-            cd backend
-            npm ci
+- Keep development `.env.local` separate; never commit secrets.
+- For staging/preview:
+  - GitHub PRs automatically build frontend preview via Static Web Apps.
+  - Backend previews require manual process (consider deployment slots).
 
-         - name: Build
-         run: |
-            cd backend
-            npm run build
-         env:
-            NODE_OPTIONS: "--max-old-space-size=4096"
+## Troubleshooting
 
-         - name: Prepare deployment
-         run: |
-            cd backend
-            # Create deployment package without dev dependencies
-            mkdir deployment
-            cp -r dist Procfile package.json package-lock.json assets config.mts deployment/
-            cd deployment
-            npm ci --omit=dev
-
-         - name: Deploy to Azure Web App
-         id: deploy-to-webapp
-         uses: azure/webapps-deploy@v2
-         with:
-            app-name: "booking-app-backend"
-            publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-            package: "./backend/deployment"
-         env:
-            SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-            SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-            SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-            ALLOWED_ORIGINS: "https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180"
-            SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
-            NODE_ENV: "production"
-            ENV: "production"
-
-         - name: Post-deployment verification
-         if: success()
-         run: |
-            echo "Deployment completed, waiting for app to start..."
-            sleep 15
-            curl -s "https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net/health" || echo "App may still be starting"
-```
-
-### Frontend Deployment
-
-The frontend deployment configuration is located at [Frontend yaml](../../github/workflows/deployment-front.yml).
-
-```yaml
-   name: Azure Static Web Apps CI/CD
-permissions:
-  contents: read
-  pull-requests: write
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches:
-      - main
-
-jobs:
-  build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
-    runs-on: ubuntu-latest
-    name: Build and Deploy Job
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true
-          lfs: false
-      - name: Install common dependencies (common types folder)
-        run: |
-          cd common
-          npm ci
-      - name: Install front dependencies
-        working-directory: ./frontend
-        run: |
-          rm -f package-lock.json
-          npm install
-      - name: Clean problematic symlinks (circular references)
-        run: |
-          find frontend/node_modules -type l -name "common" -delete
-          find frontend/node_modules -type l -name "full-stack-booking-app" -delete
-      - name: Create environment file
-        run: |
-          cd frontend
-          echo "VITE_SUPABASE_URL=https://rcbddkhvysexkvgqpcud.supabase.co" > .env.production
-          echo "VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env.production
-          echo "VITE_API_URL=https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net" >> .env.production
-
-        # Build the frontend
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
-      - name: Prepare for deployment
-        run: |
-          cd frontend
-           # Copy staticwebapp.config.json into dist if it's not already there
-           if [ ! -f dist/staticwebapp.config.json ]; then
-             cp staticwebapp.config.json dist/
-           fi
-
-           # Clean up the dist folder to ensure minimum files
-           echo "=== Files in dist before cleanup ==="
-           find dist -type f | sort
-
-           # Double-check file count
-           echo "Final file count before deployment:"
-           find dist -type f | wc -l
-
-           # Show size of distribution
-           du -sh dist
-
-      - name: Deploy to Azure Static Web Apps
-        id: builddeploy
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_GRASS_049DC8010 }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
-          action: "upload"
-          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "/frontend/dist" # App source code path
-          api_location: "" # Api source code path - optional
-          output_location: "" # Built app content directory - optional
-          skip_app_build: true # Set to true to skip building the app - optional
-          app_build_command: "echo 'Skipping build'"
-          config_file_location: "/frontend"
-          ###### End of Repository/Build Configurations ######
-      - name: Verify Environment Variables
-        run: |
-          cd frontend
-          echo "Checking environment variables for troubleshooting:"
-          echo "VITE_SUPABASE_URL length: ${#VITE_SUPABASE_URL}"
-          echo "VITE_SUPABASE_ANON_KEY available: $(if [ -n "$VITE_SUPABASE_ANON_KEY" ]; then echo "Yes"; else echo "No"; fi)"
-          echo "VITE_API_URL available: $(if [ -n "$VITE_API_URL" ]; then echo "Yes"; else echo "No"; fi)"
-        env:
-          VITE_SUPABASE_URL: "https://rcbddkhvysexkvgqpcud.supabase.co"
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          VITE_API_URL: https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net
-
-  close_pull_request_job:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    name: Close Pull Request Job
-    steps:
-      - name: Close Pull Request
-        id: closepullrequest
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_GRASS_049DC8010 }}
-          action: "close"
-          app_location: "/frontend/dist"
-```
+| Symptom                            | Likely Cause                                   | Resolution                                                 |
+| ---------------------------------- | ---------------------------------------------- | ---------------------------------------------------------- |
+| Backend returns 500                | Missing env vars or Supabase outage            | Verify App Service settings and Supabase status            |
+| Frontend build fails in CI         | Cached lock file or dependency mismatch        | Re-run with cleared cache, validate `common` package       |
+| Frontend loads but API unavailable | `VITE_API_URL` incorrect or backend down       | Confirm Static Web App configuration, check `/health`      |
+| Supabase auth failures             | Key rotated without redeploy                   | Update GitHub secrets and redeploy both services           |
+| PR staging not created             | Missing deployment token or action permissions | Re-issue Static Web App token, ensure workflow permissions |
 
 ## Database Setup
 
 The application uses a remote Supabase instance for database and authentication.
-
-<!-- TODO: UPDATE THE LINK AFTER WE REFINE SUPABASE SETUP DOC -->
-
-Refer to the [Supabase Setup Guide](../backend/supabase-setup.md) guide for detailed instructions on configuring your Supabase instance.
-
-## Post-Deployment Verification
-
-- **Backend**: Verify the health endpoint at `<backend-url>/health`.
-- **Frontend**: Open the deployed frontend URL and ensure the application loads correctly.

@@ -42,12 +42,12 @@ export class ItemImagesController {
       alt_text?: string;
       image_type: "main" | "detail";
       display_order: number;
+      object_fit: "cover" | "contain";
     },
   ) {
     if (!file) {
       throw new BadRequestException("No image file provided");
     }
-
     return this.itemImagesService.uploadItemImage(req, itemId, file, metadata);
   }
 

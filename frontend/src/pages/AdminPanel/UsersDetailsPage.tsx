@@ -9,7 +9,7 @@ import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { formatSnakeCase } from "@/utils/format";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Clipboard, RefreshCw } from "lucide-react";
+import { ChevronLeft, Clipboard } from "lucide-react";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import {
   Accordion,
@@ -762,29 +762,6 @@ const UsersDetailsPage = () => {
             </Label>
 
             <div className="flex items-center gap-2">
-              {/* Add refresh button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  try {
-                    await refreshSupabaseSession();
-                    await refreshAllUserRoles(true);
-                    toast.success(
-                      t.usersDetailsPage.toasts.roleRefreshSuccess[lang],
-                    );
-                  } catch (err) {
-                    console.error("Failed to refresh roles:", err);
-                    toast.error(
-                      t.usersDetailsPage.toasts.roleRefreshError[lang],
-                    );
-                  }
-                }}
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                {t.usersDetailsPage.buttons.refresh[lang]}
-              </Button>
-
               {isSuperAdmin && (
                 <Button
                   variant="outline"

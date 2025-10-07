@@ -426,7 +426,6 @@ function RequestDetailsPage() {
   };
 
   if (!booking) return null;
-  // console.log(groupedBookingItems);
 
   const {
     booking_number,

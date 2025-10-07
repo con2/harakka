@@ -51,6 +51,7 @@ export interface UploadItemImageDto {
   display_order: number;
   alt_text?: string;
   is_active: boolean;
+  object_fit: "contain" | "cover";
 }
 
 export type FileWithMetadata = {

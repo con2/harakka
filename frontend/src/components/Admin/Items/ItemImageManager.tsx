@@ -229,6 +229,7 @@ const ItemImageManager = ({ itemId }: ItemImageManagerProps) => {
       display_order: highestOrder + 1,
       alt_text: altText,
       is_active: true,
+      object_fit: "cover" as "cover" | "contain",
     };
 
     setUploadProgress(10); // Start progress
