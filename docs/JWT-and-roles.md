@@ -1,4 +1,4 @@
-# JWT and Roles in Storage & Booking App
+# JWT and Roles in Harakka App
 
 This document describes the JWT (JSON Web Token) authentication flow and role-based authorization system used in the Harakka Application.
 
