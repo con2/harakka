@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import {
   PostgrestMaybeSingleResponse,
   PostgrestResponse,
@@ -37,6 +37,8 @@ import { ItemImageInsert } from "../item-images/types/item-image.types";
 
 @Injectable()
 export class StorageItemsService {
+  private readonly logger = new Logger(StorageItemsService.name);
+
   constructor(
     private readonly supabaseClient: SupabaseService,
     private readonly tagService: TagService,
@@ -700,7 +702,6 @@ export class StorageItemsService {
       // return status and item details
       return { status: 201, error: null, items: itemsToInsert };
     } catch (error) {
-      console.log(error);
       // Rollback: Clean up any partially inserted data
       await Promise.allSettled([
         supabase.from("storage_item_images").delete().in("item_id", item_ids),
@@ -856,7 +857,7 @@ export class StorageItemsService {
         );
       }
     } catch (error) {
-      console.error(error);
+      this.logger.error(`Failed to delete item ${item_id}`, error);
       return { success: false, id: item_id };
     }
     return { success: true, id: item_id };
