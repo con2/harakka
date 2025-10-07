@@ -73,7 +73,6 @@ export class UserBanningController {
     if (unbanDto.organizationId) {
       this.assertOrgContext(req, unbanDto.organizationId);
     }
-    console.log("Ban Type:", unbanDto.banType);
     if (unbanDto.banType === "banForApp") {
       this.assertSuperAdmin(req);
     }
