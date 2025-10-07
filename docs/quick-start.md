@@ -54,6 +54,7 @@ Run this script from root folder to create `.env.local` file from the template:
 ```
 
 After running the script, open the `.env.local` file and fill in the required values.
+For more details refer [Setup Script Guide](./developers/workflows/scripts/setup.md)
 
 ### Install dependencies
 
