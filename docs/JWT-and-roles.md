@@ -79,7 +79,10 @@ The JWT payload is extended with custom claims in the app_metadata section:
 
 Roles are hierarchical: tenant_admin > storage_manager > requester > user
 
-Higher roles typically inherit permissions of lower roles within their organization context (excluding super_admin which has global cross-organization permissions).
+Higher roles inherit the permissions of lower roles within their organization’s context.
+
+super_admin has global access across all organizations but does not inherit from other roles.
+super_admin manages all user roles — one role to rule them all.
 
 ## Authentication Flow
 
