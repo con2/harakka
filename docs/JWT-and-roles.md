@@ -75,6 +75,12 @@ The JWT payload is extended with custom claims in the app_metadata section:
 | tenant_admin    | Full access to organization data               |
 | super_admin     | Can handle roles of any user in the app        |
 
+### Role Hierarchy
+
+Roles are hierarchical: tenant_admin > storage_manager > requester > user
+
+Higher roles typically inherit permissions of lower roles within their organization context (excluding super_admin which has global cross-organization permissions).
+
 ## Authentication Flow
 
 1. User authenticates via Supabase Auth
@@ -97,7 +103,7 @@ Controllers and routes use the @Roles decorator to specify required roles:
 })
 async getAllRoles(@Req() req: AuthRequest) {
   // Implementation
-}s
+}
 ```
 
 The decorator supports:
