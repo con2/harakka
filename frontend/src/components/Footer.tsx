@@ -63,17 +63,15 @@ const Footer = () => {
                   {t.footer.sections.about.links.termsOfUse[lang]}
                 </Link>
               </li>
-              <li>
-                <a href="/dev-team">
-                  {t.footer.sections.about.links.devTeam[lang]}
-                </a>
-              </li>
             </ul>
           </div>
           <div className="flex flex-col flex-1 min-w-[200px]">
             <h3>{t.footer.sections.theTeam.title[lang]}</h3>
             <div className="flex flex-col gap-2">
-              <Link to="" className="hover:underline underline-offset-2">
+              <Link
+                to="/dev-team"
+                className="hover:underline underline-offset-2"
+              >
                 {t.footer.sections.theTeam.devTeam[lang]}
               </Link>
               <p>
