@@ -63,7 +63,6 @@ export class TagController {
     @Param("itemId") itemId: string,
     @Body("tagIds") tagIds: string[],
   ): Promise<void> {
-    console.log("Assigning tags:", tagIds, "to item:", itemId);
     return this.tagService.assignTagsToItem(req, itemId, tagIds);
   }
 
