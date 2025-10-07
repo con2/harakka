@@ -16,7 +16,6 @@ import {
 export interface BanPermissions {
   canBanFromApp: boolean;
   canBanFromOrg: boolean;
-  canBanFromRole: boolean;
 }
 
 /**
@@ -43,58 +42,23 @@ export const useBanPermissions = () => {
 
       if (!userStatus) return false;
 
-      // Check if user has any active bans
-      const banStatus = userStatus as unknown as Record<string, unknown>;
-
-      // For super admins, show all bans
       if (isActiveRoleSuper) {
-        return Boolean(
-          banStatus.isBannedFromApp ||
-            (banStatus.bannedFromOrganizations as string[])?.length > 0 ||
-            (banStatus.bannedFromRoles as string[])?.length > 0 ||
-            userStatus.isBanned,
-        );
+        return userStatus.isBanned;
       }
 
-      // For tenant_admin, only show bans relevant to their organization context
       if (isActiveRoleTenantAdmin && activeOrgId) {
-        // Check if user is banned from the app (applies to all orgs)
-        if (banStatus.isBannedFromApp || userStatus.isBanned) {
+        if (userStatus.isBannedForApp) {
           return true;
         }
 
-        // Check if user is banned from the current active organization
-        const bannedFromOrgs =
-          (banStatus.bannedFromOrganizations as string[]) || [];
-        if (bannedFromOrgs.includes(activeOrgId)) {
-          return true;
-        }
-
-        // Check if user is banned from roles within the current organization
-        // Get user's roles in the active org
-        const userRolesInActiveOrg = allUserRoles.filter(
-          (role) =>
-            role.user_id === userId && role.organization_id === activeOrgId,
+        return userStatus.bannedFromOrganizations.some(
+          (org) => org.organizationId === activeOrgId,
         );
-
-        const bannedFromRoles = (banStatus.bannedFromRoles as string[]) || [];
-        const isRoleBannedInActiveOrg = userRolesInActiveOrg.some((role) =>
-          bannedFromRoles.includes(role.role_name || ""),
-        );
-
-        return isRoleBannedInActiveOrg;
       }
 
-      // For other users (admin, etc.), don't show ban status
       return false;
     },
-    [
-      userBanStatuses,
-      isActiveRoleSuper,
-      isActiveRoleTenantAdmin,
-      activeOrgId,
-      allUserRoles,
-    ],
+    [userBanStatuses, isActiveRoleSuper, isActiveRoleTenantAdmin, activeOrgId],
   );
 
   /**
@@ -102,43 +66,33 @@ export const useBanPermissions = () => {
    */
   const canBanUser = useCallback(
     (targetUserId: string): boolean => {
-      // super_admin can ban anyone from anywhere
       if (isActiveRoleSuper) {
         return true;
       }
 
-      // tenant_admin can only ban users whose role is below their own within their active org
       if (isActiveRoleTenantAdmin && activeOrgId) {
-        // For ban permissions, we need to check ALL roles (active and inactive)
-        // because banned users will have inactive roles but we still need to manage them
         const targetUserRoles = allUserRoles.filter(
           (role) => role.user_id === targetUserId,
         );
 
-        // Get target user's roles in the current active org (excluding Global roles)
-        const targetOrgRoles = targetUserRoles.filter(
-          (role) => role.organization_id === activeOrgId,
-        );
-
-        // If target user has no roles in the active org, they cannot be banned by tenant_admin
-        if (targetOrgRoles.length === 0) {
+        if (
+          !targetUserRoles.some((role) => role.organization_id === activeOrgId)
+        ) {
           return false;
         }
 
         const currentUserLevel =
           ROLE_HIERARCHY[activeRoleName as RoleName] || -1;
 
-        // Check if all target user's roles in the active org are below tenant_admin level
-        const canBanAllRoles = targetOrgRoles.every((role) => {
-          const targetRoleLevel =
-            ROLE_HIERARCHY[role.role_name as RoleName] ?? -1;
-          return targetRoleLevel < currentUserLevel;
-        });
-
-        return canBanAllRoles;
+        return targetUserRoles
+          .filter((role) => role.organization_id === activeOrgId)
+          .every((role) => {
+            const targetRoleLevel =
+              ROLE_HIERARCHY[role.role_name as RoleName] ?? -1;
+            return targetRoleLevel < currentUserLevel;
+          });
       }
 
-      // All other users (admin, storage_manager, requester, user) cannot ban
       return false;
     },
     [
@@ -158,11 +112,9 @@ export const useBanPermissions = () => {
       const canBanTarget = canBanUser(targetUserId);
 
       return {
-        canBanFromApp: isActiveRoleSuper && canBanTarget, // Only super admins can ban from application
+        canBanFromApp: isActiveRoleSuper && canBanTarget,
         canBanFromOrg:
-          (isActiveRoleSuper || isActiveRoleTenantAdmin) && canBanTarget, // Super admins and tenant admins can ban from org
-        canBanFromRole:
-          (isActiveRoleSuper || isActiveRoleTenantAdmin) && canBanTarget, // Super admins and tenant admins can ban from role
+          (isActiveRoleSuper || isActiveRoleTenantAdmin) && canBanTarget,
       };
     },
     [canBanUser, isActiveRoleSuper, isActiveRoleTenantAdmin],
