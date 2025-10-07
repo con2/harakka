@@ -9,10 +9,6 @@ const DevTeam = () => {
     {
       name: "Jonathan Gian",
       role: { fi: "Full Stack -kehittäjä", en: "Full Stack Developer" },
-      bio: {
-        fi: "Cool stuff in Finnish",
-        en: "Jon writes here some cool stuff about himself.",
-      },
       linkedin: "https://www.linkedin.com/in/jonathan-gian-254098325/",
       github: "https://github.com/JonathanGian",
       image: "", // Add image
@@ -20,10 +16,6 @@ const DevTeam = () => {
     {
       name: "Stefanie Jana",
       role: { fi: "Full Stack -kehittäjä", en: "Full Stack Developer" },
-      bio: {
-        fi: "Cool stuff in Finnish",
-        en: "Steffi writes here some cool stuff about herself.",
-      },
       linkedin: "https://www.linkedin.com/in/stefanie-jana-a0b094a8/",
       github: "https://github.com/stabjana",
       image: "", // Add image
@@ -31,10 +23,6 @@ const DevTeam = () => {
     {
       name: "Athina Kantis",
       role: { fi: "Full Stack -kehittäjä", en: "Full Stack Developer" },
-      bio: {
-        fi: "Cool stuff in Finnish",
-        en: "Athina writes here some cool stuff about herself.",
-      },
       linkedin: "https://www.linkedin.com/in/athina-kantis/",
       github: "https://github.com/athinakantis",
       image: "", // Add image
@@ -42,10 +30,6 @@ const DevTeam = () => {
     {
       name: "Vladimir Beliakov",
       role: { fi: "Full Stack -kehittäjä", en: "Full Stack Developer" },
-      bio: {
-        fi: "Cool stuff in Finnish",
-        en: "Vova writes here some cool stuff about himself.",
-      },
       linkedin: "https://www.linkedin.com/in/vladimir-beliakov/",
       github: "https://github.com/Ermegilius",
       image: "", // Add image
@@ -53,10 +37,6 @@ const DevTeam = () => {
     {
       name: "Maria Aluko",
       role: { fi: "Full Stack -kehittäjä", en: "Full Stack Developer" },
-      bio: {
-        fi: "Cool stuff in Finnish",
-        en: "Maria writes here some cool stuff about herself.",
-      },
       linkedin: "https://www.linkedin.com/in/maria-aluko/",
       github: "https://github.com/maria-aluko",
       //image: mariaImage,
@@ -77,9 +57,12 @@ const DevTeam = () => {
         </div>
 
         {/* Team Grid */}
-        <div className="flex flex-wrap justify-center gap-12 lg:gap-24">
+        <div className="flex flex-wrap justify-center gap-12 md:gap-16 max-w-4xl mx-auto">
           {teamMembers.map((member, index) => (
-            <div key={index} className="bg-transparent">
+            <div
+              key={index}
+              className="bg-transparent flex flex-col items-center w-full sm:w-[calc(50%-3rem)] lg:w-[calc(33.333%-3rem)]"
+            >
               {/* Avatar - initials as fallback */}
               <div className="h-48 flex items-center justify-center">
                 <div className="bg-gradient-to-br from-blue-400 to-blue-600 border-4 border-gray-400 hover:border-secondary w-32 h-32 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
@@ -107,9 +90,6 @@ const DevTeam = () => {
                 </h3>
                 <p className="text-gray-400 font-medium mb-3">
                   {member.role[lang]}
-                </p>
-                <p className="text-gray-400 font-medium mb-3 max-w-2xs text-center">
-                  {member.bio[lang]}
                 </p>
 
                 {/* Social Links */}
