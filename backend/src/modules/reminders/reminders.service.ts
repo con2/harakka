@@ -35,7 +35,7 @@ export class RemindersService {
     const supabase = this.supabaseService.getServiceClient();
 
     // 1) Find candidate booking_ids with items due today or overdue
-    const activeStatuses = ["confirmed", "picked_up"]; // items still out
+    const activeStatuses = ["picked_up"]; // remind users only about previously picked up items
 
     const dueTodayPromise = (async () => {
       if (scope === "overdue") return [] as string[];
