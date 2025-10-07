@@ -1,7 +1,16 @@
 # Quick Start
 
+## Prerequisites
+
+Before starting, ensure you have the following installed and set up:
+
+- Node.js (v18 or higher) and npm
+- Supabase account and project
+- Git
+
 ## Database Setup
 
+Ensure your database schema is set up before inserting data.
 If you start without database seed data (all db tables are empty), you should insert several rows manually in Supabase UI or via Supabase CLI.
 
 ### Insert essential data into the database
@@ -38,7 +47,7 @@ cd <root folder>
 
 ### Set up environment variables
 
-Run this script to create `.env.local` file from template
+Run this script to create `.env.local` file from the template:
 
 ```sh
 ./scripts/setup.sh
@@ -58,19 +67,19 @@ npm run install-all
 npm run dev
 ```
 
-4. **Access the application:**
-   - Frontend: <http://localhost:5180>
-   - Backend API: <http://localhost:3000>
+### Access the application
+
+- Frontend: <http://localhost:5180>
+- Backend: <http://localhost:3000>
+- Backend health endpoint: <http://localhost:3000/health>
 
 ## Setup initial super_admin user
 
-To manage your admins team you need super_admin user role. You can create the initial super_admin role manually in Supabase UI or via Supabase CLI.
+To manage your admins team, you need a super_admin user role. You can create the initial super_admin role manually in Supabase UI or via Supabase CLI.
 
 ### Assign a super_admin user
 
-By default any new user on the first "SIGNED_IN" event is assigned to the "user" role in the "Global" organization.
-To get super_admin rights, you need to update this user's roles directly in the database.
-So, the steps are:
+By default, any new user on the first "SIGNED_IN" event is assigned to the "user" role in the "Global" organization. To get super_admin rights, follow these steps:
 
 1. Sign up a new user via the frontend.
 2. Sign in to the Harakka application.
@@ -79,7 +88,7 @@ So, the steps are:
 5. Navigate to the "public.user_organization_roles" table.
 6. Insert a new row with the following details:
 
-   - user_id: <`the copied user id`>
+   - user_id: `<the copied user id>`
    - organization_id: `2a42d333-a550-493f-876e-a2cea3c80d26` ("Global" org id)
    - role_id: `86234569-43e9-4a18-83cf-f8584d84a752` (super_admin role id)
 
@@ -89,4 +98,6 @@ So, the steps are:
     ('<the copied user id>', '0360be4f-2ea1-4b89-960d-cff888fb7475', '86234569-43e9-4a18-83cf-f8584d84a752', TRUE);
    ```
 
-7. Now, the user has super_admin rights and can manage roles for all users in the application via Admin dashboard in the frontend.
+7. Verify the user has super_admin rights by signing in to the Harakka application and accessing the user menu:
+   user menu > Change organization > SuperAdmin
+   ![user menu with Super Admin option](image-1.png)
