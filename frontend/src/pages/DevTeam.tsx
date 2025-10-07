@@ -1,45 +1,43 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
-//import mariaImage from "@/assets/team/maria.jpg"; example import
 
 const DevTeam = () => {
   const { lang } = useLanguage();
-  // TODO: add images to /src/assets/team and provide import in your data below
   const teamMembers = [
     {
       name: "Jonathan Gian",
       role: { fi: "Full Stack -kehittäjä", en: "Full Stack Developer" },
       linkedin: "https://www.linkedin.com/in/jonathan-gian-254098325/",
       github: "https://github.com/JonathanGian",
-      image: "", // Add image
+      image: "https://avatars.githubusercontent.com/u/153126165?v=4",
     },
     {
       name: "Stefanie Jana",
       role: { fi: "Full Stack -kehittäjä", en: "Full Stack Developer" },
       linkedin: "https://www.linkedin.com/in/stefanie-jana-a0b094a8/",
       github: "https://github.com/stabjana",
-      image: "https://avatars.githubusercontent.com/u/162564271?v=4", // Add image
+      image: "https://avatars.githubusercontent.com/u/162564271?v=4",
     },
     {
       name: "Athina Kantis",
       role: { fi: "Full Stack -kehittäjä", en: "Full Stack Developer" },
       linkedin: "https://www.linkedin.com/in/athina-kantis/",
       github: "https://github.com/athinakantis",
-      image: "", // Add image
+      image: "https://avatars.githubusercontent.com/u/161164380?v=4",
     },
     {
       name: "Vladimir Beliakov",
       role: { fi: "Full Stack -kehittäjä", en: "Full Stack Developer" },
       linkedin: "https://www.linkedin.com/in/vladimir-beliakov/",
       github: "https://github.com/Ermegilius",
-      image: "", // Add image
+      image: "https://avatars.githubusercontent.com/u/147325520?v=4",
     },
     {
       name: "Maria Aluko",
       role: { fi: "Full Stack -kehittäjä", en: "Full Stack Developer" },
       linkedin: "https://www.linkedin.com/in/maria-aluko/",
       github: "https://github.com/maria-aluko",
-      //image: mariaImage,
+      image: "https://avatars.githubusercontent.com/u/35866661?v=4",
     },
   ];
 
