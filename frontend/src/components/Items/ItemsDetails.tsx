@@ -219,7 +219,7 @@ const ItemsDetails: React.FC = () => {
   return (
     <div className="container mx-auto px-4" data-cy="item-details-root">
       {/* Back Button */}
-      <div className="mb-3 mt-4 md:mt-0">
+      <div className="mb-3 mt-4 lg:mt-0">
         <Button
           onClick={() => {
             // navigate back to storage with page state if available
@@ -237,7 +237,7 @@ const ItemsDetails: React.FC = () => {
       </div>
       <div className="flex flex-col md:flex-row gap-8">
         {/* Item Images - Positioned Left */}
-        <div className="md:w-1/3 w-full" data-cy="item-details-images">
+        <div className="md:w-2/5 lg:w-2/5 w-full" data-cy="item-details-images">
           {/* Main Image */}
           <div
             className="relative mb-4 h-[300px] group w-full max-w-md mx-auto md:max-w-none aspect-[4/3]"
@@ -311,7 +311,7 @@ const ItemsDetails: React.FC = () => {
 
         {/* Right Side - Item Details */}
         <div
-          className="md:w-2/3 w-full space-y-4 order-1 md:order-2"
+          className="md:w-3/5 lg:w-3/5 w-full space-y-4 order-1 md:order-2"
           data-cy="item-details-info"
         >
           <h2
@@ -454,7 +454,7 @@ const ItemsDetails: React.FC = () => {
                   </p>
                 )}
               </div>
-              <div className="flex items-center justify-start mt-1 mb-4 md:mb-0">
+              <div className="flex items-center justify-start mt-1 mb-4 lg:mb-0">
                 <Button
                   className={`bg-secondary rounded-2xl text-white border-secondary border-1 flex-1 mt-3
                     hover:text-secondary hover:bg-white
@@ -469,20 +469,18 @@ const ItemsDetails: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div
-              className="flex flex-row items-center"
-              data-cy="item-details-no-dates"
-            >
+            <div className="flex flex-row" data-cy="item-details-no-dates">
               <Info className="mr-1 text-secondary size-4" />{" "}
-              {t.itemDetails.info.noDates[lang]}
-              <Link
-                to="/storage"
-                className="ml-1 text-secondary underline"
-                data-cy="item-details-here-link"
-              >
-                {t.itemDetails.info.here[lang]}
-              </Link>
-              .
+              <div>
+                {t.itemDetails.info.noDates[lang]}
+                <Link
+                  to="/storage"
+                  className="ml-1 text-secondary underline"
+                  data-cy="item-details-here-link"
+                >
+                  {t.itemDetails.info.here[lang]}
+                </Link>
+              </div>
             </div>
           )}
         </div>
