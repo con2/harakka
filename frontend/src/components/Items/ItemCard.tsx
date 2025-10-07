@@ -231,7 +231,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({
         "{item_name}",
         item.translations[lang].item_name,
       )}
-      onClick={() => handleItemClick(item.id)}
+      onClick={preview ? undefined : () => handleItemClick(item.id)}
       className="hover:[&_h2]:text-muted-foreground cursor-pointer"
       tabIndex={0}
       onKeyDown={(e) => {
