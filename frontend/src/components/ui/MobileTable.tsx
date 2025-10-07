@@ -12,6 +12,7 @@ import Pagination from "./pagination";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 interface MobileTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -77,7 +78,7 @@ function MobileTableEntry<TData>({
   rowClick,
 }: MobileTableEntryProps<TData>) {
   return (
-    <div className="p-2 bg-white w-full rounded-sm">
+    <div className="p-2 bg-white w-full rounded-sm shadow-sm">
       <table
         className={cn("text-sm w-full", rowClick && "hover:cursor-pointer")}
         onClick={() => rowClick?.(row)}

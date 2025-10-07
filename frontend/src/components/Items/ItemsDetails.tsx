@@ -6,6 +6,7 @@ import {
   selectSelectedItem,
   selectItemsLoading,
   selectItemsError,
+  clearSelectedItem,
 } from "@/store/slices/itemsSlice";
 import {
   getItemImages,
@@ -160,6 +161,10 @@ const ItemsDetails: React.FC = () => {
           console.error("Failed to fetch item images:", error);
         });
     }
+
+    return () => {
+      dispatch(clearSelectedItem());
+    };
   }, [id, dispatch]);
 
   // Fetch org data when item is loaded

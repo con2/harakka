@@ -143,4 +143,20 @@ export const itemSummary = {
       fi: "yksi kenttä",
     },
   },
+  messages: {
+    toastPromise: {
+      loading: {
+        en: "Creating your items...",
+        fi: "Luodaan tuotteitasi...",
+      },
+      success: {
+        en: "Your items were created!",
+        fi: "Tuotteesi luotiin!",
+      },
+      error: {
+        en: "Items could not be created. Contact support if the error persists.",
+        fi: "Tuotteita ei voitu luoda. Ota yhteyttä tukeen, jos virhe toistuu.",
+      },
+    },
+  },
 };

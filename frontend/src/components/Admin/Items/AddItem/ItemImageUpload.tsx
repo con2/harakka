@@ -6,41 +6,49 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   removeFromBucket,
+  selectUploadUrls,
   setUploadImageType,
   uploadToBucket,
 } from "@/store/slices/itemImagesSlice";
 import { CreateItemType } from "@common/items/form.types";
 import { ImagePlus, Info, Trash } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { UseFormSetValue } from "react-hook-form";
+import {
+  FieldError,
+  FieldErrorsImpl,
+  Merge,
+  UseFormSetValue,
+} from "react-hook-form";
 import { toast } from "sonner";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useImageValidator } from "@/utils/imageUtils";
 import { FILE_CONSTRAINTS } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 
 const MAX_DETAIL_IMAGES = 5;
-
-type UUID = `${string}-${string}-${string}-${string}-${string}`;
 
 type ItemImageUploadProps = {
   item_id: string;
   updateForm: UseFormSetValue<CreateItemType>;
   formImages: CreateItemType["images"];
+  errors?: Merge<FieldError, FieldErrorsImpl<CreateItemType["images"]>>;
 };
 
 function ItemImageUpload({
   item_id,
   updateForm,
   formImages,
+  errors,
 }: ItemImageUploadProps) {
   const dispatch = useAppDispatch();
   const { lang } = useLanguage();
   const { validateFile } = useImageValidator();
+  const uploadedUrls = useAppSelector(selectUploadUrls);
 
   // Simplified state - only track uploading status and drag states
   const [uploadingStates, setUploadingStates] = useState({
@@ -50,25 +58,6 @@ function ItemImageUpload({
 
   const [dragStates, setDragStates] = useState({ main: false, detail: false });
   const previewUrls = useRef<Set<string>>(new Set());
-
-  const createPreviewUrl = useCallback((file: File): string => {
-    const preview = URL.createObjectURL(file);
-    previewUrls.current.add(preview);
-    return preview;
-  }, []);
-
-  const uploadImage = useCallback(
-    (files: File[], image_id: string) => {
-      return dispatch(
-        uploadToBucket({
-          files,
-          bucket: "item-images",
-          path: `${item_id}/${image_id}`,
-        }),
-      ).unwrap();
-    },
-    [dispatch, item_id],
-  );
 
   // MAIN IMAGE HANDLERS
   const handleMainImageUpload = useCallback(
@@ -85,29 +74,30 @@ function ItemImageUpload({
 
       try {
         const id = crypto.randomUUID();
-        const preview = createPreviewUrl(file);
 
-        // Set uploading state and update form with preview
+        // Set loading state for main image
         setUploadingStates((prev) => ({ ...prev, main: true }));
         dispatch(setUploadImageType("main"));
 
-        updateForm("images.main", {
-          id,
-          url: preview, // Use preview URL initially
-          full_path: "",
-          path: "",
-          metadata: {
-            image_type: "main",
-            display_order: 0,
-            alt_text: "",
-            is_active: true,
-            object_fit: formImages.main?.metadata.object_fit || "cover",
-          },
-        });
+        const promise = dispatch(
+          uploadToBucket({
+            files: [file],
+            bucket: "item-images",
+            path: `${item_id}/main`,
+          }),
+        ).unwrap();
 
-        // Upload and update with real URLs
-        const { urls, paths, full_paths } = await uploadImage([file], id);
+        // Await upload
+        await toast
+          .promise(promise, {
+            loading: t.itemImageUpload.messages.uploadingMain.loading[lang],
+            success: t.itemImageUpload.messages.uploadingMain.success[lang],
+            error: t.itemImageUpload.messages.uploadingMain.error[lang],
+          })
+          .unwrap();
 
+        // If upload is successful, update the form
+        const { urls, full_paths, paths } = uploadedUrls;
         updateForm("images.main", {
           id,
           url: urls[0],
@@ -121,31 +111,41 @@ function ItemImageUpload({
             object_fit: formImages.main?.metadata.object_fit || "cover",
           },
         });
-
+      } catch (_error) {
+        updateForm("images.main", null); // Clear the image on error
         setUploadingStates((prev) => ({ ...prev, main: false }));
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : t.itemImageUpload.messages.uploadFailed[lang],
-        );
+      } finally {
+        // Set loading to false
         setUploadingStates((prev) => ({ ...prev, main: false }));
       }
     },
-    [validateFile, createPreviewUrl, uploadImage, updateForm, dispatch, lang],
+    [
+      validateFile,
+      updateForm,
+      dispatch,
+      lang,
+      item_id,
+      formImages.main?.metadata.object_fit,
+      uploadedUrls,
+    ],
   );
-
   const handleDetailImagesUpload = useCallback(
     async (filesList: FileList) => {
       const files = Array.from(filesList);
-      const currentDetailsCount = formImages?.details?.length || 0;
+      const currentDetails = formImages?.details || [];
+      const currentCount = currentDetails.length;
 
-      if (currentDetailsCount + files.length > MAX_DETAIL_IMAGES) {
-        toast.error(`Only ${MAX_DETAIL_IMAGES} images allowed`);
+      if (currentCount + files.length > MAX_DETAIL_IMAGES) {
+        toast.error(
+          t.itemImageUpload.messages.tooManyFiles[lang].replace(
+            "{max_files}",
+            MAX_DETAIL_IMAGES.toString(),
+          ),
+        );
         return;
       }
 
-      // Validate all files before proceeding
+      // Validate files
       const allValid = files.every((file) =>
         validateFile(
           file,
@@ -153,92 +153,77 @@ function ItemImageUpload({
           FILE_CONSTRAINTS.ALLOWED_FILE_TYPES,
         ),
       );
-
       if (!allValid) return;
 
       try {
-        // Create image data with previews
-        const newImageData = files.map((file, idx) => {
-          const id = crypto.randomUUID();
-          const preview = createPreviewUrl(file);
-          return {
-            id,
-            url: preview, // Use preview URL initially
-            full_path: "",
-            path: "",
-            metadata: {
-              image_type: "detail" as const,
-              display_order: currentDetailsCount + idx,
-              alt_text: "",
-              is_active: true,
-              object_fit: "cover" as "cover" | "contain",
-            },
-          };
-        });
-
-        // Track uploading states
-        const newUploadingIds = new Set(newImageData.map((img) => img.id));
-        setUploadingStates((prev) => ({
-          ...prev,
-          details: new Set([...prev.details, ...newUploadingIds]),
-        }));
-
-        // Update form with preview data immediately
-        const currentDetails = formImages?.details || [];
-        updateForm("images.details", [...currentDetails, ...newImageData]);
-
         dispatch(setUploadImageType("detail"));
 
-        // Upload files - need to upload each file with its corresponding ID
-        const uploadPromises = files.map((file, idx) =>
-          uploadImage([file], newImageData[idx].id),
-        );
-        const uploadResults = await Promise.all(uploadPromises);
+        // Set
+        setUploadingStates((prev) => ({
+          ...prev,
+          details: new Set([
+            ...prev.details,
+            ...files.map(() => crypto.randomUUID()),
+          ]),
+        }));
 
-        // Update form with real URLs
-        const updatedImageData = newImageData.map((img, idx) => ({
+        // Create IDs for each file before upload
+        const imageData = files.map((_file, idx) => ({
+          id: crypto.randomUUID(),
+          metadata: {
+            image_type: "detail" as const,
+            display_order: currentCount + idx,
+            alt_text: "",
+            is_active: true,
+            object_fit: "cover" as const,
+          },
+        }));
+
+        const uploadPromises = imageData.map((img, idx) =>
+          dispatch(
+            uploadToBucket({
+              files: [files[idx]],
+              bucket: "item-images",
+              path: `${item_id}/${img.id}`,
+            }),
+          ).unwrap(),
+        );
+
+        // Await upload
+        const uploadResults = await toast
+          .promise(Promise.all(uploadPromises), {
+            loading: t.itemImageUpload.messages.uploadingDetails.loading[lang],
+            success: t.itemImageUpload.messages.uploadingDetails.success[lang],
+            error: t.itemImageUpload.messages.uploadingDetails.error[lang],
+          })
+          .unwrap();
+
+        // Update imageData with urls and paths
+        const newDetailImages = imageData.map((img, idx) => ({
           ...img,
           url: uploadResults[idx].urls[0],
           full_path: uploadResults[idx].full_paths[0],
           path: uploadResults[idx].paths[0],
         }));
 
-        updateForm("images.details", [...currentDetails, ...updatedImageData]);
-
-        // Clear uploading states
-        setUploadingStates((prev) => ({
-          ...prev,
-          details: new Set(
-            [...prev.details].filter((id) => !newUploadingIds.has(id as UUID)),
-          ),
-        }));
+        // Update the form
+        updateForm("images.details", [...currentDetails, ...newDetailImages]);
       } catch (error) {
         toast.error(
           error instanceof Error
             ? error.message
             : t.itemImageUpload.messages.uploadFailed[lang],
         );
-        // Clear uploading states on error
+        setUploadingStates((prev) => ({ ...prev, details: new Set() }));
+      } finally {
+        // Set loading to false
         setUploadingStates((prev) => ({
           ...prev,
-          details: new Set(
-            [...prev.details].filter(
-              (id) =>
-                !files.map(() => crypto.randomUUID()).includes(id as UUID),
-            ),
-          ),
+          details: new Set(),
         }));
       }
     },
-    [
-      formImages?.details,
-      validateFile,
-      createPreviewUrl,
-      uploadImage,
-      updateForm,
-      dispatch,
-      lang,
-    ],
+    [formImages?.details, validateFile, updateForm, dispatch, lang, item_id],
   );
 
   // FILE SELECT HANDLER
@@ -372,9 +357,12 @@ function ItemImageUpload({
         <div className="mb-3">
           <Button
             type="button"
-            className={`flex flex-1 border-1 border-dashed w-full min-h-[200px] flex-col transition-colors ${
-              dragStates.main ? "border-primary bg-primary/5" : ""
-            } ${isMainUploading ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={cn(
+              `flex flex-1 border-1 border-dashed w-full min-h-[200px] flex-col transition-colors ${
+                dragStates.main ? "border-primary bg-primary/5" : ""
+              } ${isMainUploading ? "opacity-50 cursor-not-allowed" : ""}`,
+              errors?.main && "border-(--descrtuctive)",
+            )}
             disabled={isMainUploading}
             onClick={(e) => {
               e.preventDefault();
@@ -482,9 +470,12 @@ function ItemImageUpload({
         <div className="mb-6">
           <Button
             type="button"
-            className={`flex flex-1 border-1 border-dashed w-full min-h-[200px] flex-col transition-colors ${
-              dragStates.detail ? "border-primary bg-primary/5" : ""
-            } ${isDetailUploading || formImages?.details?.length >= MAX_DETAIL_IMAGES ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={cn(
+              `flex flex-1 border-1 border-dashed w-full min-h-[200px] flex-col transition-colors ${
+                dragStates.detail ? "border-primary bg-primary/5" : ""
+              } ${isDetailUploading || formImages?.details?.length >= MAX_DETAIL_IMAGES ? "opacity-50 cursor-not-allowed" : ""}`,
+              errors?.details && "border-(--descrtuctive)",
+            )}
             disabled={
               isDetailUploading ||
               formImages?.details?.length >= MAX_DETAIL_IMAGES

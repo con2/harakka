@@ -52,6 +52,12 @@ export const addCategory = {
       en: "Loading...",
       fi: "Ladataan...",
     },
+    validation: {
+      translations: {
+        en: "Missing category name",
+        fi: "Missing category name",
+      },
+    },
   },
   buttons: {
     cancel: {
