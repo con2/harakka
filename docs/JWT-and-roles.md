@@ -9,15 +9,34 @@ The application uses Supabase Auth for authentication, with a custom JWT enhance
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────────┐
 │  Supabase   │     │   Backend   │     │    Frontend     │
-│    Auth     │────►│   Service   │────►│  Application    │
+│    Auth     │◄───►│   Service   │◄───►│  Application    │
 └─────────────┘     └─────────────┘     └─────────────────┘
-       │                   │                    │
-       │                   │                    │
-       ▼                   ▼                    ▼
+       ▲                   ▲                   ▲
+       │                   │                   │
+       │                   │                   │
+       ▼                   ▼                   ▼
 ┌─────────────────────────────────────────────────────────┐
 │                  JWT with embedded roles                │
 └─────────────────────────────────────────────────────────┘
 ```
+
+### Flows explanation:
+
+**Supabase ↔️ Backend**
+
+- Backend updates JWT metadata in Supabase via `JwtService`.
+- Backend retrieves and validates tokens issued by Supabase
+
+**Backend ↔️ Frontend**
+
+- Frontend sends JWT in requests via api interceptors
+- Backend validates tokens and sends role version headers back
+- Frontend detects role changes through `x-role-version` header
+
+**Frontend ↔️ Supabase**
+
+- Frontend authenticates and refreshes tokens directly with Supabase
+- Frontend reads embedded roles from JWT payload
 
 ## JWT Structure
 
