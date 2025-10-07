@@ -14,6 +14,10 @@ export const itemImageUpload = {
       en: "File size must be less than {size}MB",
       fi: "Tiedoston koko ei saa ylittää {size}MB",
     },
+    tooManyFiles: {
+      en: "Only {max_files} images allowed",
+      fi: "Vain {max_files} kuvaa sallittu",
+    },
     invalidFileType: {
       en: "Invalid file type. Only images are allowed.",
       fi: "Virheellinen tiedostotyyppi. Vain kuvat ovat sallittuja.",

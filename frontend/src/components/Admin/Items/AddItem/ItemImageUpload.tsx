@@ -32,8 +32,6 @@ import { cn } from "@/lib/utils";
 
 const MAX_DETAIL_IMAGES = 5;
 
-type UUID = `${string}-${string}-${string}-${string}-${string}`;
-
 type ItemImageUploadProps = {
   item_id: string;
   updateForm: UseFormSetValue<CreateItemType>;
@@ -61,15 +59,9 @@ function ItemImageUpload({
   const [dragStates, setDragStates] = useState({ main: false, detail: false });
   const previewUrls = useRef<Set<string>>(new Set());
 
-  const createPreviewUrl = useCallback((file: File): string => {
-    const preview = URL.createObjectURL(file);
-    previewUrls.current.add(preview);
-    return preview;
-  }, []);
-
   // MAIN IMAGE HANDLERS
   const handleMainImageUpload = useCallback(
-    (file: File) => {
+    async (file: File) => {
       if (
         !validateFile(
           file,
@@ -82,9 +74,8 @@ function ItemImageUpload({
 
       try {
         const id = crypto.randomUUID();
-        const preview = createPreviewUrl(file);
 
-        // Set uploading state and update form with preview
+        // Set loading state for main image
         setUploadingStates((prev) => ({ ...prev, main: true }));
         dispatch(setUploadImageType("main"));
 
@@ -92,34 +83,21 @@ function ItemImageUpload({
           uploadToBucket({
             files: [file],
             bucket: "item-images",
-            path: `${item_id}/${id}`,
+            path: `${item_id}/main`,
           }),
         ).unwrap();
 
-        // Await upload promise
-        toast.promise(promise, {
-          loading: t.itemImageUpload.messages.uploadingMain.loading[lang],
-          success: t.itemImageUpload.messages.uploadingMain.success[lang],
-          error: t.itemImageUpload.messages.uploadingMain.error[lang],
-        });
+        // Await upload
+        await toast
+          .promise(promise, {
+            loading: t.itemImageUpload.messages.uploadingMain.loading[lang],
+            success: t.itemImageUpload.messages.uploadingMain.success[lang],
+            error: t.itemImageUpload.messages.uploadingMain.error[lang],
+          })
+          .unwrap();
 
-        // If successful update form
-        updateForm("images.main", {
-          id,
-          url: preview,
-          full_path: "",
-          path: "",
-          metadata: {
-            image_type: "main",
-            display_order: 0,
-            alt_text: "",
-            is_active: true,
-            object_fit: formImages.main?.metadata.object_fit || "cover",
-          },
-        });
+        // If upload is successful, update the form
         const { urls, full_paths, paths } = uploadedUrls;
-
-        // Update form with real URLs
         updateForm("images.main", {
           id,
           url: urls[0],
@@ -133,26 +111,41 @@ function ItemImageUpload({
             object_fit: formImages.main?.metadata.object_fit || "cover",
           },
         });
-
-        setUploadingStates((prev) => ({ ...prev, main: false }));
       } catch (_error) {
-        updateForm("images.main", null);
+        updateForm("images.main", null); // Clear the image on error
+        setUploadingStates((prev) => ({ ...prev, main: false }));
+      } finally {
+        // Set loading to false
         setUploadingStates((prev) => ({ ...prev, main: false }));
       }
     },
-    [validateFile, createPreviewUrl, updateForm, dispatch, lang],
+    [
+      validateFile,
+      updateForm,
+      dispatch,
+      lang,
+      item_id,
+      formImages.main?.metadata.object_fit,
+      uploadedUrls,
+    ],
   );
   const handleDetailImagesUpload = useCallback(
-    (filesList: FileList) => {
+    async (filesList: FileList) => {
       const files = Array.from(filesList);
-      const currentDetailsCount = formImages?.details?.length || 0;
+      const currentDetails = formImages?.details || [];
+      const currentCount = currentDetails.length;
 
-      if (currentDetailsCount + files.length > MAX_DETAIL_IMAGES) {
-        toast.error(`Only ${MAX_DETAIL_IMAGES} images allowed`);
+      if (currentCount + files.length > MAX_DETAIL_IMAGES) {
+        toast.error(
+          t.itemImageUpload.messages.tooManyFiles[lang].replace(
+            "{max_files}",
+            MAX_DETAIL_IMAGES.toString(),
+          ),
+        );
         return;
       }
 
-      // Validate all files before proceeding
+      // Validate files
       const allValid = files.every((file) =>
         validateFile(
           file,
@@ -160,129 +153,79 @@ function ItemImageUpload({
           FILE_CONSTRAINTS.ALLOWED_FILE_TYPES,
         ),
       );
-
       if (!allValid) return;
 
-      // 1. Create image data with previews and generate IDs
-      const newImageData = files.map((file, idx) => {
-        const id = crypto.randomUUID();
-        const preview = createPreviewUrl(file);
-        return {
-          id,
-          url: preview, // Use preview URL initially
-          full_path: "",
-          path: "",
+      try {
+        dispatch(setUploadImageType("detail"));
+
+        // Set
+        setUploadingStates((prev) => ({
+          ...prev,
+          details: new Set([
+            ...prev.details,
+            ...files.map(() => crypto.randomUUID()),
+          ]),
+        }));
+
+        // Create IDs for each file before upload
+        const imageData = files.map((_file, idx) => ({
+          id: crypto.randomUUID(),
           metadata: {
             image_type: "detail" as const,
-            display_order: currentDetailsCount + idx,
+            display_order: currentCount + idx,
             alt_text: "",
             is_active: true,
-            object_fit: "cover" as "cover" | "contain",
+            object_fit: "cover" as const,
           },
-        };
-      });
+        }));
 
-      // Track uploading states
-      const newUploadingIds = new Set(newImageData.map((img) => img.id));
-      setUploadingStates((prev) => ({
-        ...prev,
-        details: new Set([...prev.details, ...newUploadingIds]),
-      }));
+        const uploadPromises = imageData.map((img, idx) =>
+          dispatch(
+            uploadToBucket({
+              files: [files[idx]],
+              bucket: "item-images",
+              path: `${item_id}/${img.id}`,
+            }),
+          ).unwrap(),
+        );
 
-      // Update form with preview data immediately
-      const currentDetails = formImages?.details || [];
-      updateForm("images.details", [...currentDetails, ...newImageData]);
+        // Await upload
+        const uploadResults = await toast
+          .promise(Promise.all(uploadPromises), {
+            loading: t.itemImageUpload.messages.uploadingDetails.loading[lang],
+            success: t.itemImageUpload.messages.uploadingDetails.success[lang],
+            error: t.itemImageUpload.messages.uploadingDetails.error[lang],
+          })
+          .unwrap();
 
-      dispatch(setUploadImageType("detail"));
+        // Update imageData with urls and paths
+        const newDetailImages = imageData.map((img, idx) => ({
+          ...img,
+          url: uploadResults[idx].urls[0],
+          full_path: uploadResults[idx].full_paths[0],
+          path: uploadResults[idx].paths[0],
+        }));
 
-      // 2. Define the main promise that will be tracked by toast.promise
-      //    NOTE: The executor function is NOT async.
-      const uploadPromise = new Promise<void>((resolve, reject) => {
-        // Use a SEAF to wrap the async logic and safely use try/catch/await
-        void (async () => {
-          try {
-            // Dispatch the upload action
-            const promise = dispatch(
-              uploadToBucket({
-                files: files,
-                bucket: "item-images",
-                path: `${item_id}`,
-              }),
-            ).unwrap();
-
-            const uploadedUrls = await promise;
-            const { urls, full_paths, paths } = uploadedUrls;
-
-            // Check if the number of returned URLs matches the number of files
-            if (urls.length !== files.length) {
-              throw new Error("Mismatched number of uploaded URLs.");
-            }
-
-            // Update form with real URLs
-            const updatedImageData = newImageData.map((img, idx) => ({
-              ...img,
-              url: urls[idx],
-              full_path: full_paths[idx],
-              path: paths[idx],
-            }));
-
-            // Final form update with real URLs
-            const detailsWithoutPreviews = currentDetails.filter(
-              (detail) => !newUploadingIds.has(detail.id as UUID),
-            );
-            updateForm("images.details", [
-              ...detailsWithoutPreviews,
-              ...updatedImageData,
-            ]);
-
-            // Clear uploading states (Success)
-            setUploadingStates((prev) => ({
-              ...prev,
-              details: new Set(
-                [...prev.details].filter(
-                  (id) => !newUploadingIds.has(id as UUID),
-                ),
-              ),
-            }));
-
-            resolve();
-          } catch (error) {
-            // Error handling and cleanup
-            const detailsBeforeUpload = currentDetails.filter(
-              (detail) => !newUploadingIds.has(detail.id as UUID),
-            );
-            updateForm("images.details", detailsBeforeUpload); // Remove the preview items
-
-            setUploadingStates((prev) => ({
-              ...prev,
-              details: new Set(
-                [...prev.details].filter(
-                  (id) => !newUploadingIds.has(id as UUID),
-                ),
-              ),
-            }));
-            reject(error as Error);
-          }
-        })();
-      });
-
-      // 3. Pass the defined promise to toast.promise
-      toast.promise(uploadPromise, {
-        loading: t.itemImageUpload.messages.uploadingDetails.loading[lang],
-        success: t.itemImageUpload.messages.uploadingDetails.success[lang],
-        error: t.itemImageUpload.messages.uploadingDetails.error[lang],
-      });
+        // Update the form
+        updateForm("images.details", [...currentDetails, ...newDetailImages]);
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : t.itemImageUpload.messages.uploadFailed[lang],
+        );
+        setUploadingStates((prev) => ({ ...prev, details: new Set() }));
+      } finally {
+        // Set loading to false
+        setUploadingStates((prev) => ({
+          ...prev,
+          details: new Set(),
+        }));
+      }
     },
-    [
-      formImages?.details,
-      validateFile,
-      createPreviewUrl,
-      updateForm,
-      dispatch,
-      lang,
-      item_id,
-    ],
+    [formImages?.details, validateFile, updateForm, dispatch, lang, item_id],
   );
+
   // FILE SELECT HANDLER
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>, type: "main" | "detail") => {
