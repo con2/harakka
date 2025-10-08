@@ -92,8 +92,8 @@ npm run backend:local          # Backend only
 - `VITE_SUPABASE_URL` - Frontend Supabase URL (local)
 - `VITE_SUPABASE_ANON_KEY` - Frontend Supabase anonymous key
 - `CRON_SECRET` - Shared secret for cron endpoint protection
-- `STORAGE_EMAIL` - Gmail address for sending emails
-- `STORAGE_EMAIL_PASSWORD` - Gmail app password
+- `STORAGE_EMAIL` -(Optional) Gmail address for sending emails
+- `STORAGE_EMAIL_PASSWORD` - (Optional) Gmail app password
 - `GOOGLE_ENABLED` - Enable Google OAuth (true/false)
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID for local dev
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
