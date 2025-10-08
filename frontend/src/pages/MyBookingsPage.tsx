@@ -41,7 +41,7 @@ import {
 import { ItemImage } from "@/components/ItemImage";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileTable from "@/components/ui/MobileTable";
-import { normalizeCityName } from "@/utils/locationValidation";
+import { extractCityFromLocationName } from "@/utils/locationValidation";
 
 const MyBookingsPage = () => {
   const { id } = useParams();
@@ -310,7 +310,7 @@ const MyBookingsPage = () => {
       header: t.myBookingsPage.columns.location[lang],
       cell: ({ row }) => (
         <div className="max-w-[170px] truncate justify-self-end md:justify-self-start">
-          {normalizeCityName(
+          {extractCityFromLocationName(
             all_locations?.find((l) => l.id === row.original.location_id)
               ?.name ?? "",
           )}
