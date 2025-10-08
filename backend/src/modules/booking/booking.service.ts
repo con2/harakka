@@ -1028,6 +1028,8 @@ export class BookingService {
       activeItems.length > 0 &&
       activeItems.every((it) => it.status !== "pending");
 
+    const hasRejectedItems = activeItems.some((it) => it.status === "rejected");
+
     if (allRejected) {
       const { error: bookingUpdateErr } = await supabase
         .from("bookings")
@@ -1051,17 +1053,104 @@ export class BookingService {
         );
       }
 
-      // Send confirmation email if all items are confirmed
-      try {
-        await this.mailService.sendBookingMail(BookingMailType.Confirmation, {
-          bookingId,
-          triggeredBy: req.user.id,
-        });
-      } catch (emailErr) {
-        console.error(
-          "All items confirmed, but email notification failed:",
-          emailErr,
-        );
+      if (hasRejectedItems) {
+        // There are both confirmed and rejected items - fetch full details
+        const { data: bookingWithItems, error: detailsError } = await supabase
+          .from("view_bookings_with_details")
+          .select(
+            `
+            id,
+            booking_items(
+              id,
+              status,
+              quantity,
+              storage_items (
+                translations
+              )
+            )
+          `,
+          )
+          .eq("id", bookingId)
+          .single();
+
+        if (detailsError || !bookingWithItems) {
+          console.error(
+            "Failed to fetch booking details for email:",
+            detailsError,
+          );
+        } else {
+          const itemsWithDetails = bookingWithItems.booking_items || [];
+
+          // Prepare confirmed items with translations
+          const confirmedItems = itemsWithDetails
+            .filter((item) => item.status === "confirmed")
+            .map((item) => {
+              const translations = item.storage_items?.translations
+                ? JSON.parse(JSON.stringify(item.storage_items.translations))
+                : {};
+
+              return {
+                ...item,
+                translations: {
+                  fi: {
+                    name: translations.fi?.item_name,
+                  },
+                  en: {
+                    name: translations.en?.item_name,
+                  },
+                },
+              };
+            });
+
+          const rejectedItems = itemsWithDetails
+            .filter((item) => item.status === "rejected")
+            .map((item) => {
+              const translations = item.storage_items?.translations
+                ? JSON.parse(JSON.stringify(item.storage_items.translations))
+                : {};
+
+              return {
+                ...item,
+                translations: {
+                  fi: {
+                    name: translations.fi?.item_name,
+                  },
+                  en: {
+                    name: translations.en?.item_name,
+                  },
+                },
+              };
+            });
+
+          try {
+            await this.mailService.sendBookingMail(
+              BookingMailType.PartlyConfirmed,
+              {
+                bookingId,
+                triggeredBy: req.user.id,
+                extraData: { confirmedItems, rejectedItems },
+              },
+            );
+          } catch (emailErr) {
+            console.error(
+              "Booking confirmed, but notification about mixed status items failed:",
+              emailErr,
+            );
+          }
+        }
+      } else {
+        // All items are confirmed (no rejections), send standard confirmation email
+        try {
+          await this.mailService.sendBookingMail(BookingMailType.Confirmation, {
+            bookingId,
+            triggeredBy: req.user.id,
+          });
+        } catch (emailErr) {
+          console.error(
+            "All items confirmed, but email notification failed:",
+            emailErr,
+          );
+        }
       }
     }
 
