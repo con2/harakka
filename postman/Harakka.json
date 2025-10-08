@@ -201,7 +201,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"email\": \"athina.kantis@gmail.com\",\r\n  \"password\": \"abcdef\"\r\n}",
+									"raw": "",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -310,7 +310,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"email\": \"ermegilius@gmail.com\",\r\n  \"password\": \"SuperVera666\"\r\n}",
+									"raw": "",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -416,7 +416,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"email\": \"user@test.com\",\r\n  \"password\": \"CreaTive90.\"\r\n}",
+									"raw": "{\r\n  \"email\": \"user@test.com\",\r\n  \"password\": \"\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -510,7 +510,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"email\": \"requester@test.com\",\r\n  \"password\": \"CreaTive90.\"\r\n}",
+									"raw": "{\r\n  \"email\": \"requester@test.com\",\r\n  \"password\": \"\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -604,7 +604,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"email\": \"storage_manager@test.com\",\r\n  \"password\": \"CreaTive90.\"\r\n}",
+									"raw": "{\r\n  \"email\": \"storage_manager@test.com\",\r\n  \"password\": \"\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -698,7 +698,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"email\": \"tenant_admin@test.com\",\r\n  \"password\": \"CreaTive90.\"\r\n}",
+									"raw": "{\r\n  \"email\": \"tenant_admin@test.com\",\r\n  \"password\": \"\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -792,7 +792,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"email\": \"super_admin@test.com\",\r\n  \"password\": \"CreaTive90.\"\r\n}",
+									"raw": "{\r\n  \"email\": \"super_admin@test.com\",\r\n  \"password\": \"\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -820,7 +820,7 @@
 							"response": []
 						}
 					],
-					"description": "# Test Users for RLS Policy Testing\n\nThis document contains the test users created in the remote database for testing Row Level Security (RLS) policies. Each user has specific roles and organization assignments for comprehensive testing.\n\n## Test User Details\n\n### Regular User\n\n- **Email:** `user@test.com`\n- **User ID:** `6e2686aa-7164-4a10-8852-177c56dd3d5f`\n- **Organization ID:** `2a42d333-a550-493f-876e-a2cea3c80d26`\n- **Role:** User\n- **Password:** `TestPassword123!`\n\n### Requester\n\n- **Email:** `requester@test.com`\n- **User ID:** `0efaafbf-29c4-48cd-8dc9-954dd924f553`\n- **Organization ID:** `5b96fb05-1a69-4d8b-832a-504eebf13960`\n- **Role:** Requester\n- **Password:** `TestPassword123!`\n\n### Storage Manager\n\n- **Email:** `storage_manager@test.com`\n- **User ID:** `1e647a27-717f-4aee-a2da-f2c1737349c1`\n- **Organization ID:** `5b96fb05-1a69-4d8b-832a-504eebf13960`\n- **Role:** Storage Manager\n- **Password:** `TestPassword123!`\n\n### Super Admin\n\n- **Email:** `super_admin@test.com`\n- **User ID:** `b8339c44-8410-49e0-8bb6-b74876120185`\n- **Organization ID:** `0360be4f-2ea1-4b89-960d-cff888fb7475`\n- **Role:** Super Admin\n- **Password:** `TestPassword123!`\n\n### Tenant Admin\n\n- **Email:** `tenant_admin@test.com`\n- **User ID:** `b08ed477-8100-4ee8-8ff8-84e1bcba1550`\n- **Organization ID:** `5b96fb05-1a69-4d8b-832a-504eebf13960`\n- **Role:** Tenant Admin\n- **Password:** `TestPassword123!`\n\n## Usage Instructions\n\n### Testing RLS Policies\n\n1. **Access Supabase Dashboard**\n   - Navigate to your Supabase project dashboard\n   - Go to Authentication > Users\n\n2. **Impersonate Test Users**\n   - Click on any test user from the list\n   - Click the \"Impersonate user\" button\n   - This will allow you to test RLS policies from that user's perspective\n\n3. **Test Different Scenarios**\n   - Use the SQL editor or table editor to test queries\n   - Verify that RLS policies are working correctly for each role\n   - Test cross-organization access restrictions\n\n4. **Stop Impersonation**\n   - Remember to stop impersonating when testing is complete\n   - Return to your admin view\n\n### Organization Structure\n\n- **Organization 1:** `2a42d333-a550-493f-876e-a2cea3c80d26`\n  - Regular User\n\n- **Organization 2:** `5b96fb05-1a69-4d8b-832a-504eebf13960`\n  - Requester\n  - Storage Manager  \n  - Tenant Admin\n\n- **Organization 3:** `0360be4f-2ea1-4b89-960d-cff888fb7475`\n  - Super Admin\n\n## Notes\n\n- All test users share the same password: `TestPassword123!`\n- Users are distributed across different organizations to test cross-org policies\n- These users should only be used for testing purposes\n- Remove or disable these users before going to production\n"
+					"description": ""
 				},
 				{
 					"name": "Old Logins",
@@ -1317,7 +1317,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"email\": \"maria.alukoo@gmail.com\",\r\n  \"password\": \"Kasseesobib123\"\r\n}",
+									"raw": "",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1564,7 +1564,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"email\": \"test@example.com\",\r\n  \"password\": \"CreaTive90.\"\r\n}",
+							"raw": "{\r\n  \"email\": \"test@example.com\",\r\n  \"password\": \"\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2430,7 +2430,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"error\": null,\n    \"data\": [\n        {\n            \"id\": \"fd9c5a45-3b9c-452e-b468-6af43c1e4b08\",\n            \"status\": \"pending\",\n            \"created_at\": \"2025-08-27T07:24:00.802255+00:00\",\n            \"booking_number\": \"ORD-3399\",\n            \"created_at_text\": \"2025-08-27 07:24:00.802255+00\",\n            \"full_name\": \"Athina Kantis\",\n            \"visible_name\": \"\",\n            \"email\": \"athina.kantis@gmail.com\",\n            \"user_id\": \"8457b0c7-a1ca-4e12-b1eb-76ee50894a90\",\n            \"org_status_for_active_org\": \"pending\"\n        },\n        {\n            \"id\": \"957f099f-fd04-49ae-bb37-51ad68614aa8\",\n            \"status\": \"pending\",\n            \"created_at\": \"2025-08-28T06:30:37.07991+00:00\",\n            \"booking_number\": \"ORD-0586\",\n            \"created_at_text\": \"2025-08-28 06:30:37.07991+00\",\n            \"full_name\": \"Maria Aluko\",\n            \"visible_name\": \"Admin Maria\",\n            \"email\": \"maria.alukoo@gmail.com\",\n            \"user_id\": \"3bc48c8b-77aa-4743-bd9f-382c6caef25e\",\n            \"org_status_for_active_org\": \"confirmed\"\n        },\n        {\n            \"id\": \"b14ce87b-641f-40d9-998a-39f6771c690a\",\n            \"status\": \"rejected\",\n            \"created_at\": \"2025-08-28T07:09:17.825247+00:00\",\n            \"booking_number\": \"ORD-9570\",\n            \"created_at_text\": \"2025-08-28 07:09:17.825247+00\",\n            \"full_name\": \"Maria Aluko\",\n            \"visible_name\": \"Admin Maria\",\n            \"email\": \"maria.alukoo@gmail.com\",\n            \"user_id\": \"3bc48c8b-77aa-4743-bd9f-382c6caef25e\",\n            \"org_status_for_active_org\": \"rejected\"\n        },\n        {\n            \"id\": \"5e12fabe-d8cb-4d99-a2ea-cc53ad67bc10\",\n            \"status\": \"pending\",\n            \"created_at\": \"2025-08-29T07:47:44.911339+00:00\",\n            \"booking_number\": \"ORD-4275\",\n            \"created_at_text\": \"2025-08-29 07:47:44.911339+00\",\n            \"full_name\": \"Maria Aluko\",\n            \"visible_name\": \"Admin Maria\",\n            \"email\": \"maria.alukoo@gmail.com\",\n            \"user_id\": \"3bc48c8b-77aa-4743-bd9f-382c6caef25e\",\n            \"org_status_for_active_org\": \"pending\"\n        },\n        {\n            \"id\": \"da174d4a-2a27-4f2f-93d0-23e8959eec8f\",\n            \"status\": \"pending\",\n            \"created_at\": \"2025-08-29T07:59:37.803718+00:00\",\n            \"booking_number\": \"ORD-0359\",\n            \"created_at_text\": \"2025-08-29 07:59:37.803718+00\",\n            \"full_name\": \"Athina Kantis\",\n            \"visible_name\": \"\",\n            \"email\": \"athina.kantis@gmail.com\",\n            \"user_id\": \"8457b0c7-a1ca-4e12-b1eb-76ee50894a90\",\n            \"org_status_for_active_org\": \"pending\"\n        },\n        {\n            \"id\": \"06494130-ac90-42f1-9a69-7faae31071bc\",\n            \"status\": \"pending\",\n            \"created_at\": \"2025-08-29T09:55:18.832705+00:00\",\n            \"booking_number\": \"ORD-6269\",\n            \"created_at_text\": \"2025-08-29 09:55:18.832705+00\",\n            \"full_name\": \"Vladimir Beliakov\",\n            \"visible_name\": \"Vova superVera\",\n            \"email\": \"ermegilius@gmail.com\",\n            \"user_id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\",\n            \"org_status_for_active_org\": \"pending\"\n        },\n        {\n            \"id\": \"d95d22a1-f7c4-4086-bcc3-2ecacae8dc58\",\n            \"status\": \"pending\",\n            \"created_at\": \"2025-09-02T08:01:04.326007+00:00\",\n            \"booking_number\": \"ORD-3705\",\n            \"created_at_text\": \"2025-09-02 08:01:04.326007+00\",\n            \"full_name\": \"Jonathan Gian\",\n            \"visible_name\": \"Jonathan\",\n            \"email\": \"jongian90@gmail.com\",\n            \"user_id\": \"20309789-792f-4755-b8ad-e94dbb4961e3\",\n            \"org_status_for_active_org\": \"pending\"\n        }\n    ],\n    \"count\": 7,\n    \"status\": 200,\n    \"statusText\": \"OK\",\n    \"metadata\": {\n        \"total\": 7,\n        \"totalPages\": 1,\n        \"page\": 1\n    }\n}"
+							"body": ""
 						}
 					]
 				},
@@ -2797,7 +2797,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"error\": null,\n    \"data\": [\n        {\n            \"id\": \"06494130-ac90-42f1-9a69-7faae31071bc\",\n            \"status\": \"pending\",\n            \"created_at\": \"2025-08-29T09:55:18.832705+00:00\",\n            \"booking_number\": \"ORD-6269\",\n            \"created_at_text\": \"2025-08-29 09:55:18.832705+00\",\n            \"full_name\": \"Vladimir Beliakov\",\n            \"visible_name\": \"Vova superVera\",\n            \"email\": \"ermegilius@gmail.com\",\n            \"user_id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\"\n        },\n        {\n            \"id\": \"66bead30-bdb3-4750-8a9f-84dda25f524f\",\n            \"status\": \"cancelled\",\n            \"created_at\": \"2025-07-08T12:37:55.548724+00:00\",\n            \"booking_number\": \"ORD-5669\",\n            \"created_at_text\": \"2025-07-08 12:37:55.548724+00\",\n            \"full_name\": \"Vladimir Beliakov\",\n            \"visible_name\": \"Vova superVera\",\n            \"email\": \"ermegilius@gmail.com\",\n            \"user_id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\"\n        },\n        {\n            \"id\": \"46d0287f-6c3c-4e6e-b342-1f0acbf90335\",\n            \"status\": \"pending\",\n            \"created_at\": \"2025-07-08T12:29:47.552329+00:00\",\n            \"booking_number\": \"ORD-5187\",\n            \"created_at_text\": \"2025-07-08 12:29:47.552329+00\",\n            \"full_name\": \"Vladimir Beliakov\",\n            \"visible_name\": \"Vova superVera\",\n            \"email\": \"ermegilius@gmail.com\",\n            \"user_id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\"\n        },\n        {\n            \"id\": \"990424c7-794f-46dc-a0f5-50bebfd93108\",\n            \"status\": \"rejected\",\n            \"created_at\": \"2025-05-22T09:07:10.581436+00:00\",\n            \"booking_number\": \"ORD-0318\",\n            \"created_at_text\": \"2025-05-22 09:07:10.581436+00\",\n            \"full_name\": \"Vladimir Beliakov\",\n            \"visible_name\": \"Vova superVera\",\n            \"email\": \"ermegilius@gmail.com\",\n            \"user_id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\"\n        },\n        {\n            \"id\": \"1cfe03aa-0b8f-4039-85e0-8b0231f7df26\",\n            \"status\": \"pending\",\n            \"created_at\": \"2025-05-17T13:41:31.016359+00:00\",\n            \"booking_number\": \"ORD-8455\",\n            \"created_at_text\": \"2025-05-17 13:41:31.016359+00\",\n            \"full_name\": \"Vladimir Beliakov\",\n            \"visible_name\": \"Vova superVera\",\n            \"email\": \"ermegilius@gmail.com\",\n            \"user_id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\"\n        },\n        {\n            \"id\": \"b26475b1-4071-43c4-a2a4-9d73e69e1946\",\n            \"status\": \"confirmed\",\n            \"created_at\": \"2025-05-17T12:52:02.159789+00:00\",\n            \"booking_number\": \"ORD-9503\",\n            \"created_at_text\": \"2025-05-17 12:52:02.159789+00\",\n            \"full_name\": \"Vladimir Beliakov\",\n            \"visible_name\": \"Vova superVera\",\n            \"email\": \"ermegilius@gmail.com\",\n            \"user_id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\"\n        },\n        {\n            \"id\": \"abfea224-53de-47bb-8fd9-b7eb853e07f1\",\n            \"status\": \"confirmed\",\n            \"created_at\": \"2025-05-15T14:35:56.887526+00:00\",\n            \"booking_number\": \"ORD-0546\",\n            \"created_at_text\": \"2025-05-15 14:35:56.887526+00\",\n            \"full_name\": \"Vladimir Beliakov\",\n            \"visible_name\": \"Vova superVera\",\n            \"email\": \"ermegilius@gmail.com\",\n            \"user_id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\"\n        },\n        {\n            \"id\": \"a9b8322f-506e-4a0c-bee0-afde283bab7d\",\n            \"status\": \"pending\",\n            \"created_at\": \"2025-05-14T12:15:01.285351+00:00\",\n            \"booking_number\": \"ORD-7020\",\n            \"created_at_text\": \"2025-05-14 12:15:01.285351+00\",\n            \"full_name\": \"Vladimir Beliakov\",\n            \"visible_name\": \"Vova superVera\",\n            \"email\": \"ermegilius@gmail.com\",\n            \"user_id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\"\n        },\n        {\n            \"id\": \"422125c1-a3aa-4f8e-b88b-c7ed32d5d002\",\n            \"status\": \"pending\",\n            \"created_at\": \"2025-05-14T08:01:39.553554+00:00\",\n            \"booking_number\": \"ORD-1270\",\n            \"created_at_text\": \"2025-05-14 08:01:39.553554+00\",\n            \"full_name\": \"Vladimir Beliakov\",\n            \"visible_name\": \"Vova superVera\",\n            \"email\": \"ermegilius@gmail.com\",\n            \"user_id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\"\n        },\n        {\n            \"id\": \"cb85a36b-b1ec-46c7-82f1-8c64701cb11c\",\n            \"status\": \"pending\",\n            \"created_at\": \"2025-05-13T17:02:03.55494+00:00\",\n            \"booking_number\": \"ORD-9681\",\n            \"created_at_text\": \"2025-05-13 17:02:03.55494+00\",\n            \"full_name\": \"Vladimir Beliakov\",\n            \"visible_name\": \"Vova superVera\",\n            \"email\": \"ermegilius@gmail.com\",\n            \"user_id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\"\n        }\n    ],\n    \"count\": 44,\n    \"status\": 206,\n    \"statusText\": \"Partial Content\",\n    \"metadata\": {\n        \"total\": 44,\n        \"totalPages\": 5,\n        \"page\": 1\n    }\n}"
+							"body": ""
 						}
 					]
 				},
@@ -4903,7 +4903,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"message\": \"Booking cancelled by user\",\n    \"orderId\": \"8a7d4831-45c2-45a9-9c91-3e1321c52d2d\",\n    \"recipient\": {\n        \"email\": \"jongian90@gmail.com\",\n        \"role\": \"user\"\n    },\n    \"cancelledBy\": \"user\",\n    \"items\": [\n        {\n            \"item_id\": \"e22019a0-a28f-4081-8af7-2d816101f43c\",\n            \"quantity\": 1,\n            \"start_date\": \"2026-08-26T00:00:00+00:00\",\n            \"end_date\": \"2026-08-27T00:00:00+00:00\"\n        }\n    ]\n}"
+							"body": ""
 						}
 					]
 				},
@@ -7926,7 +7926,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"to\": \"jongian90@gmail.com\",\r\n    \"subject\": \"Hello\",\r\n    \"message\" : \"This is a test\",\r\n    \"from\" : \"illusia.info.ry@gmail.com\"\r\n}",
+							"raw": "",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -7952,7 +7952,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"to\": \"jongian90@gmail.com\",\r\n    \"subject\": \"Hello\",\r\n    \"message\" : \"This is a test\",\r\n    \"from\" : \"notsure@gmail.com\"\r\n}",
+									"raw": "",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -8033,7 +8033,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"to\": \"jongian90@gmail.com\",\r\n    \"subject\": \"Hello\",\r\n    \"message\" : \"This is a test\",\r\n    \"from\" : \"illusia.info.ry@gmail.com\"\r\n}",
+									"raw": "",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -12027,7 +12027,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"id\": \"0b3a6eb8-2590-4b89-88ae-562fb3ebd2f0\",\n    \"user_id\": \"20309789-792f-4755-b8ad-e94dbb4961e3\",\n    \"organization_id\": \"51f5fd2f-9b13-47dd-b51f-539c7ef4f345\",\n    \"role_id\": \"1663d9f0-7b1e-417d-9349-4f2e19b6d1e8\",\n    \"role_name\": \"user\",\n    \"organization_name\": \"Org A\",\n    \"is_active\": true,\n    \"created_at\": \"2025-07-10T09:48:24.495481+00:00\",\n    \"user_email\": \"jongian90@gmail.com\",\n    \"user_full_name\": \"Jonathan Gian\",\n    \"user_visible_name\": \"Jonathan\"\n}"
+							"body": ""
 						}
 					]
 				},
@@ -18768,7 +18768,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"userId\": \"dcd9f8e6-8421-4bed-a7f9-f0893b370ba2\",\n  \"email\": \"testingusercreation42@gmail.com\"\n}",
+									"raw": "",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -18995,7 +18995,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "[\n    {\n        \"id\": \"695c234f-246e-4d7c-92d3-3a96d8620329\",\n        \"role\": \"user\",\n        \"full_name\": \"Grit Hanssen\",\n        \"visible_name\": \"Grit\",\n        \"phone\": \"+35812345678\",\n        \"email\": \"kramp-stefanie@web.de\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-04-11T18:25:09.575915+00:00\"\n    },\n    {\n        \"id\": \"7335ec3d-2559-45a2-934d-d6f23e98fec0\",\n        \"role\": \"user\",\n        \"full_name\": \"Santtu Pajukanta\",\n        \"visible_name\": \"Japsu\",\n        \"phone\": \"+358503450542\",\n        \"email\": \"japsu@con2.fi\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-05-19T10:27:14.202977+00:00\"\n    },\n    {\n        \"id\": \"ffd7779c-e0d3-4e51-bf7a-5a43edd8576b\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Shital Sapkota\",\n        \"visible_name\": \"Shital\",\n        \"phone\": \"+35877345678\",\n        \"email\": \"shital.sapkota1@gmail.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-04-29T07:47:18.911711+00:00\"\n    },\n    {\n        \"id\": \"868ff272-c25a-4edb-b78a-de61c68c2aaa\",\n        \"role\": \"admin\",\n        \"full_name\": \"Peter Illusia\",\n        \"visible_name\": \"Johnny Johnny\",\n        \"phone\": \"+358123123123\",\n        \"email\": \"illusia.rental.service@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-05-09T08:39:46.393965+00:00\"\n    },\n    {\n        \"id\": \"3bc48c8b-77aa-4743-bd9f-382c6caef25e\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Maria Aluko\",\n        \"visible_name\": \"Admin Maria\",\n        \"phone\": \"+358407766454\",\n        \"email\": \"maria.alukoo@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {\n            \"new_key_1744188133248\": \"light\"\n        },\n        \"created_at\": \"2025-04-07T13:49:08.07806+00:00\"\n    },\n    {\n        \"id\": \"f58479f1-50af-4b0d-8364-536387847821\",\n        \"role\": \"user\",\n        \"full_name\": \"Mari Halonen\",\n        \"visible_name\": \"Mari Halonen\",\n        \"phone\": \"+358407766454\",\n        \"email\": \"marihalonen89@gmail.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-05-22T08:23:56.443758+00:00\"\n    },\n    {\n        \"id\": \"bb85cd05-9770-4e12-9b2e-723cbe072187\",\n        \"role\": \"user\",\n        \"full_name\": \"Maria Aluko\",\n        \"visible_name\": \"User Maria\",\n        \"phone\": \"+358407766454\",\n        \"email\": \"huopolainen.maria@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-05-12T11:32:40.937895+00:00\"\n    },\n    {\n        \"id\": \"e4949613-1e8c-40f8-a073-31757e80d33b\",\n        \"role\": \"user\",\n        \"full_name\": \"\",\n        \"visible_name\": \"\",\n        \"phone\": \"\",\n        \"email\": \"maciej@wonderlarp.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-05-19T09:55:53.597639+00:00\"\n    },\n    {\n        \"id\": \"e1d33e88-465f-49c8-99c8-c8d91e003e76\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Vova Admin\",\n        \"visible_name\": \"Vova Admin\",\n        \"phone\": \"+358417654321\",\n        \"email\": \"ermegilius42@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-05-19T10:21:47.310059+00:00\"\n    },\n    {\n        \"id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Vladimir Beliakov\",\n        \"visible_name\": \"Vova\",\n        \"phone\": \"+1123 6536 5321\",\n        \"email\": \"ermegilius@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-04-07T11:04:09.542177+00:00\"\n    },\n    {\n        \"id\": \"86bf2302-9fa0-4ca7-88ce-630c8bfd8ae3\",\n        \"role\": \"user\",\n        \"full_name\": null,\n        \"visible_name\": null,\n        \"phone\": null,\n        \"email\": \"user@postman.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-06-08T16:08:06.48164+00:00\"\n    },\n    {\n        \"id\": \"20309789-792f-4755-b8ad-e94dbb4961e3\",\n        \"role\": \"admin\",\n        \"full_name\": \"Jonathan Gian\",\n        \"visible_name\": \"Jonathan\",\n        \"phone\": null,\n        \"email\": \"jongian90@gmail.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-05-29T11:52:30.973219+00:00\"\n    },\n    {\n        \"id\": \"8457b0c7-a1ca-4e12-b1eb-76ee50894a90\",\n        \"role\": \"user\",\n        \"full_name\": null,\n        \"visible_name\": null,\n        \"phone\": null,\n        \"email\": \"athina.kantis@gmail.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-06-09T11:05:14.757477+00:00\"\n    },\n    {\n        \"id\": \"d812cc61-0323-41e2-975b-cbb43b4fcb87\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Steffi Jana\",\n        \"visible_name\": \"Steffi\",\n        \"phone\": \"+35812399678\",\n        \"email\": \"garschtubald@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-04-07T12:12:38.816013+00:00\"\n    },\n    {\n        \"id\": \"b1fe639d-8ba1-41f6-82d1-320beab80194\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Matti Riverlainen\",\n        \"visible_name\": \"My name\",\n        \"phone\": \"+123456789\",\n        \"email\": \"newemail@mail.com\",\n        \"saved_lists\": null,\n        \"preferences\": {},\n        \"created_at\": \"2025-05-08T15:36:36.616532+00:00\"\n    }\n]"
+							"body": ""
 						}
 					]
 				},
@@ -19216,7 +19216,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "[\n    {\n        \"id\": \"695c234f-246e-4d7c-92d3-3a96d8620329\",\n        \"role\": \"user\",\n        \"full_name\": \"Grit Hanssen\",\n        \"visible_name\": \"Grit\",\n        \"phone\": \"+35812345678\",\n        \"email\": \"kramp-stefanie@web.de\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-04-11T18:25:09.575915+00:00\"\n    },\n    {\n        \"id\": \"7335ec3d-2559-45a2-934d-d6f23e98fec0\",\n        \"role\": \"user\",\n        \"full_name\": \"Santtu Pajukanta\",\n        \"visible_name\": \"Japsu\",\n        \"phone\": \"+358503450542\",\n        \"email\": \"japsu@con2.fi\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-05-19T10:27:14.202977+00:00\"\n    },\n    {\n        \"id\": \"ffd7779c-e0d3-4e51-bf7a-5a43edd8576b\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Shital Sapkota\",\n        \"visible_name\": \"Shital\",\n        \"phone\": \"+35877345678\",\n        \"email\": \"shital.sapkota1@gmail.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-04-29T07:47:18.911711+00:00\"\n    },\n    {\n        \"id\": \"868ff272-c25a-4edb-b78a-de61c68c2aaa\",\n        \"role\": \"admin\",\n        \"full_name\": \"Peter Illusia\",\n        \"visible_name\": \"Johnny Johnny\",\n        \"phone\": \"+358123123123\",\n        \"email\": \"illusia.rental.service@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-05-09T08:39:46.393965+00:00\"\n    },\n    {\n        \"id\": \"3bc48c8b-77aa-4743-bd9f-382c6caef25e\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Maria Aluko\",\n        \"visible_name\": \"Admin Maria\",\n        \"phone\": \"+358407766454\",\n        \"email\": \"maria.alukoo@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {\n            \"new_key_1744188133248\": \"light\"\n        },\n        \"created_at\": \"2025-04-07T13:49:08.07806+00:00\"\n    },\n    {\n        \"id\": \"f58479f1-50af-4b0d-8364-536387847821\",\n        \"role\": \"user\",\n        \"full_name\": \"Mari Halonen\",\n        \"visible_name\": \"Mari Halonen\",\n        \"phone\": \"+358407766454\",\n        \"email\": \"marihalonen89@gmail.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-05-22T08:23:56.443758+00:00\"\n    },\n    {\n        \"id\": \"bb85cd05-9770-4e12-9b2e-723cbe072187\",\n        \"role\": \"user\",\n        \"full_name\": \"Maria Aluko\",\n        \"visible_name\": \"User Maria\",\n        \"phone\": \"+358407766454\",\n        \"email\": \"huopolainen.maria@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-05-12T11:32:40.937895+00:00\"\n    },\n    {\n        \"id\": \"e4949613-1e8c-40f8-a073-31757e80d33b\",\n        \"role\": \"user\",\n        \"full_name\": \"\",\n        \"visible_name\": \"\",\n        \"phone\": \"\",\n        \"email\": \"maciej@wonderlarp.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-05-19T09:55:53.597639+00:00\"\n    },\n    {\n        \"id\": \"e1d33e88-465f-49c8-99c8-c8d91e003e76\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Vova Admin\",\n        \"visible_name\": \"Vova Admin\",\n        \"phone\": \"+358417654321\",\n        \"email\": \"ermegilius42@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-05-19T10:21:47.310059+00:00\"\n    },\n    {\n        \"id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Vladimir Beliakov\",\n        \"visible_name\": \"Vova\",\n        \"phone\": \"+1123 6536 5321\",\n        \"email\": \"ermegilius@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-04-07T11:04:09.542177+00:00\"\n    },\n    {\n        \"id\": \"86bf2302-9fa0-4ca7-88ce-630c8bfd8ae3\",\n        \"role\": \"user\",\n        \"full_name\": null,\n        \"visible_name\": null,\n        \"phone\": null,\n        \"email\": \"user@postman.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-06-08T16:08:06.48164+00:00\"\n    },\n    {\n        \"id\": \"20309789-792f-4755-b8ad-e94dbb4961e3\",\n        \"role\": \"admin\",\n        \"full_name\": \"Jonathan Gian\",\n        \"visible_name\": \"Jonathan\",\n        \"phone\": null,\n        \"email\": \"jongian90@gmail.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-05-29T11:52:30.973219+00:00\"\n    },\n    {\n        \"id\": \"8457b0c7-a1ca-4e12-b1eb-76ee50894a90\",\n        \"role\": \"user\",\n        \"full_name\": null,\n        \"visible_name\": null,\n        \"phone\": null,\n        \"email\": \"athina.kantis@gmail.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-06-09T11:05:14.757477+00:00\"\n    },\n    {\n        \"id\": \"d812cc61-0323-41e2-975b-cbb43b4fcb87\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Steffi Jana\",\n        \"visible_name\": \"Steffi\",\n        \"phone\": \"+35812399678\",\n        \"email\": \"garschtubald@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-04-07T12:12:38.816013+00:00\"\n    },\n    {\n        \"id\": \"b1fe639d-8ba1-41f6-82d1-320beab80194\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Matti Riverlainen\",\n        \"visible_name\": \"My name\",\n        \"phone\": \"+123456789\",\n        \"email\": \"newemail@mail.com\",\n        \"saved_lists\": null,\n        \"preferences\": {},\n        \"created_at\": \"2025-05-08T15:36:36.616532+00:00\"\n    }\n]"
+							"body": ""
 						}
 					]
 				},
@@ -19424,7 +19424,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "[\n    {\n        \"id\": \"695c234f-246e-4d7c-92d3-3a96d8620329\",\n        \"role\": \"user\",\n        \"full_name\": \"Grit Hanssen\",\n        \"visible_name\": \"Grit\",\n        \"phone\": \"+35812345678\",\n        \"email\": \"kramp-stefanie@web.de\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-04-11T18:25:09.575915+00:00\"\n    },\n    {\n        \"id\": \"7335ec3d-2559-45a2-934d-d6f23e98fec0\",\n        \"role\": \"user\",\n        \"full_name\": \"Santtu Pajukanta\",\n        \"visible_name\": \"Japsu\",\n        \"phone\": \"+358503450542\",\n        \"email\": \"japsu@con2.fi\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-05-19T10:27:14.202977+00:00\"\n    },\n    {\n        \"id\": \"ffd7779c-e0d3-4e51-bf7a-5a43edd8576b\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Shital Sapkota\",\n        \"visible_name\": \"Shital\",\n        \"phone\": \"+35877345678\",\n        \"email\": \"shital.sapkota1@gmail.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-04-29T07:47:18.911711+00:00\"\n    },\n    {\n        \"id\": \"868ff272-c25a-4edb-b78a-de61c68c2aaa\",\n        \"role\": \"admin\",\n        \"full_name\": \"Peter Illusia\",\n        \"visible_name\": \"Johnny Johnny\",\n        \"phone\": \"+358123123123\",\n        \"email\": \"illusia.rental.service@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-05-09T08:39:46.393965+00:00\"\n    },\n    {\n        \"id\": \"3bc48c8b-77aa-4743-bd9f-382c6caef25e\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Maria Aluko\",\n        \"visible_name\": \"Admin Maria\",\n        \"phone\": \"+358407766454\",\n        \"email\": \"maria.alukoo@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {\n            \"new_key_1744188133248\": \"light\"\n        },\n        \"created_at\": \"2025-04-07T13:49:08.07806+00:00\"\n    },\n    {\n        \"id\": \"f58479f1-50af-4b0d-8364-536387847821\",\n        \"role\": \"user\",\n        \"full_name\": \"Mari Halonen\",\n        \"visible_name\": \"Mari Halonen\",\n        \"phone\": \"+358407766454\",\n        \"email\": \"marihalonen89@gmail.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-05-22T08:23:56.443758+00:00\"\n    },\n    {\n        \"id\": \"bb85cd05-9770-4e12-9b2e-723cbe072187\",\n        \"role\": \"user\",\n        \"full_name\": \"Maria Aluko\",\n        \"visible_name\": \"User Maria\",\n        \"phone\": \"+358407766454\",\n        \"email\": \"huopolainen.maria@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-05-12T11:32:40.937895+00:00\"\n    },\n    {\n        \"id\": \"e4949613-1e8c-40f8-a073-31757e80d33b\",\n        \"role\": \"user\",\n        \"full_name\": \"\",\n        \"visible_name\": \"\",\n        \"phone\": \"\",\n        \"email\": \"maciej@wonderlarp.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-05-19T09:55:53.597639+00:00\"\n    },\n    {\n        \"id\": \"e1d33e88-465f-49c8-99c8-c8d91e003e76\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Vova Admin\",\n        \"visible_name\": \"Vova Admin\",\n        \"phone\": \"+358417654321\",\n        \"email\": \"ermegilius42@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-05-19T10:21:47.310059+00:00\"\n    },\n    {\n        \"id\": \"272ff9ac-1d2c-43f2-8564-dde2d352aeda\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Vladimir Beliakov\",\n        \"visible_name\": \"Vova\",\n        \"phone\": \"+1123 6536 5321\",\n        \"email\": \"ermegilius@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-04-07T11:04:09.542177+00:00\"\n    },\n    {\n        \"id\": \"86bf2302-9fa0-4ca7-88ce-630c8bfd8ae3\",\n        \"role\": \"user\",\n        \"full_name\": null,\n        \"visible_name\": null,\n        \"phone\": null,\n        \"email\": \"user@postman.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-06-08T16:08:06.48164+00:00\"\n    },\n    {\n        \"id\": \"20309789-792f-4755-b8ad-e94dbb4961e3\",\n        \"role\": \"admin\",\n        \"full_name\": \"Jonathan Gian\",\n        \"visible_name\": \"Jonathan\",\n        \"phone\": null,\n        \"email\": \"jongian90@gmail.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-05-29T11:52:30.973219+00:00\"\n    },\n    {\n        \"id\": \"8457b0c7-a1ca-4e12-b1eb-76ee50894a90\",\n        \"role\": \"user\",\n        \"full_name\": null,\n        \"visible_name\": null,\n        \"phone\": null,\n        \"email\": \"athina.kantis@gmail.com\",\n        \"saved_lists\": null,\n        \"preferences\": null,\n        \"created_at\": \"2025-06-09T11:05:14.757477+00:00\"\n    },\n    {\n        \"id\": \"d812cc61-0323-41e2-975b-cbb43b4fcb87\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Steffi Jana\",\n        \"visible_name\": \"Steffi\",\n        \"phone\": \"+35812399678\",\n        \"email\": \"garschtubald@gmail.com\",\n        \"saved_lists\": [],\n        \"preferences\": {},\n        \"created_at\": \"2025-04-07T12:12:38.816013+00:00\"\n    },\n    {\n        \"id\": \"b1fe639d-8ba1-41f6-82d1-320beab80194\",\n        \"role\": \"superVera\",\n        \"full_name\": \"Matti Riverlainen\",\n        \"visible_name\": \"My name\",\n        \"phone\": \"+123456789\",\n        \"email\": \"newemail@mail.com\",\n        \"saved_lists\": null,\n        \"preferences\": {},\n        \"created_at\": \"2025-05-08T15:36:36.616532+00:00\"\n    }\n]"
+							"body": ""
 						}
 					]
 				},
@@ -19795,7 +19795,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"id\": \"d812cc61-0323-41e2-975b-cbb43b4fcb87\",\n    \"role\": \"superVera\",\n    \"full_name\": \"Steffi Jana\",\n    \"visible_name\": \"Steffi\",\n    \"phone\": \"+35812399678\",\n    \"email\": \"garschtubald@gmail.com\",\n    \"saved_lists\": [],\n    \"preferences\": {},\n    \"created_at\": \"2025-04-07T12:12:38.816013+00:00\"\n}"
+							"body": ""
 						},
 						{
 							"name": "500",
@@ -19949,7 +19949,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"email\": \"Update@test.com\",\r\n    \"password\": \"somethingNew\",\r\n    \"full_name\": \"Ima-Tester\",\r\n    \"visible_name\": \"Not-A-Cat\",\r\n    \"phone\": \"000000000\",\r\n    \"role\" : \"admin\",\r\n    \"preferences\": \"none\"\r\n}",
+									"raw": "",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -21964,7 +21964,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n \"email\": \"jongian@hotmail.com\",\n \"password\": \"CreaTive90.\"\n}",
+							"raw": "{\n \"email\": \"\",\n \"password\": \"\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -21990,7 +21990,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n \"email\": \"jongian@hotmail.com\",\n \"password\": \"CreaTive90.\"\n}",
+									"raw": "{\n \"email\": \"\",\n \"password\": \"\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -22064,7 +22064,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n \"email\": \"jongian@hotmail.com\",\n \"password\": \"CreaTive90.\"\n}"
+							"raw": "{\n \"email\": \"\",\n \"password\": \".\"\n}"
 						},
 						"url": {
 							"raw": "{{BACKEND_URL}}/auth/token-info",
@@ -22147,7 +22147,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n \"email\": \"jongian@hotmail.com\",\n \"password\": \"CreaTive90.\"\n}",
+							"raw": "{\n \"email\": \"\",\n \"password\": \".\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -22173,7 +22173,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n \"email\": \"jongian@hotmail.com\",\n \"password\": \"CreaTive90.\"\n}",
+									"raw": "{\n \"email\": \"\",\n \"password\": \".\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -24578,16 +24578,6 @@
 		{
 			"key": "fresh_booking_id",
 			"value": "b4450ddc-46fa-4eab-90bb-33108d26a8a1",
-			"type": "default"
-		},
-		{
-			"key": "Jons_Email",
-			"value": "jongian@hotmail.com",
-			"type": "default"
-		},
-		{
-			"key": "Jons_Password",
-			"value": "CreaTive90.",
 			"type": "default"
 		},
 		{
