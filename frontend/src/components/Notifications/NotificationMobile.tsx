@@ -80,7 +80,7 @@ export const NotificationMobile: React.FC<Props> = ({
       </Button>
       {/* Notification Panel */}
       <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
-        <SheetContent side="top" hideClose className="w-full max-w-none p-0">
+        <SheetContent side="top" hideClose className="max-w-none p-0">
           {/* Header */}
           <div className="p-3 border-b flex items-center justify-between gap-2 flex-wrap">
             {/* Notifications title (SheetTitle for accessibility) */}
@@ -97,10 +97,10 @@ export const NotificationMobile: React.FC<Props> = ({
                 {t.navigation.notifications.label[lang]}
               </SheetTitle>
               <SheetDescription className="sr-only">
-                View and manage your notifications.
+                {t.navigation.notifications.description[lang]}
               </SheetDescription>
             </div>
-            <div className="flex items-center gap-2 flex-none ml-auto">
+            <div className="flex items-center gap-2 flex-none ml-auto ">
               {showToggle && (
                 <div className="inline-flex rounded border border-(--subtle-grey) overflow-hidden">
                   {/* Active */}
@@ -135,7 +135,7 @@ export const NotificationMobile: React.FC<Props> = ({
                       <TooltipContent
                         side="bottom"
                         align="end"
-                        className="max-w-[280px] z-50"
+                        className="max-w-[280px] z-50 w-fit"
                         sideOffset={8}
                       >
                         <div className="flex flex-col gap-2">
@@ -192,11 +192,11 @@ export const NotificationMobile: React.FC<Props> = ({
           </div>
 
           {visibleFeed.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">
+            <p className="p-10 text-sm text-muted-foreground text-center">
               {t.navigation.notifications.none[lang]}
             </p>
           ) : (
-            <ScrollArea className="h-[70vh] sm:h-[80vh]">
+            <ScrollArea className="max-h-[70vh] sm:max-h-[80vh] overflow-y-scroll">
               {visibleFeed.map((n) => {
                 const tpl =
                   (
