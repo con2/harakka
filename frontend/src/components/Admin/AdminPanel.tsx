@@ -11,6 +11,7 @@ import {
   Building2,
   MapPin,
   LayoutGrid,
+  BarChart2,
 } from "lucide-react";
 import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -65,7 +66,7 @@ const AdminPanel = () => {
             <SidebarLink
               to="/admin/bookings"
               icon={<IncomingBookings aria-hidden className="w-6 h-5" />}
-              label={t.adminPanel.navigation.bookings[lang]}
+              label={t.adminPanel.navigation.bookingsIn[lang]}
               dataCy="admin-nav-bookings"
             />
           )}
@@ -73,7 +74,7 @@ const AdminPanel = () => {
             <SidebarLink
               to="/admin/requests"
               icon={<OutgoingBookings aria-hidden className="w-6 h-5" />}
-              label={t.adminPanel.navigation.requests[lang]}
+              label={t.adminPanel.navigation.bookingsOut[lang]}
               dataCy="admin-nav-bookings-out"
             />
           )}
@@ -130,6 +131,15 @@ const AdminPanel = () => {
               icon={<MapPin aria-hidden className="w-5 h-5" />}
               label={t.adminPanel.navigation.locations[lang]}
               dataCy="admin-nav-locations"
+            />
+          )}
+
+          {hasAnyRole(["tenant_admin", "storage_manager"]) && (
+            <SidebarLink
+              to="/admin/reports"
+              icon={<BarChart2 aria-hidden className="w-5 h-5" />}
+              label={t.adminPanel.navigation.reports[lang]}
+              dataCy="admin-nav-reports"
             />
           )}
 

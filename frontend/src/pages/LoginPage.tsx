@@ -52,21 +52,23 @@ const LoginPage = () => {
         data-cy="login-content"
       >
         <div className="w-full max-w-md" data-cy="login-card-container">
-          {/* Welcome Text */}
-          <div className="text-center mb-8" data-cy="login-welcome">
-            <h1
-              className="text-4xl font-bold text-white drop-shadow-lg mb-2"
-              data-cy="login-title"
-            >
-              {t.login.welcome[lang]}
-            </h1>
-            <p
-              className="text-white/80 drop-shadow-md"
-              data-cy="login-subtitle"
-            >
-              {t.login.subtitle[lang]}
-            </p>
-          </div>
+          {/* Welcome Text - Only show for sign_in view */}
+          {currentView === "sign_in" && (
+            <div className="text-center mb-8" data-cy="login-welcome">
+              <h1
+                className="text-4xl font-bold text-white drop-shadow-lg mb-2"
+                data-cy="login-title"
+              >
+                {t.login.welcome[lang]}
+              </h1>
+              <p
+                className="text-white/80 drop-shadow-md"
+                data-cy="login-subtitle"
+              >
+                {t.login.subtitle[lang]}
+              </p>
+            </div>
+          )}
           <Card
             className="w-full shadow-2xl bg-white/95 backdrop-blur-sm border-0 transform hover:scale-[1.02] transition-all duration-300"
             data-cy="login-card"

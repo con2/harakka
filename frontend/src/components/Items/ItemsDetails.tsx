@@ -6,6 +6,7 @@ import {
   selectSelectedItem,
   selectItemsLoading,
   selectItemsError,
+  clearSelectedItem,
 } from "@/store/slices/itemsSlice";
 import {
   getItemImages,
@@ -87,7 +88,7 @@ const ItemsDetails: React.FC = () => {
   // Get the main image - no transformation needed
   const mainImage = useMemo(() => {
     // If user selected an image, use that
-    if (selectedImageUrl) return selectedImageUrl;
+    if (selectedImageUrl) return { image_url: selectedImageUrl };
 
     // First try to find a main image
     const mainImg = itemImagesForCurrentItem.find(
@@ -96,7 +97,7 @@ const ItemsDetails: React.FC = () => {
     const firstImg = itemImagesForCurrentItem[0];
 
     // Return image URL or placeholder
-    return mainImg || firstImg || imagePlaceholder;
+    return mainImg || firstImg || { image_url: imagePlaceholder };
   }, [itemImagesForCurrentItem, selectedImageUrl]);
 
   const handleAddToCart = () => {
@@ -160,6 +161,10 @@ const ItemsDetails: React.FC = () => {
           console.error("Failed to fetch item images:", error);
         });
     }
+
+    return () => {
+      dispatch(clearSelectedItem());
+    };
   }, [id, dispatch]);
 
   // Fetch org data when item is loaded
@@ -217,9 +222,12 @@ const ItemsDetails: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4" data-cy="item-details-root">
+    <div
+      className="container mx-auto px-4 max-w-full overflow-x-hidden"
+      data-cy="item-details-root"
+    >
       {/* Back Button */}
-      <div className="mb-3 mt-4 md:mt-0">
+      <div className="mb-3 mt-4 lg:mt-0">
         <Button
           onClick={() => {
             // navigate back to storage with page state if available
@@ -235,12 +243,15 @@ const ItemsDetails: React.FC = () => {
           <ChevronLeft /> {t.itemDetails.buttons.back[lang]}
         </Button>
       </div>
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-8">
         {/* Item Images - Positioned Left */}
-        <div className="md:w-1/3 w-full" data-cy="item-details-images">
+        <div
+          className="md:w-2/5 lg:w-2/5 w-full max-w-full"
+          data-cy="item-details-images"
+        >
           {/* Main Image */}
           <div
-            className="relative mb-4 h-[300px] group w-full max-w-md mx-auto md:max-w-none aspect-[4/3]"
+            className="relative mb-4 h-[250px] sm:h-[300px] group w-full max-w-full sm:max-w-md mx-auto md:max-w-none aspect-[4/3]"
             data-cy="item-details-main-image"
           >
             {/* Main Image Container */}
@@ -272,7 +283,7 @@ const ItemsDetails: React.FC = () => {
               >
                 <div className="w-[90%] max-w-[420px] max-h-[80%] h-auto border rounded-lg shadow-lg bg-white flex justify-center items-center p-2">
                   <img
-                    src={(mainImage as ItemImage).image_url}
+                    src={selectedImageUrl || (mainImage as ItemImage).image_url}
                     alt={itemContent?.item_name || "Tuotteen kuva"}
                     className="object-contain w-[400px] h-[400px] max-w-full max-h-full cursor-pointer"
                   />
@@ -311,7 +322,7 @@ const ItemsDetails: React.FC = () => {
 
         {/* Right Side - Item Details */}
         <div
-          className="md:w-2/3 w-full space-y-4 order-1 md:order-2"
+          className="md:w-3/5 lg:w-3/5 w-full space-y-4 order-1 md:order-2"
           data-cy="item-details-info"
         >
           <h2
@@ -454,7 +465,7 @@ const ItemsDetails: React.FC = () => {
                   </p>
                 )}
               </div>
-              <div className="flex items-center justify-start mt-1 mb-4 md:mb-0">
+              <div className="flex items-center justify-start mt-1 mb-4 lg:mb-0">
                 <Button
                   className={`bg-secondary rounded-2xl text-white border-secondary border-1 flex-1 mt-3
                     hover:text-secondary hover:bg-white
@@ -470,19 +481,21 @@ const ItemsDetails: React.FC = () => {
             </div>
           ) : (
             <div
-              className="flex flex-row items-center"
+              className="flex flex-row items-start gap-1"
               data-cy="item-details-no-dates"
             >
-              <Info className="mr-1 text-secondary size-4" />{" "}
-              {t.itemDetails.info.noDates[lang]}
-              <Link
-                to="/storage"
-                className="ml-1 text-secondary underline"
-                data-cy="item-details-here-link"
-              >
-                {t.itemDetails.info.here[lang]}
-              </Link>
-              .
+              <Info className="shrink-0 text-secondary size-4 mt-0.5" />{" "}
+              <div className="flex-1">
+                <span>{t.itemDetails.info.noDates[lang]}</span>
+                <Link
+                  to="/storage"
+                  className="ml-1 text-secondary underline"
+                  data-cy="item-details-here-link"
+                >
+                  {t.itemDetails.info.here[lang]}
+                </Link>
+                .
+              </div>
             </div>
           )}
         </div>

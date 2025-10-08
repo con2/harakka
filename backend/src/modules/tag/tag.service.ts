@@ -7,6 +7,7 @@ import { Database } from "@common/database.types";
 import { ApiResponse } from "@common/response.types";
 import { getPaginationMeta, getPaginationRange } from "src/utils/pagination";
 import { TagLink } from "@common/items/storage-items.types";
+import { handleSupabaseError } from "@src/utils/handleError.utils";
 
 @Injectable()
 export class TagService {
@@ -75,7 +76,15 @@ export class TagService {
     // Get count
     const result = await query;
     const { error: countError, count, data } = result;
-    if (countError) throw new Error(countError.message);
+    if (countError)
+      handleSupabaseError(countError, {
+        messageOverrides: {
+          internal: "Failed to fetch tags",
+          badRequest: "Failed to fetch tags",
+          forbidden: "Failed to fetch tags",
+        },
+        loggerContext: { scope: "TagService.getAllTags" },
+      });
 
     const meta = getPaginationMeta(count ?? 0, page, limit);
 
@@ -96,7 +105,14 @@ export class TagService {
       .select("tags(*)")
       .eq("item_id", itemId);
 
-    if (error) throw new Error(error.message);
+    if (error)
+      handleSupabaseError(error, {
+        messageOverrides: {
+          notFound: "Failed to fetch tags for item",
+          badRequest: "Failed to fetch tags for item",
+        },
+        loggerContext: { scope: "TagService.getTagsForItem", itemId },
+      });
 
     return data.map((entry) => entry.tags as unknown as TagRow);
   }
@@ -109,7 +125,14 @@ export class TagService {
       .insert(tagData)
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error)
+      handleSupabaseError(error, {
+        messageOverrides: {
+          badRequest: "Failed to create tag",
+          conflict: "Tag already exists",
+        },
+        loggerContext: { scope: "TagService.createTag" },
+      });
     return data;
   }
 
@@ -125,7 +148,17 @@ export class TagService {
       .delete()
       .eq("item_id", itemId);
 
-    if (deleteError) throw new Error(deleteError.message);
+    if (deleteError)
+      handleSupabaseError(deleteError, {
+        messageOverrides: {
+          badRequest: "Failed to update tags for item",
+          forbidden: "Failed to update tags for item",
+        },
+        loggerContext: {
+          scope: "TagService.assignTagsToItem",
+          itemId,
+        },
+      });
 
     // Prepare bulk insert
     const insertData = tagIds.map((tagId) => ({
@@ -137,19 +170,29 @@ export class TagService {
       .from("storage_item_tags")
       .insert(insertData);
 
-    if (insertError) throw new Error(insertError.message);
+    if (insertError)
+      handleSupabaseError(insertError, {
+        messageOverrides: {
+          badRequest: "Failed to assign tags to item",
+        },
+        loggerContext: {
+          scope: "TagService.assignTagsToItem",
+          itemId,
+        },
+      });
   }
 
-  async assignTagsToBulk(req: AuthRequest, payload: TagLink[]) {
-    try {
-      const supabase = req.supabase;
-      const { error } = await supabase
-        .from("storage_item_tags")
-        .insert(payload);
-      if (error) throw error;
-    } catch (error) {
-      return error;
-    }
+  async assignTagsToBulk(req: AuthRequest, payload: TagLink[]): Promise<void> {
+    const supabase = req.supabase;
+    const { error } = await supabase.from("storage_item_tags").insert(payload);
+    if (error)
+      handleSupabaseError(error, {
+        messageOverrides: {
+          badRequest: "Failed to assign tags",
+          conflict: "Failed to assign tags",
+        },
+        loggerContext: { scope: "TagService.assignTagsToBulk" },
+      });
   }
 
   async updateTag(
@@ -164,7 +207,14 @@ export class TagService {
       .eq("id", id)
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error)
+      handleSupabaseError(error, {
+        messageOverrides: {
+          badRequest: "Failed to update tag",
+          forbidden: "Failed to update tag",
+        },
+        loggerContext: { scope: "TagService.updateTag", id },
+      });
     return data;
   }
 
@@ -179,7 +229,17 @@ export class TagService {
       .delete()
       .match({ item_id: itemId, tag_id: tagId });
 
-    if (error) throw new Error(error.message);
+    if (error)
+      handleSupabaseError(error, {
+        messageOverrides: {
+          badRequest: "Failed to remove tag from item",
+        },
+        loggerContext: {
+          scope: "TagService.removeTagFromItem",
+          itemId,
+          tagId,
+        },
+      });
   }
 
   async deleteTag(req: AuthRequest, id: string): Promise<void> {
@@ -190,7 +250,13 @@ export class TagService {
       .delete()
       .eq("tag_id", id);
 
-    if (deleteRefsError) throw new Error(deleteRefsError.message);
+    if (deleteRefsError)
+      handleSupabaseError(deleteRefsError, {
+        messageOverrides: {
+          badRequest: "Failed to delete tag references",
+        },
+        loggerContext: { scope: "TagService.deleteTag", id },
+      });
 
     // Delete the tag itself
     const { error: deleteTagError } = await supabase
@@ -198,6 +264,12 @@ export class TagService {
       .delete()
       .eq("id", id);
 
-    if (deleteTagError) throw new Error(deleteTagError.message);
+    if (deleteTagError)
+      handleSupabaseError(deleteTagError, {
+        messageOverrides: {
+          badRequest: "Failed to delete tag",
+        },
+        loggerContext: { scope: "TagService.deleteTag", id },
+      });
   }
 }

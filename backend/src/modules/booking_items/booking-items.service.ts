@@ -124,12 +124,11 @@ export class BookingItemsService {
         .from("booking_items")
         .insert(booking_items)
         .select();
-      if (process.env.NODE_ENV !== "production") {
-        if (result.error) handleSupabaseError(result.error);
-      } else {
-        if (result.error)
-          throw new BadRequestException("Could not create booking-item");
-      }
+
+      if (result.error)
+        handleSupabaseError(result.error, {
+          messageOverrides: { badRequest: "Could not create booking-item" },
+        });
       return result;
     }
 
@@ -141,12 +140,10 @@ export class BookingItemsService {
         .select()
         .single();
 
-    if (process.env.NODE_ENV !== "production") {
-      if (singleResult.error) handleSupabaseError(singleResult.error);
-    } else {
-      if (singleResult.error)
-        throw new BadRequestException("Could not create booking-item");
-    }
+    if (singleResult.error)
+      handleSupabaseError(singleResult.error, {
+        messageOverrides: { badRequest: "Could not create booking-item" },
+      });
     return singleResult;
   }
   // Soft delete by setting status to cancelled

@@ -6,7 +6,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
 import { Button } from "@/components/ui/button";
 import { useRoles } from "@/hooks/useRoles";
-import { formatRoleName } from "@/utils/format";
+import { formatSnakeCase } from "@/utils/format";
 
 interface OrganizationInfoProps {
   organization: OrganizationDetails;
@@ -60,7 +60,7 @@ const OrganizationInfo: React.FC<OrganizationInfoProps> = ({
               <span className="text-sm font-medium text-green-700">
                 {t.organizationList.membership.youAreRole[lang].replace(
                   "{role}",
-                  formatRoleName(userOrgRole.roles[0]),
+                  formatSnakeCase(userOrgRole.roles[0]),
                 )}
                 {userOrgRole.roles.length > 1 &&
                   ` +${userOrgRole.roles.length - 1}`}

@@ -65,7 +65,15 @@ jobs:
             exit 1
           fi
 
-          # Optional: fail if sent skyrockets unusually (spam guard)
-          # jq -e 'if .sent != null and .sent > 500 then false else true end' response.json
-          # [ $? -ne 0 ] && { echo "Aborting: unusually high send count" >&2; exit 1; }
-
+          # Spam guard: fail if sent count is unusually high
+          echo "Checking sent count..."
+          sent_count=$(jq -r '.sent // 0' response.json)
+          echo "Emails sent: $sent_count"
+          
+          if [ "$sent_count" -gt 500 ]; then
+            echo "⚠️  WARNING: Unusually high send count detected ($sent_count emails)" >&2
+            echo "Aborting to prevent potential spam" >&2
+            exit 1
+          fi
+          
+          echo "✅ Send count is within normal range"

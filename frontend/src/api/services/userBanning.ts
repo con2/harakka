@@ -1,6 +1,5 @@
 import { api } from "../axios";
 import {
-  BanForRoleRequest,
   BanForOrgRequest,
   BanForAppRequest,
   UnbanRequest,
@@ -14,12 +13,6 @@ import {
  * API service for user banning related endpoints
  */
 export const userBanningApi = {
-  /**
-   * Ban a user for a specific role
-   */
-  banForRole: (data: BanForRoleRequest): Promise<BanOperationResult> =>
-    api.post("/user-banning/ban-for-role", data),
-
   /**
    * Ban a user for all roles in an organization
    */

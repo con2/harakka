@@ -15,7 +15,7 @@ import {
 } from "@/store/slices/bookingsSlice";
 import { BookingItemWithDetails, BookingWithDetails } from "@/types";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { t } from "@/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -39,11 +39,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { selectActiveRoleContext } from "@/store/slices/rolesSlice";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import InlineTimeframePicker from "@/components/InlineTimeframeSelector";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileTable from "@/components/ui/MobileTable";
 
 function RequestDetailsPage() {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { lang } = useLanguage();
 
   const { user } = useAuth();
@@ -55,6 +58,7 @@ function RequestDetailsPage() {
   const { organizationId: activeOrgId, organizationName: activeOrgName } =
     useAppSelector(selectActiveRoleContext);
   const itemsWithLoadedImages = useAppSelector(selectItemsWithLoadedImages);
+  const { isMobile } = useIsMobile();
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -70,7 +74,10 @@ function RequestDetailsPage() {
                 activeOrgName!,
               ),
             );
-            void navigate("/admin/requests");
+            const pageState = (location.state as { page?: number })?.page;
+            void navigate("/admin/requests", {
+              state: pageState ? { page: pageState } : undefined,
+            });
           }
         }
       }
@@ -188,7 +195,12 @@ function RequestDetailsPage() {
             t.bookingDetailsPage.confirmations.removeAllItems.description[lang],
           confirmText:
             t.bookingDetailsPage.confirmations.removeAllItems.confirmText[lang],
-          onSuccess: () => void navigate("/admin/requests"),
+          onSuccess: () => {
+            const pageState = (location.state as { page?: number })?.page;
+            void navigate("/admin/requests", {
+              state: pageState ? { page: pageState } : undefined,
+            });
+          },
         }
       : {
           title: t.bookingDetailsPage.confirmations.removeItem.title[lang],
@@ -335,7 +347,10 @@ function RequestDetailsPage() {
             }),
           );
         }
-        void navigate("/admin/requests");
+        const pageState = (location.state as { page?: number })?.page;
+        void navigate("/admin/requests", {
+          state: pageState ? { page: pageState } : undefined,
+        });
         return;
       }
 
@@ -411,7 +426,6 @@ function RequestDetailsPage() {
   };
 
   if (!booking) return null;
-  // console.log(groupedBookingItems);
 
   const {
     booking_number,
@@ -433,6 +447,7 @@ function RequestDetailsPage() {
     handleDecrementQuantity,
     availability,
     removeItem,
+    isMobile,
   );
 
   if (loading) return <Spinner />;
@@ -440,7 +455,12 @@ function RequestDetailsPage() {
   return (
     <div className="space-y-4 max-w-[900px]">
       <Button
-        onClick={() => navigate(-1)}
+        onClick={() => {
+          const pageState = (location.state as { page?: number })?.page;
+          void navigate("/admin/requests", {
+            state: pageState ? { page: pageState } : undefined,
+          });
+        }}
         className="text-secondary px-6 border-secondary border-1 rounded-2xl bg-white hover:bg-secondary hover:text-white"
       >
         <ChevronLeft /> {t.common.back[lang]}
@@ -454,7 +474,7 @@ function RequestDetailsPage() {
               booking_number,
             )}
           </h1>
-          <div className="space-y-2 grid grid-cols-2 gap-4 text-sm text-primary">
+          <div className="space-y-2 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-primary">
             <div className="flex flex-col">
               <p>{full_name}</p>
               <div className="flex items-center gap-2">
@@ -543,7 +563,12 @@ function RequestDetailsPage() {
                           toast.success(
                             t.myBookingsPage.edit.toast.emptyCancelled[lang],
                           );
-                          void navigate("/admin/requests");
+                          const pageState = (
+                            location.state as { page?: number }
+                          )?.page;
+                          void navigate("/admin/requests", {
+                            state: pageState ? { page: pageState } : undefined,
+                          });
                         }
                       } catch {
                         toast.error(
@@ -589,9 +614,11 @@ function RequestDetailsPage() {
             <h4 className="text-md font-medium mb-2 text-gray-700">
               {`${orgGroup.orgName || "Unknown Organization"} ${t.myBookingsPage.bookingDetails.orgItems[lang]} (${orgGroup.items.length})`}
             </h4>
-            <div className="border rounded-3xl overflow-hidden [&_td,th]:p-2">
+            {isMobile ? (
+              <MobileTable columns={columns} data={orgGroup.items} />
+            ) : (
               <DataTable columns={columns} data={orgGroup.items} />
-            </div>
+            )}
           </div>
         ))}
       </div>

@@ -116,36 +116,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({
 
   // Set the image URL just once when it changes
   useEffect(() => {
-    const { image_url } = stableImage;
-    if (image_url && !failedImageUrlsRef.current.has(image_url)) {
-      // Clear any existing timeout
-      if (imageLoadingTimeoutRef.current) {
-        clearTimeout(imageLoadingTimeoutRef.current);
-      }
-
-      setCurrentImage(stableImage);
-      setIsImageLoading(true);
-      setLoadFailed(false);
-
-      // Set a timeout to prevent infinite loading
-      imageLoadingTimeoutRef.current = setTimeout(() => {
-        setIsImageLoading(false);
-        failedImageUrlsRef.current.add(stableImage.image_url); // Mark as failed due to timeout
-        console.warn(`Image loading timed out for ${stableImage.image_url}`);
-      }, 5000); // 5 seconds timeout
-    } else {
-      // If no URL or URL previously failed
-      setCurrentImage(stableImage);
-      setIsImageLoading(false);
-      setLoadFailed(true);
-    }
-
-    // Cleanup function to clear timeout
-    return () => {
-      if (imageLoadingTimeoutRef.current) {
-        clearTimeout(imageLoadingTimeoutRef.current);
-      }
-    };
+    setCurrentImage(stableImage);
   }, [stableImage]);
 
   // Fetch images only once per item
@@ -209,7 +180,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({
 
   // Update availability info based on dates selection
   useEffect(() => {
-    if (startDate && endDate) {
+    if (startDate && endDate && !preview) {
       setAvailabilityInfo((prev) => ({
         ...prev,
         isChecking: true,
@@ -260,7 +231,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({
         "{item_name}",
         item.translations[lang].item_name,
       )}
-      onClick={() => handleItemClick(item.id)}
+      onClick={preview ? undefined : () => handleItemClick(item.id)}
       className="hover:[&_h2]:text-muted-foreground cursor-pointer"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -273,7 +244,7 @@ const ItemCard: React.FC<ItemsCardProps> = ({
         data-cy="items-card"
         className={cn(
           "w-full h-full flex flex-col justify-between p-4 flex-[1_0_250px]",
-          preview && "shadow-none max-w-[350px]",
+          preview && "shadow-none max-w-[270px]",
         )}
       >
         {/* Image Section */}

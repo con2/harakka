@@ -5,27 +5,43 @@ This document provides a comprehensive reference for the backend API endpoints i
 ## Table of Contents
 
 - [General Information](#general-information)
-- [Authentication](#authentication)
-- [Users and Profiles](#users-and-profiles)
-- [Storage Items](#storage-items)
-- [Storage Locations](#storage-locations)
-- [Tags](#tags)
-- [Orders](#orders)
-- [Payments and Invoices](#payments-and-invoices)
-- [Logs](#logs)
-- [Error Handling](#error-handling)
-- [Response Type](#response-type)
+  - [Authentication](#authentication)
+  - [Request & Response Format](#request--response-format)
+- [Core Endpoints](#core-endpoints)
+  - [Authentication](#authentication-auth)
+  - [Users and Profiles](#users-users)
+    - [User Banning](#user-banning-user-banning)
+    - [User Roles](#roles-roles)
+  - [Organizations](#organizations-organizations)
+  - [Storage Items](#storage-items-items)
+    - [Categories](#categories-categories)
+    - [Tags](#tags-tags)
+    - [Locations](#locations-storage-locations)
+  - [Bookings](#bookings-bookings)
+  - [Email System](#email-system-mail)
+  - [Logging](#logging-logs)
+  - [Error Handling](#error-responses)
+  - [Response Types](#response-type)
+  - [Notes](#notes)
 
-## General Information
+## General-Information
 
-### Base URL
+## Base URL
 
 All API endpoints are relative to the base URL:
 
 - **Development**: `http://localhost:3000`
-- **Production**: `https://api.your-production-domain.com`
+- **Production**: `https://booking-app-backend-duh9encbeme0awca.northeurope-01.azurewebsites.net/` <!-- toDo: change to actual domain -->
 
-### Response Format
+## Authentication
+
+All API endpoints require authentication via JWT token in the `Authorization` header:
+
+```
+Authorization: Bearer <jwt-token>
+```
+
+### Request & Response Format
 
 Successful responses follow this general structure:
 
@@ -61,502 +77,381 @@ Error responses follow this structure:
 
 \*Required for authenticated endpoints
 
-## Authentication
+---
 
-Authentication is handled through Supabase Auth. The API uses JWT tokens for authorization.
+## Health Check (`/`)
 
-### Get Current User
+### Get Application Status
 
+```http
+GET /
 ```
-GET /auth/profile
-```
 
-Returns the profile of the currently authenticated user.
-
-**Response 200**
+**Response:**
 
 ```json
 {
-  "id": "uuid",
+  "message": "Backend is running",
+  "timestamp": "2025-09-12T10:30:00Z"
+}
+```
+
+---
+
+## **Core Endpoints**
+
+## **Authentication (`/auth`)**
+
+### Login
+
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
   "email": "user@example.com",
-  "role": "user",
-  "full_name": "User Name",
-  "visible_name": "User",
-  "phone": "+1234567890",
-  "preferences": {
-    /* preferences object */
+  "password": "password123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "access_token": "jwt-token-here",
+  "refresh_token": "refresh-token-here",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "role": "user"
   }
 }
 ```
 
-## Users and Profiles
+### Logout
+
+```http
+POST /auth/logout
+Authorization: Bearer <token>
+```
+
+### Refresh Token
+
+```http
+POST /auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "refresh-token-here"
+}
+```
+
+## **Users (`/users`)**
 
 ### Get All Users
 
+```http
+GET /users?page=1&limit=10&role=user&organizationId=uuid
 ```
-GET /users
+
+### Get User Profile
+
+```http
+GET /users/profile
 ```
 
-Returns a list of all users. Requires admin privileges.
+### Update User Profile
 
-**Response 200**
+```http
+PUT /users/profile
+Content-Type: application/json
 
-```json
-[
-  {
-    "id": "uuid",
-    "email": "user@example.com",
-    "role": "user",
-    "full_name": "User Name",
-    "visible_name": "User",
-    "created_at": "2023-01-01T00:00:00Z"
-  }
-  // ...
-]
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "phone": "+1234567890"
+}
 ```
 
 ### Get User by ID
 
-```
+```http
 GET /users/:id
 ```
 
-Returns a specific user's profile by ID.
+### Update User Role
 
-**Response 200**
+```http
+PATCH /users/:id/role
+Content-Type: application/json
 
-```json
 {
-  "id": "uuid",
-  "email": "user@example.com",
-  "role": "user",
-  "full_name": "User Name",
-  "visible_name": "User",
-  "phone": "+1234567890",
-  "preferences": {
-    /* preferences object */
-  },
-  "created_at": "2023-01-01T00:00:00Z"
+  "roleId": "uuid",
+  "organizationId": "uuid"
 }
 ```
 
-### Update User
+---
 
+## **Roles (`/roles`)**
+
+### Get All Roles
+
+```http
+GET /roles
 ```
-PUT /users/:id
-```
 
-Updates a user's profile.
-
-**Request Body**
+**Response:**
 
 ```json
 {
-  "full_name": "New Name",
-  "visible_name": "NewUser",
-  "phone": "+0987654321",
-  "preferences": {
-    /* updated preferences */
-  }
-}
-```
-
-**Response 200**
-
-```json
-{
-  "id": "uuid",
-  "email": "user@example.com",
-  "role": "user",
-  "full_name": "New Name",
-  "visible_name": "NewUser",
-  "phone": "+0987654321",
-  "preferences": {
-    /* updated preferences */
-  },
-  "created_at": "2023-01-01T00:00:00Z"
-}
-```
-
-### Delete User
-
-```
-DELETE /users/:id
-```
-
-Deletes a user account. Requires admin privileges or account ownership.
-
-**Response 204**
-
-No content
-
-## Storage Items
-
-### Get All Storage Items
-
-```
-GET /storage-items
-```
-
-Returns a list of all storage items.
-
-**Query Parameters**
-
-| Parameter     | Type    | Description                       |
-| ------------- | ------- | --------------------------------- |
-| `location_id` | string  | Filter by location                |
-| `active_only` | boolean | If true, return only active items |
-| `tag_id`      | string  | Filter by tag                     |
-| `page`        | number  | Page number for pagination        |
-| `limit`       | number  | Items per page                    |
-
-**Response 200**
-
-```json
-[
-  {
-    "id": "uuid",
-    "location_id": "uuid",
-    "price": 10.99,
-    "items_number_total": 50,
-    "average_rating": 4.5,
-    "is_active": true,
-    "translations": {
-      "en": {
-        "item_name": "Combat Vest",
-        "item_description": "Military style combat vest"
-      },
-      "fi": {
-        "item_name": "Taisteluliivi",
-        "item_description": "Sotilastyylinen taisteluliivi"
-      }
-    },
-    "created_at": "2023-01-01T00:00:00Z"
-  }
-  // ...
-]
-```
-
-### Get Storage Item by ID
-
-```
-GET /storage-items/:id
-```
-
-Returns a specific storage item by ID.
-
-**Response 200**
-
-```json
-{
-  "id": "uuid",
-  "location_id": "uuid",
-  "compartment_id": "uuid",
-  "price": 10.99,
-  "items_number_total": 50,
-  "average_rating": 4.5,
-  "is_active": true,
-  "translations": {
-    "en": {
-      "item_name": "Combat Vest",
-      "item_description": "Military style combat vest"
-    },
-    "fi": {
-      "item_name": "Taisteluliivi",
-      "item_description": "Sotilastyylinen taisteluliivi"
-    }
-  },
-  "images": [
+  "data": [
     {
       "id": "uuid",
-      "image_url": "https://example.com/image.jpg",
-      "image_type": "main",
-      "display_order": 1
-    }
-  ],
-  "tags": [
+      "name": "super_admin",
+      "description": "Full system access"
+    },
     {
       "id": "uuid",
-      "translations": {
-        "en": { "name": "Armor" },
-        "fi": { "name": "Haarniska" }
-      }
+      "name": "tenant_admin",
+      "description": "Organization admin"
     }
-  ],
-  "created_at": "2023-01-01T00:00:00Z"
-}
-```
-
-### Create Storage Item
-
-```
-POST /storage-items
-```
-
-Creates a new storage item. Requires admin privileges.
-
-**Request Body**
-
-```json
-{
-  "location_id": "uuid",
-  "compartment_id": "uuid",
-  "items_number_total": 50,
-  "price": 10.99,
-  "is_active": true,
-  "translations": {
-    "en": {
-      "item_name": "Combat Vest",
-      "item_description": "Military style combat vest"
-    },
-    "fi": {
-      "item_name": "Taisteluliivi",
-      "item_description": "Sotilastyylinen taisteluliivi"
-    }
-  },
-  "tag_ids": ["uuid1", "uuid2"]
-}
-```
-
-**Response 201**
-
-```json
-{
-  "id": "uuid",
-  "location_id": "uuid",
-  "compartment_id": "uuid",
-  "price": 10.99,
-  "items_number_total": 50,
-  "average_rating": 0,
-  "is_active": true,
-  "translations": {
-    "en": {
-      "item_name": "Combat Vest",
-      "item_description": "Military style combat vest"
-    },
-    "fi": {
-      "item_name": "Taisteluliivi",
-      "item_description": "Sotilastyylinen taisteluliivi"
-    }
-  },
-  "created_at": "2023-01-01T00:00:00Z"
-}
-```
-
-### Update Storage Item
-
-```
-PUT /storage-items/:id
-```
-
-Updates a storage item. Requires admin privileges.
-
-**Request Body**
-
-```json
-{
-  "price": 12.99,
-  "is_active": true,
-  "translations": {
-    "en": {
-      "item_description": "Updated military style combat vest"
-    }
-  }
-}
-```
-
-**Response 200**
-
-```json
-{
-  "id": "uuid",
-  "location_id": "uuid",
-  "compartment_id": "uuid",
-  "price": 12.99,
-  "items_number_total": 50,
-  "average_rating": 4.5,
-  "is_active": true,
-  "translations": {
-    "en": {
-      "item_name": "Combat Vest",
-      "item_description": "Updated military style combat vest"
-    },
-    "fi": {
-      "item_name": "Taisteluliivi",
-      "item_description": "Sotilastyylinen taisteluliivi"
-    }
-  },
-  "created_at": "2023-01-01T00:00:00Z"
-}
-```
-
-### Delete Storage Item
-
-```
-POST /storage-items/:id/soft-delete
-```
-
-Soft deletes a storage item. Requires admin privileges.
-
-**Response 200**
-
-```json
-{
-  "id": "uuid",
-  "is_deleted": true,
-  "is_active": false
-}
-```
-
-### Upload Item Image
-
-```
-POST /storage-items/:id/images
-```
-
-Uploads an image for a storage item. Requires admin privileges.
-
-**Request Body (multipart/form-data)**
-
-```
-image: [file]
-image_type: "main" | "detail"
-display_order: 1
-alt_text: "Description of image"
-```
-
-**Response 201**
-
-```json
-{
-  "id": "uuid",
-  "item_id": "uuid",
-  "image_url": "https://example.com/image.jpg",
-  "image_type": "main",
-  "display_order": 1,
-  "alt_text": "Description of image",
-  "storage_path": "item-images/uuid.jpg",
-  "is_active": true,
-  "created_at": "2023-01-01T00:00:00Z"
-}
-```
-
-## Storage Locations
-
-### Get All Locations
-
-```
-GET /locations
-```
-
-Returns a list of all storage locations.
-
-**Response 200**
-
-```json
-[
-  {
-    "id": "uuid",
-    "name": "Main Storage",
-    "description": "Primary storage facility",
-    "address": "123 Main St, City",
-    "latitude": 60.1699,
-    "longitude": 24.9384,
-    "is_active": true,
-    "image_url": "https://example.com/location.jpg",
-    "created_at": "2023-01-01T00:00:00Z"
-  }
-  // ...
-]
-```
-
-### Get Location by ID
-
-```
-GET /locations/:id
-```
-
-Returns a specific location by ID.
-
-**Response 200**
-
-```json
-{
-  "id": "uuid",
-  "name": "Main Storage",
-  "description": "Primary storage facility",
-  "address": "123 Main St, City",
-  "latitude": 60.1699,
-  "longitude": 24.9384,
-  "is_active": true,
-  "image_url": "https://example.com/location.jpg",
-  "working_hours": [
-    {
-      "day": "monday",
-      "open_time": "09:00:00",
-      "close_time": "17:00:00"
-    }
-    // Other days
-  ],
-  "images": [
-    {
-      "id": "uuid",
-      "image_url": "https://example.com/location1.jpg",
-      "image_type": "main",
-      "display_order": 1
-    }
-  ],
-  "created_at": "2023-01-01T00:00:00Z"
-}
-```
-
-### Create Location
-
-```
-POST /locations
-```
-
-Creates a new storage location. Requires admin privileges.
-
-**Request Body**
-
-```json
-{
-  "name": "Downtown Storage",
-  "description": "Downtown storage facility",
-  "address": "456 Center St, City",
-  "latitude": 60.1699,
-  "longitude": 24.9384,
-  "is_active": true,
-  "image_url": "https://example.com/location.jpg",
-  "working_hours": [
-    {
-      "day": "monday",
-      "open_time": "09:00:00",
-      "close_time": "17:00:00"
-    }
-    // Other days
   ]
 }
 ```
 
-**Response 201**
+---
 
-```json
+## **Organizations (`/organizations`)**
+
+### Get All Organizations
+
+```http
+GET /organizations?page=1&limit=10
+```
+
+### Get Organization by ID
+
+```http
+GET /organizations/:id
+```
+
+### Create Organization
+
+```http
+POST /organizations
+Content-Type: application/json
+
 {
-  "id": "uuid",
-  "name": "Downtown Storage",
-  "description": "Downtown storage facility",
-  "address": "456 Center St, City",
-  "latitude": 60.1699,
-  "longitude": 24.9384,
-  "is_active": true,
-  "image_url": "https://example.com/location.jpg",
-  "created_at": "2023-01-01T00:00:00Z"
+  "name": "New Organization",
+  "description": "Organization description",
+  "website": "https://example.com",
+  "address": "123 Main St"
 }
 ```
 
-## Tags
+### Update Organization
+
+```http
+PUT /organizations/:id
+Content-Type: application/json
+
+{
+  "name": "Updated Name"
+}
+```
+
+---
+
+## **Storage Items (`/items`)**
+
+### Get All Items
+
+```http
+GET /items?page=1&limit=10&search=tent&categoryId=uuid&tagIds=uuid1,uuid2&locationIds=uuid3&orgIds=uuid4&isActive=true
+```
+
+**Query Parameters:**
+
+- `page`: Page number (default: 1)
+- `limit`: Items per page (default: 10)
+- `search`: Search term
+- `categoryId`: Filter by category
+- `tagIds`: Filter by tags (comma-separated)
+- `locationIds`: Filter by locations (comma-separated)
+- `orgIds`: Filter by organizations (comma-separated)
+- `isActive`: Filter active/inactive items
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Camping Tent",
+      "description": "4-person tent",
+      "quantity": 5,
+      "available_quantity": 3,
+      "category_id": "uuid",
+      "organization_id": "uuid",
+      "location_id": "uuid",
+      "is_active": true,
+      "created_at": "2025-09-12T10:00:00Z",
+      "images": ["image-url-1", "image-url-2"],
+      "tags": ["outdoor", "camping"]
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 50,
+    "totalPages": 5
+  }
+}
+```
+
+### Get Item by ID
+
+```http
+GET /items/:id
+```
+
+### Create Item
+
+```http
+POST /items
+Content-Type: application/json
+
+{
+  "name": "Camping Tent",
+  "description": "4-person tent",
+  "quantity": 5,
+  "category_id": "uuid",
+  "organization_id": "uuid",
+  "location_id": "uuid",
+  "tagIds": ["uuid1", "uuid2"]
+}
+```
+
+### Update Item
+
+```http
+PUT /items/:id
+Content-Type: application/json
+
+{
+  "name": "Updated Tent Name",
+  "quantity": 8
+}
+```
+
+### Delete Item
+
+```http
+DELETE /items/:id
+```
+
+### Check Item Availability
+
+```http
+GET /items/:id/availability?startDate=2025-09-20&endDate=2025-09-25
+```
+
+**Response:**
+
+```json
+{
+  "data": {
+    "item_id": "uuid",
+    "alreadyBookedQuantity": 2,
+    "availableQuantity": 3
+  }
+}
+```
+
+### Bulk Import Items (Excel)
+
+```http
+POST /items/bulk-create
+Content-Type: multipart/form-data
+
+{
+  "file": <excel-file>,
+  "organizationId": "uuid"
+}
+```
+
+---
+
+---
+
+## **Item Images (`/item-images`)**
+
+### Upload Image
+
+```http
+POST /item-images/upload
+Content-Type: multipart/form-data
+
+{
+  "file": <image-file>,
+  "itemId": "uuid"
+}
+```
+
+**Response:**
+
+```json
+{
+  "data": {
+    "id": "uuid",
+    "url": "https://storage-url/image.jpg",
+    "thumbnail_url": "https://storage-url/thumb.jpg"
+  }
+}
+```
+
+### Get Item Images
+
+```http
+GET /item-images/:itemId
+```
+
+### Delete Image
+
+```http
+DELETE /item-images/:imageId
+```
+
+---
+
+## **Categories (`/categories`)**
+
+### Get All Categories
+
+```http
+GET /categories?lang=en
+```
+
+### Create Category
+
+```http
+POST /categories
+Content-Type: application/json
+
+{
+  "translations": {
+    "en": "Electronics",
+    "de": "Elektronik"
+  },
+  "sort_order": 1
+}
+```
+
+---
+
+## **Tags (`/tags`)**
 
 ### Get All Tags
 
@@ -584,286 +479,230 @@ Returns a list of all tags.
 
 ### Create Tag
 
-```
+```http
 POST /tags
-```
+Content-Type: application/json
 
-Creates a new tag. Requires admin privileges.
-
-**Request Body**
-
-```json
 {
-  "translations": {
-    "en": { "name": "Weapons" },
-    "fi": { "name": "Aseet" }
-  }
+  "name": "outdoor",
+  "color": "#0d00ffff"
 }
 ```
 
-**Response 201**
+---
 
-```json
+## **Bookings (`/bookings`)**
+
+### Get All Bookings
+
+```http
+GET /bookings?page=1&limit=10&status=pending&organizationId=uuid&userId=uuid
+```
+
+**Query Parameters:**
+
+- `status`: Filter by status (pending, confirmed, rejected, cancelled, completed)
+- `organizationId`: Filter by organization
+- `userId`: Filter by user
+- `startDate`: Filter bookings starting after date
+- `endDate`: Filter bookings ending before date
+
+### Get Booking by ID
+
+```http
+GET /bookings/:id
+```
+
+### Create Booking
+
+```http
+POST /bookings
+Content-Type: application/json
+
 {
-  "id": "uuid",
-  "translations": {
-    "en": { "name": "Weapons" },
-    "fi": { "name": "Aseet" }
-  },
-  "created_at": "2023-01-01T00:00:00Z"
-}
-```
-
-## Orders
-
-### Get All Orders
-
-```
-GET /orders
-```
-
-Returns a list of all orders for the authenticated user. Admin users can see all orders.
-
-**Query Parameters**
-
-| Parameter | Type   | Description                                     |
-| --------- | ------ | ----------------------------------------------- |
-| `status`  | string | Filter by status (`pending`, `confirmed`, etc.) |
-| `page`    | number | Page number for pagination                      |
-| `limit`   | number | Items per page                                  |
-
-**Response 200**
-
-```json
-[
-  {
-    "id": "uuid",
-    "order_number": "ORD-12345",
-    "user_id": "uuid",
-    "status": "confirmed",
-    "total_amount": 50.99,
-    "discount_amount": 5.0,
-    "final_amount": 45.99,
-    "payment_status": "invoice-sent",
-    "created_at": "2023-01-01T00:00:00Z"
-  }
-  // ...
-]
-```
-
-### Get Order by ID
-
-```
-GET /orders/:id
-```
-
-Returns a specific order by ID.
-
-**Response 200**
-
-```json
-{
-  "id": "uuid",
-  "order_number": "ORD-12345",
-  "user_id": "uuid",
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "full_name": "User Name"
-  },
-  "status": "confirmed",
-  "total_amount": 50.99,
-  "discount_amount": 5.0,
-  "final_amount": 45.99,
-  "payment_status": "invoice-sent",
-  "notes": "Special handling required",
-  "order_items": [
+  "start_date": "2025-09-20",
+  "end_date": "2025-09-25",
+  "pickup_method": "pickup",
+  "notes": "Special instructions",
+  "booking_items": [
     {
-      "id": "uuid",
-      "item_id": "uuid",
-      "quantity": 2,
-      "unit_price": 10.99,
-      "start_date": "2023-02-01T00:00:00Z",
-      "end_date": "2023-02-05T00:00:00Z",
-      "total_days": 5,
-      "subtotal": 109.9,
-      "status": "confirmed",
-      "item": {
-        "id": "uuid",
-        "translations": {
-          "en": { "item_name": "Combat Vest" }
-        }
-      }
+      "storage_item_id": "uuid",
+      "quantity": 2
     }
-  ],
-  "created_at": "2023-01-01T00:00:00Z"
+  ]
 }
 ```
 
-### Create Order
+### Update Booking Status
 
-```
-POST /orders
-```
+```http
+PATCH /bookings/:id/status
+Content-Type: application/json
 
-Creates a new order.
-
-**Request Body**
-
-```json
 {
-  "items": [
-    {
-      "item_id": "uuid",
-      "quantity": 2,
-      "start_date": "2023-02-01T00:00:00Z",
-      "end_date": "2023-02-05T00:00:00Z"
-    }
-  ],
-  "discount_code": "WELCOME10",
-  "notes": "Special handling required"
-}
-```
-
-**Response 201**
-
-```json
-{
-  "id": "uuid",
-  "order_number": "ORD-12345",
-  "user_id": "uuid",
-  "status": "pending",
-  "total_amount": 50.99,
-  "discount_amount": 5.0,
-  "final_amount": 45.99,
-  "payment_status": null,
-  "notes": "Special handling required",
-  "created_at": "2023-01-01T00:00:00Z"
-}
-```
-
-### Update Order Status
-
-```
-PATCH /orders/:id/status
-```
-
-Updates an order's status. Requires admin privileges or order ownership.
-
-**Request Body**
-
-```json
-{
-  "status": "confirmed"
-}
-```
-
-**Response 200**
-
-```json
-{
-  "id": "uuid",
-  "order_number": "ORD-12345",
   "status": "confirmed",
-  "updated_at": "2023-01-02T00:00:00Z"
+  "admin_notes": "Approved for pickup"
 }
 ```
 
-## Payments and Invoices
+### Cancel Booking
 
-### Generate Invoice
+```http
+DELETE /bookings/:id
+Content-Type: application/json
 
-```
-GET /orders/:orderId/generate
-```
-
-Generates an invoice for an order. Requires admin privileges or order ownership.
-
-**Response 200**
-
-```json
 {
-  "invoice_url": "https://example.com/invoice.pdf"
+  "reason": "User cancelled"
 }
 ```
 
-### Get Invoice PDF URL
+---
 
-```
-GET /invoices/:orderId/pdf
-```
+## **Booking Items (`/booking-items`)**
 
-Returns a signed URL for downloading the invoice PDF. Requires admin privileges or order ownership.
+### Get Booking Items
 
-**Response 200**
-
-```
-"https://signed-url-for-invoice.pdf"
+```http
+GET /booking-items?bookingId=uuid
 ```
 
-## Logs
+### Update Booking Item Status
 
-### Get All Logs
+```http
+PATCH /booking-items/:id/status
+Content-Type: application/json
 
-```
-GET /logs
-```
-
-Returns a list of system logs. Requires admin privileges.
-
-**Headers**
-
-| Header      | Description   |
-| ----------- | ------------- |
-| `x-user-id` | Admin user ID |
-
-**Response 200**
-
-```json
-[
-  {
-    "id": "uuid",
-    "level": "info",
-    "message": "Order confirmed",
-    "metadata": {
-      "orderId": "uuid",
-      "userId": "uuid"
-    },
-    "source": "OrderService",
-    "created_at": "2023-01-01T00:00:00Z"
-  }
-  // ...
-]
+{
+  "status": "picked_up"
+}
 ```
 
-## Error Handling
+---
 
-### Common Error Codes
+## **Locations (`/storage-locations`)**
 
-| Status Code | Description                                     |
-| ----------- | ----------------------------------------------- |
-| 400         | Bad Request - Invalid input                     |
-| 401         | Unauthorized - Authentication required          |
-| 403         | Forbidden - Insufficient permissions            |
-| 404         | Not Found - Resource does not exist             |
-| 409         | Conflict - Resource already exists              |
-| 422         | Unprocessable Entity - Validation error         |
-| 429         | Too Many Requests - Rate limit exceeded         |
-| 500         | Internal Server Error - Unexpected server error |
+### Get All Storage Locations
 
-### Error Response Example
+```http
+GET /storage-locations?organizationId=uuid
+```
+
+### Create Storage Location
+
+```http
+POST /storage-locations
+Content-Type: application/json
+
+{
+  "name": "Warehouse A",
+  "address": "123 Storage St",
+  "organization_id": "uuid"
+}
+```
+
+---
+
+## **Email System (`/mail`)**
+
+### Preview Email Templates (Development Only)
+
+```http
+GET /mail/preview/booking-creation
+GET /mail/preview/booking-confirmation
+GET /mail/preview/welcome
+```
+
+---
+
+## **Logging (`/logs`)**
+
+### Get Application Logs
+
+```http
+GET /logs?page=1&limit=50&level=error&startDate=2025-09-01&endDate=2025-09-12
+```
+
+---
+
+## **User Banning (`/user-banning`)**
+
+### Ban User
+
+```http
+POST /user-banning/ban
+Content-Type: application/json
+
+{
+  "userId": "uuid",
+  "reason": "Violation of terms",
+  "duration": 30  // days, omit for permanent
+}
+```
+
+### Unban User
+
+```http
+POST /user-banning/unban
+Content-Type: application/json
+
+{
+  "userId": "uuid"
+}
+```
+
+---
+
+## **Error Responses**
+
+All endpoints may return these error formats:
+
+### 400 Bad Request
 
 ```json
 {
   "statusCode": 400,
-  "message": "Invalid input data",
-  "error": "Bad Request",
-  "details": [
-    {
-      "field": "email",
-      "message": "Invalid email format"
-    }
-  ]
+  "message": "Validation failed",
+  "error": "Bad Request"
+}
+```
+
+### 401 Unauthorized
+
+```json
+{
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "error": "Unauthorized"
+}
+```
+
+### 403 Forbidden
+
+```json
+{
+  "statusCode": 403,
+  "message": "Insufficient permissions",
+  "error": "Forbidden"
+}
+```
+
+### 404 Not Found
+
+```json
+{
+  "statusCode": 404,
+  "message": "Resource not found",
+  "error": "Not Found"
+}
+```
+
+### 500 Internal Server Error
+
+```json
+{
+  "statusCode": 500,
+  "message": "Internal server error",
+  "error": "Internal Server Error"
 }
 ```
 
@@ -914,10 +753,10 @@ export type ApiSingleResponse<T> = PostgrestSingleResponse<T> & {
 };
 ```
 
-1. **ApiResponse<T>**
+1. **ApiResponse**
    Returns an object with the same properties as a PostgrestResponse as well as an optional metadata. Will always return an array of the type, no need to explicitly say that the expected data will be an array.
 
-2. **ApiSingleResponse<T>**
+2. **ApiSingleResponse**
    This type should be used the exact same way as the ApiResponse. Will always return a singular entity of the expected type, no arrays.
 
 ### Usage
@@ -946,6 +785,23 @@ export type ApiSingleResponse<T> = PostgrestSingleResponse<T> & {
   }
 ```
 
-### Other cases
+---
 
-In the event of that an endpoint does not make a request to the database, the returned data **should** have the same format as the ApiResponse/ApiSingleResponse still.
+## **Notes**
+
+- All timestamps are in ISO 8601 format (UTC)
+- UUIDs are used for all entity IDs
+- Pagination follows the format: `?page=1&limit=10`
+- File uploads support JPG, PNG, WebP formats (max 5MB)
+- Role-based access control applies to all endpoints
+- Rate limiting may apply to certain endpoints
+
+---
+
+## **Related Documentation**
+
+- [Database Schema](./database-schema.md)
+- [Authentication & Security](./security.md)
+- [Email System](./email-system.md)
+- [Modules Overview](./modules.md)
+- [Query-Constructor](./queryconstructor.md)

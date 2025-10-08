@@ -218,22 +218,24 @@ const TimeframeSelector: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex w-full lg:w-auto items-center justify-center">
-          {/* Clear Dates Button */}
-          <Button
-            size="sm"
-            onClick={handleClearTimeframe}
-            className={`mt-6 ${
-              confirmClearDates
-                ? "bg-amber-500 text-white hover:bg-amber-600"
-                : "bg-white text-highlight2 border border-highlight2 hover:bg-highlight2 hover:text-white"
-            } ${startDate || endDate ? "visible" : "invisible"}`}
-          >
-            {confirmClearDates
-              ? t.timeframeSelector.confirmClear[lang]
-              : t.timeframeSelector.clearDates[lang]}
-          </Button>
-        </div>
+        {/* Clear Dates Button - only render when dates are selected */}
+        {(startDate || endDate) && (
+          <div className="flex w-full lg:w-auto items-center justify-center">
+            <Button
+              size="sm"
+              onClick={handleClearTimeframe}
+              className={`mt-6 ${
+                confirmClearDates
+                  ? "bg-amber-500 text-white hover:bg-amber-600"
+                  : "bg-white text-highlight2 border border-highlight2 hover:bg-highlight2 hover:text-white"
+              }`}
+            >
+              {confirmClearDates
+                ? t.timeframeSelector.confirmClear[lang]
+                : t.timeframeSelector.clearDates[lang]}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
