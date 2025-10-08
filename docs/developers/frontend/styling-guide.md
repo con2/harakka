@@ -1,6 +1,6 @@
 # Frontend Styling Guide
 
-This document outlines the styling approach, design system, and best practices for the Storage and Booking Application frontend.
+This document outlines the styling approach, design system, and best practices for the Harakka App frontend.
 
 ## Table of Contents
 
@@ -257,6 +257,7 @@ This is done using tailwinds built in breakpoints prefixes.
 ```
 
 ### Breakpoints
+
 We use tailwinds default breakpoints which are:
 |Prefix | Min width | CSS |
 |-|-|-|
@@ -316,7 +317,6 @@ Use Tailwind's container class with responsive modifiers:
   <!-- Content -->
 </div>
 ```
-
 
 ### Responsive Layout Patterns
 

@@ -12,36 +12,17 @@ A comprehensive platform for managing and booking storage items across multiple 
 - **Admin Dashboard**: Comprehensive tools for inventory and order management
 - **Responsive Design**: Seamless experience across desktop and mobile devices
 
-## Tech Stack
-
-### Frontend
-
-- **React 18** with TypeScript for type-safe component development
-- **Vite** for fast development and optimized builds
-- **Redux Toolkit** for centralized state management
-- **UI Components**: Shadcn/UI with Tailwind CSS for styling
-- **Axios** for API requests with automatic authentication
-- **React Router** for client-side routing
-- **Cypress** for end-to-end testing
-
-### Backend
-
-- **NestJS** for robust, modular API development
-- **TypeScript** for type safety across the application
-- **Supabase** for PostgreSQL database, authentication and storage
-- **Row-Level Security** for fine-grained data access control
-- **Email Integration** with nodemailer and React Email templates
-
 ## Documentation
 
 Comprehensive documentation is available in the `docs` directory:
 
-- [Quick Start Guide](docs/quick-start.md) - Initial setup and local development
+- [Quick Start Guide](docs/quick-start.md) - Initial setup and local development (initial super_admin creation)
 - [Setup Script Guide](docs/developers/workflows/scripts/setup.md) - Setup Script Guide
-- [Project Overview](docs/developers/overview.md) - Architectural overview
 - [Project Structure](docs/developers/project-structure.md) - Directory organization
 - [JWT and Roles](docs/developers/JWT-and-roles.md) - Authentication and authorization system
-- [Lessons Learned](docs/developers/lessons-learned.md) - Technical insights and knowledge gained
+- [Environment Variables](docs/developers/environment-variables.md) - environment variables guide
+- [Infisical Setup](docs/developers/infisical-setup.md) - Secure environment variable management with Infisical
+- [Tech stack](docs/developers/tech-stack.md) - Overview of technologies used
 
 ### Frontend Documentation
 
@@ -53,14 +34,28 @@ Comprehensive documentation is available in the `docs` directory:
 
 ### Backend Documentation
 
-- [Database Schema](docs/developers/backend/database-schema.md) - Data structure
+- [Backend Overview](docs/developers/backend/backend-overview.md) - Architecture and modules
 - [API Reference](docs/developers/backend/api-reference.md) - API endpoints
-- [Supabase (Branching & Setup)](docs/developers/Supabase.md) - Branching, setup, and workflow
-- [Security](docs/developers/backend/security.md) - Authentication and authorization
+- [Modules](docs/developers/backend/modules.md) - Core modules and services
+- [Security](docs/developers/backend/security.md) - Security practices and implementations
+- [Email System](docs/developers/backend/email-system.md) - Email templates and SMTP setup
+- [Query Constructor](docs/developers/backend/queryconstructor.md) - Dynamic query building utility
+
+### Common Documentation
+
+- [Helper Types](docs/developers/common/helper-types.md) - Utility types for TypeScript
+- [Unified Supabase Types](docs/developers/common/new-unified-types.md) - Shared Supabase types with `MergeDeep`
+
+### Database Documentation
+
+- [Getting Started Database](docs/developers/database/getting-started.md) - Setting up the databases
+- [Migrations](docs/developers/database/migration-seperation.md) - Managing migrations
+- [Row-Level Security (RLS)](docs/developers/database/row-level-security.md) - Implementing RLS policies
+- [SQL checks](docs/developers/database/SQL-checks.md) - Database integrity checks
+- [Subabase local development](docs/developers/database/supabase-local-development.md) - Local Supabase setup
+- [Supabase dotenvx](docs/developers/database/supabase-dotenvx.md) - Managing Supabase environment variables
 
 ### Workflow Documentation
 
-- [Development Cycle](docs/developers/workflows/development-cycle.md) - Git workflow
-- [Testing](docs/developers/workflows/testing.md) - Testing practices
 - [Default Deployment](docs/developers/workflows/default-deployment.md) - Default Production deployment (Azure)
-- [Contribution Guide](docs/developers/workflows/contribution-guide.md) - How to contribute
+- [Azure Instances Creation](docs/developers/workflows/azure-instances-creation.md) - Setting up Azure resources

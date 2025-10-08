@@ -1,6 +1,6 @@
 # Client-Side Routing
 
-This document explains the routing approach used in the Storage and Booking Application frontend.
+This document explains the routing approach used in the Harakka App frontend.
 
 ## Table of Contents
 

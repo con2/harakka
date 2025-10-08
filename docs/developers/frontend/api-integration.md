@@ -1,6 +1,6 @@
 # API Integration Guide
 
-This document outlines how the frontend application integrates with backend APIs in the Storage and Booking Application.
+This document outlines how the frontend application integrates with backend APIs in the Harakka App.
 
 ## Table of Contents
 

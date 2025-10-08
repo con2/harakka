@@ -1,6 +1,6 @@
 # State Management Guide
 
-This document outlines the state management patterns and practices used in the Storage and Booking Application frontend.
+This document outlines the state management patterns and practices used in the Harakka App frontend.
 
 ## Table of Contents
 
@@ -466,9 +466,7 @@ When handling arrays of related entities, use deduplication patterns to ensure d
 // Example from itemsSlice.ts - deduplicating tags
 if (updatedItem.storage_item_tags && updatedItem.storage_item_tags.length > 0) {
   updatedItem.storage_item_tags = Array.from(
-    new Map(
-      updatedItem.storage_item_tags.map((tag) => [tag.id, tag]),
-    ).values(),
+    new Map(updatedItem.storage_item_tags.map((tag) => [tag.id, tag])).values(),
   );
 }
 ```
