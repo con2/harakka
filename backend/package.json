@@ -70,7 +70,7 @@
     "full-stack-booking-app": "file:..",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
-    "nodemailer": "^7.0.2",
+    "nodemailer": "^7.0.7",
     "papaparse": "^5.5.3",
     "pdfkit": "^0.17.1",
     "react-email": "^4.0.13",
