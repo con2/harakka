@@ -28,7 +28,6 @@ import { BookingItemsController } from "../booking_items/booking-items.controlle
 import { LogsController } from "../logs_module/logs.controller";
 import { RoleModule } from "../role/role.module";
 import { RoleController } from "../role/role.controller";
-import { AuthModule } from "../auth/auth.module";
 import { JwtModule } from "../jwt/jwt.module";
 import { RolesGuard } from "src/guards/roles.guard";
 import { OrganizationsModule } from "../organization/organizations.module";
@@ -43,7 +42,9 @@ import { RemindersModule } from "../reminders/reminders.module";
 // Load and expand environment variables before NestJS modules initialize
 // Only load env files if SUPABASE_URL is not already set (meaning env-cmd hasn't run)
 if (!process.env.SUPABASE_URL) {
-  console.log("SUPABASE_URL not found in environment, loading env files...");
+  if (process.env.NODE_ENV === "development") {
+    console.log("SUPABASE_URL not found in environment, loading env files...");
+  }
 
   // Load .env first (base configuration)
   const baseEnvFile = path.resolve(process.cwd(), "../.env");
@@ -54,11 +55,14 @@ if (!process.env.SUPABASE_URL) {
   const localEnvFile = path.resolve(process.cwd(), "../.env.local");
   const localEnv = dotenv.config({ path: localEnvFile });
   dotenvExpand.expand(localEnv);
-  console.log(
-    "Loaded env files manually:",
-    localEnv.parsed ? "SUCCESS" : "FAILED",
-  );
-} else {
+
+  if (process.env.NODE_ENV === "development") {
+    console.log(
+      "Loaded env files manually:",
+      localEnv.parsed ? "SUCCESS" : "FAILED",
+    );
+  }
+} else if (process.env.NODE_ENV === "development") {
   console.log("Using environment variables from env-cmd or external source");
   console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
 }
@@ -77,7 +81,6 @@ if (!process.env.SUPABASE_URL) {
         },
       ],
     }),
-    AuthModule,
     BookingModule,
     CategoriesModule,
     ItemImagesModule,
