@@ -398,11 +398,15 @@ const UsersDetailsPage = () => {
       id: "actions",
       header: t.usersDetailsPage.columns.actions[lang],
       cell: ({ row }: { row: Row<RoleAssignment> }) => {
+        const ra = row.original;
+        const isGlobalUserRole =
+          ra.org_name === "Global" && ra.role_name === "user";
         return (
           <Button
             type="button"
             size="sm"
             variant="ghost"
+            disabled={isGlobalUserRole}
             className="justify-self-end"
             onClick={() => removeRoleAssignment(row.index)}
           >
@@ -888,6 +892,9 @@ const UsersDetailsPage = () => {
                         size="sm"
                         variant="ghost"
                         className="justify-self-end"
+                        disabled={
+                          ra.org_name === "Global" && ra.role_name === "user"
+                        }
                         onClick={() => removeRoleAssignment(index)}
                       >
                         {t.usersDetailsPage.buttons.remove[lang]}
