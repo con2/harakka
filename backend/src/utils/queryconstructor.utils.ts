@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { PostgrestResponse, SupabaseClient } from "@supabase/supabase-js";
 import { getPaginationRange } from "./pagination";
 import { PostgrestFilterBuilder } from "@supabase/postgrest-js";
@@ -5,6 +6,8 @@ import { GenericSchema } from "@supabase/postgrest-js/dist/cjs/types";
 import { ColumnMeta, Eq, Filter } from "src/types/queryconstructor.types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+const logger = new Logger("QueryConstructorUtils");
 
 /**
  * Get rows of X table that matches your desired constraints.
@@ -57,7 +60,7 @@ export async function getColumnData(
       input_table_name: tableName,
     },
   );
-  if (result.error) console.log(result.error);
+  if (result.error) logger.error("Failed to get table columns", result.error);
   return result.data;
 }
 

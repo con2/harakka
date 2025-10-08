@@ -78,9 +78,7 @@ This document outlines the key technologies used in our Storage and Booking Appl
 
 ### File Storage
 
-- **AWS S3** - Cloud storage for files
-  - Using AWS SDK for S3
-  - Upload using multipart form data
+- **Supabase Storage** - File storage for uploads
 
 ### API Features
 
@@ -93,17 +91,26 @@ This document outlines the key technologies used in our Storage and Booking Appl
 - **Day.js** - Lightweight date-time library
 - **dayjs-plugin-utc** - UTC support
 
-### Testing
-
-- **Jest** - Testing framework
-
 ## DevOps & Tools
 
 ### Development
 
 - **ESLint** - Code linting
 - **Prettier** - Code formatting
+- **Infisical** - Secret management for environment variables
 
 ### Version Control
 
 - **Git** - Source code management
+
+### CI/CD
+
+- **GitHub Actions** - Continuous integration and deployment workflows
+- **Azure Static Web Apps** - Deployment for frontend
+- **Azure App Service** - Deployment for backend
+
+### Other Tools
+
+- **Postman** - API testing and documentation
+- **dotenv-expand** - Expanding environment variables
+- **env-cmd** - Managing environment variables

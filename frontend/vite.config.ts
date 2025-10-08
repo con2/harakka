@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
   } else {
     // Fallback to loading from .env files
     try {
+      console.log("mode", mode);
       if (mode === "development") {
         env = loadEnv(mode, path.resolve(__dirname, ".."), "");
         console.log("Loaded environment from:", path.resolve(__dirname, ".."));

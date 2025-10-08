@@ -72,6 +72,10 @@ export const myBookingsPage = {
       fi: "Omatoiminosto",
       en: "Self-Pickup",
     },
+    location: {
+      en: "Location",
+      fi: "Sijainti",
+    },
   },
   bookingDetails: {
     title: {

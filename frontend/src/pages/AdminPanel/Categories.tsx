@@ -159,10 +159,14 @@ function Categories() {
 
   return (
     <>
-      <h1 className="text-xl mb-4">
+      <h1 className="text-xl mb-2">
         {t.categories.headings.manageCategories[lang]}
       </h1>
 
+      <p className="text-sm text-muted-foreground mb-4">
+        {t.categories.info.depthLimit[lang]}
+      </p>
+      
       <div className="flex flex-wrap md:justify-between items-center mb-4 gap-4">
         <div className="flex gap-4 items-center relative sm:max-w-xs min-w-[250px]">
           <Search

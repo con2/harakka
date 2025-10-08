@@ -1,6 +1,6 @@
 # API Reference
 
-This document provides a comprehensive reference for the backend API endpoints in the Storage and Booking Application.
+This document provides a comprehensive reference for the backend API endpoints in the Harakka App.
 
 ## Table of Contents
 

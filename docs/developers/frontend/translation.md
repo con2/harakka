@@ -260,7 +260,7 @@ export type Language = "fi" | "en" | "sv";
 ### The result
 
 The language is now shown in the app. However for the new language to work across the app, you will need to [add the translation to the modules](#4-adding-translations)
-![](https://rcbddkhvysexkvgqpcud.supabase.co/storage/v1/object/public/docs/translations/Screenshot%202025-09-25%20150617.png)
+![new language in user menu](https://rcbddkhvysexkvgqpcud.supabase.co/storage/v1/object/public/docs/translations/Screenshot%202025-09-25%20150617.png)
 
 ## 6. Checking Coverage
 

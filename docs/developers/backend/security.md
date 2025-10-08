@@ -1,6 +1,6 @@
 # Security Guide
 
-This document outlines the current security architecture and implementation in the Storage and Booking Application.
+This document outlines the current security architecture and implementation in the Harakka App.
 
 ## Table of Contents
 

@@ -11,6 +11,7 @@ import {
   selectBookingPagination,
   selectCurrentBooking,
   selectCurrentBookingLoading,
+  selectOrgBookings,
   updateBooking,
 } from "@/store/slices/bookingsSlice";
 import { BookingItemWithDetails, BookingWithDetails } from "@/types";
@@ -41,6 +42,9 @@ import { toastConfirm } from "@/components/ui/toastConfirm";
 import InlineTimeframePicker from "@/components/InlineTimeframeSelector";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileTable from "@/components/ui/MobileTable";
+import BookingPickupButton from "@/components/Admin/Bookings/BookingPickupButton";
+import BookingReturnButton from "@/components/Admin/Bookings/BookingReturnButton";
+import { cn } from "@/lib/utils";
 
 function RequestDetailsPage() {
   const { id } = useParams();
@@ -59,6 +63,29 @@ function RequestDetailsPage() {
     useAppSelector(selectActiveRoleContext);
   const itemsWithLoadedImages = useAppSelector(selectItemsWithLoadedImages);
   const { isMobile } = useIsMobile();
+  const orgBookings = useAppSelector(selectOrgBookings);
+
+  const extendedBooking = useMemo(() => {
+    if (!booking?.id || !orgBookings.length) return null;
+    return orgBookings.find((ob) => ob.id === booking.id) || null;
+  }, [booking?.id, orgBookings]);
+
+  // Self-pickup state
+  const ORGS_WITH_SELF_PICKUP = (extendedBooking?.orgs ?? [])
+    .filter((org) => org.locations.some((loc) => loc.self_pickup))
+    .map((org) => ({
+      ...org,
+      locations: org.locations.filter((loc) => loc.self_pickup),
+    }));
+  const self_pickup_locations = ORGS_WITH_SELF_PICKUP.flatMap(
+    (o) => o.locations,
+  );
+  const all_locations = extendedBooking?.orgs.flatMap((o) => o.locations);
+  const HAS_SELF_PICKUP = self_pickup_locations.length > 0;
+  const PICKUP_DATE = new Date(
+    booking?.booking_items?.[0]?.start_date ?? "",
+  ).setHours(0, 0, 0, 0);
+  const TODAY = new Date().setHours(0, 0, 0, 0);
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -160,6 +187,7 @@ function RequestDetailsPage() {
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>(
     {},
   );
+
   const [availability, setAvailability] = useState<{
     [itemId: string]: number;
   }>({});
@@ -168,6 +196,9 @@ function RequestDetailsPage() {
     Set<string>
   >(new Set());
   const hasItemsFromOtherOrgs = booking?.has_items_from_multiple_orgs ?? false;
+
+  // Statuses which have no further actions
+  const END_STATUSES = ["cancelled", "rejected", "returned", "completed"];
 
   const removeItem = (
     item: NonNullable<BookingWithDetails["booking_items"]>[number],
@@ -244,6 +275,24 @@ function RequestDetailsPage() {
     });
   };
 
+  const refetchBookings = () => {
+    if (!id) return;
+    void (async () => {
+      try {
+        const res = await dispatch(
+          getOrgBookings({ org_id: activeOrgId!, page, limit }),
+        ).unwrap();
+        const list = res && "data" in res ? res.data : [];
+        const found = list?.find((b) => b.id === id) || null;
+        if (found) dispatch(selectBooking(found));
+      } catch {
+        // ignore
+      } finally {
+        void dispatch(getBookingByID({ booking_id: id }));
+      }
+    })();
+  };
+
   // Availability check when timeframe or items change
   useEffect(() => {
     if (!globalStartDate || !globalEndDate) return;
@@ -267,6 +316,10 @@ function RequestDetailsPage() {
       const avail = availability[item.item_id];
       return avail === undefined || inputQty <= avail;
     });
+
+  useEffect(() => {
+    if (orgBookings.length === 0) refetchBookings();
+  }, []); // eslint-disable-line
 
   // Check if there are any changes to save
   const hasChangesToSave = useMemo(() => {
@@ -448,6 +501,7 @@ function RequestDetailsPage() {
     availability,
     removeItem,
     isMobile,
+    all_locations || [],
   );
 
   if (loading) return <Spinner />;
@@ -468,7 +522,7 @@ function RequestDetailsPage() {
       <div className="flex flex-col">
         {/* Booking overview and details */}
         <div className="mb-8 border-1 border-(muted-foreground) p-5 rounded bg-white flex flex-col gap-4">
-          <h1 className="text-xl">
+          <h1 className="text-xl font-semibold">
             {t.requestDetailsPage.title[lang].replace(
               "{booking_number}",
               booking_number,
@@ -585,6 +639,77 @@ function RequestDetailsPage() {
             )}
           </div>
         </div>
+        {HAS_SELF_PICKUP &&
+          !allItemsPending &&
+          TODAY >= PICKUP_DATE &&
+          !END_STATUSES.includes(status) &&
+          !showEdit && (
+            <div className="bg-white w-full p-5 rounded-sm border flex mb-8 flex-wrap flex-col justify-center sm:justify-start">
+              <h3 className="mb-1 text-lg">
+                {t.requestDetailsPage.selfPickup.title[lang]}
+              </h3>
+              <p className="mb-6 text-sm text-muted-foreground">
+                {t.requestDetailsPage.selfPickup.description[lang]}
+              </p>
+
+              <div className="flex gap-4 flex-wrap">
+                {ORGS_WITH_SELF_PICKUP?.map((org) => {
+                  const { locations, id: orgId } = org;
+
+                  return (locations || []).map((loc, idx) => {
+                    if (loc.pickup_status === "returned" || !id) return;
+                    if (loc.pickup_status === "picked_up")
+                      return (
+                        <BookingReturnButton
+                          key={`${loc.id}-${idx}`}
+                          onSuccess={refetchBookings}
+                          id={id}
+                          org_id={orgId}
+                          location_id={loc.id}
+                          className={cn(
+                            "infoBtn flex !p-2 !px-4 gap-3 text-start items-center flex-1 lg:flex-0 h-fit",
+                            locations.length > 1 ? "lg:flex-0" : "sm:flex-0",
+                          )}
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{loc.name}</span>
+                            {
+                              t.requestDetailsPage.selfPickup.markAs.returned[
+                                lang
+                              ]
+                            }
+                          </div>
+                        </BookingReturnButton>
+                      );
+
+                    if (PICKUP_DATE < TODAY) return;
+                    return (
+                      <BookingPickupButton
+                        id={id}
+                        key={`${loc.id}-${idx}`}
+                        location_id={loc.id}
+                        org_id={orgId}
+                        onSuccess={refetchBookings}
+                        className={cn(
+                          "infoBtn flex !p-2 !px-4 gap-3 text-start items-center flex-1 lg:flex-0 h-fit",
+                          locations.length > 1 ? "lg:flex-0" : "sm:flex-0",
+                        )}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-semibold">{loc.name}</span>
+                          {
+                            t.requestDetailsPage.selfPickup.markAs.pickedUp[
+                              lang
+                            ]
+                          }
+                        </div>
+                      </BookingPickupButton>
+                    );
+                  });
+                })}
+              </div>
+            </div>
+          )}
         {showEdit && (
           <div className="mb-4">
             {hasItemsFromOtherOrgs ? (
@@ -608,6 +733,7 @@ function RequestDetailsPage() {
             )}
           </div>
         )}
+
         {/* Table */}
         {groupedBookingItems.map((orgGroup, index) => (
           <div key={orgGroup.orgName || `org-${index}`} className="mb-4">

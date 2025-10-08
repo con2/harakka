@@ -59,7 +59,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          ALLOWED_ORIGINS: "https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180"
+          ALLOWED_ORIGINS: "https://agreeable-grass-049dc8010.6.azurestaticapps.net,http://localhost:5180,http://harakka.con2.fi,https://harakka.con2.fi"
           SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
           NODE_ENV: "production"
           ENV: "production"
