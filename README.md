@@ -60,6 +60,11 @@ Comprehensive documentation is available in the `docs` directory:
 - [Email System](docs/developers/backend/email-system.md) - Email templates and SMTP setup
 - [Query Constructor](docs/developers/backend/queryconstructor.md) - Dynamic query building utility
 
+### Common Documentation
+
+- [Helper Types](docs/developers/common/helper-types.md) - Utility types for TypeScript
+- [Unified Supabase Types](docs/developers/common/new-unified-types.md) - Shared Supabase types with `MergeDeep`
+
 ### Database Documentation
 
 - [Getting Started Database](docs/developers/database/getting-started.md) - Setting up the database
