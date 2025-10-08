@@ -19,7 +19,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useFormattedDate } from "@/hooks/useFormattedDate";
 import Spinner from "@/components/Spinner";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2, RotateCcw, Minus, Plus } from "lucide-react";
+import { ArrowLeft, Minus, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toastConfirm } from "@/components/ui/toastConfirm";
 import {
   getItemImages,
@@ -41,6 +41,7 @@ import {
 import { ItemImage } from "@/components/ItemImage";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileTable from "@/components/ui/MobileTable";
+import { extractCityFromLocationName } from "@/utils/locationValidation";
 
 const MyBookingsPage = () => {
   const { id } = useParams();
@@ -59,6 +60,9 @@ const MyBookingsPage = () => {
     if (!booking?.id || !userBookings.length) return null;
     return userBookings.find((ub) => ub.id === booking.id) || null;
   }, [booking?.id, userBookings]);
+  const ORGS_WITH_SELF_PICKUP = (extendedBooking?.orgs || []).filter((o) =>
+    o.locations.filter((loc) => loc.self_pickup),
+  );
 
   // Group booking items by organization
   const groupBookingItemsByOrg = (
@@ -91,6 +95,17 @@ const MyBookingsPage = () => {
     if (!booking?.booking_items) return [];
     return groupBookingItemsByOrg(booking.booking_items);
   }, [booking?.booking_items]);
+
+  // Self-pickup state & Date states
+  const self_pickup_locations = ORGS_WITH_SELF_PICKUP.flatMap(
+    (o) => o.locations,
+  );
+  const all_locations = extendedBooking?.orgs.flatMap((o) => o.locations);
+  const HAS_SELF_PICKUP = self_pickup_locations.length > 0;
+  const PICKUP_DATE = new Date(
+    booking?.booking_items?.[0]?.start_date ?? "",
+  ).setHours(0, 0, 0, 0);
+  const TODAY = new Date().setHours(0, 0, 0, 0);
 
   // Check if all booking items are pending - only then allow editing
   const allItemsPending = useMemo(() => {
@@ -292,6 +307,17 @@ const MyBookingsPage = () => {
       },
     },
     {
+      header: t.myBookingsPage.columns.location[lang],
+      cell: ({ row }) => (
+        <div className="max-w-[170px] truncate justify-self-end md:justify-self-start">
+          {extractCityFromLocationName(
+            all_locations?.find((l) => l.id === row.original.location_id)
+              ?.name ?? "",
+          )}
+        </div>
+      ),
+    },
+    {
       accessorKey: "status",
       header: t.myBookingsPage.columns.status[lang],
       cell: ({ row }) => {
@@ -304,70 +330,6 @@ const MyBookingsPage = () => {
         );
       },
     },
-    ...(allItemsPending
-      ? []
-      : [
-          {
-            accessorKey: "self_pickup",
-            header: booking?.booking_items?.some((item) => item.self_pickup)
-              ? t.myBookingsPage.columns.selfPickup[lang]
-              : "",
-            cell: ({ row }: { row: Row<BookingItemWithDetails> }) => {
-              const item = row.original;
-
-              if (!item.self_pickup) {
-                return null;
-              }
-
-              // find the corresponding org and location from extendedBooking
-              const org = extendedBooking?.orgs?.find(
-                (o) => o.id === item.provider_organization_id,
-              );
-              const location = org?.locations?.find(
-                (l) => l.id === item.location_id,
-              );
-
-              if (!location?.self_pickup) return null;
-
-              const isBeforeStart = new Date(item.start_date) > new Date();
-              const pickupDisabledReason = isBeforeStart
-                ? t.bookingPickup.errors.beforeStartDate[lang]
-                : undefined;
-
-              return (
-                <div className="flex gap-1 justify-end md:justify-start">
-                  {/* Show pickup button if item status is confirmed */}
-                  {item.status === "confirmed" && booking?.id && (
-                    <BookingPickupButton
-                      onSuccess={refetchBookings}
-                      location_id={item.location_id}
-                      id={booking.id}
-                      className="gap-1 h-8 text-xs justify-end md:justify-center"
-                      org_id={item.provider_organization_id}
-                      disabled={isBeforeStart}
-                      disabledReason={pickupDisabledReason}
-                    >
-                      {t.myBookingsPage.buttons.pickedUp[lang]}
-                    </BookingPickupButton>
-                  )}
-                  {/* Show return button if item is already picked up */}
-                  {item.status === "picked_up" && booking?.id && (
-                    <BookingReturnButton
-                      onSuccess={refetchBookings}
-                      location_id={item.location_id}
-                      id={booking.id}
-                      className="justify-end md:justify-center"
-                      org_id={item.provider_organization_id}
-                    >
-                      {t.myBookingsPage.buttons.return[lang]}
-                    </BookingReturnButton>
-                  )}
-                </div>
-              );
-            },
-            size: 40,
-          },
-        ]),
     ...(allItemsPending && showEdit
       ? [
           {
@@ -428,6 +390,9 @@ const MyBookingsPage = () => {
       const avail = availability[item.item_id];
       return avail === undefined || inputQty <= avail;
     });
+
+  // Statuses which have no further actions
+  const END_STATUSES = ["cancelled", "rejected", "returned", "completed"];
 
   // Check if there are any changes to save
   const hasChangesToSave = useMemo(() => {
@@ -771,6 +736,72 @@ const MyBookingsPage = () => {
               />
             )}
           </div>
+
+          {HAS_SELF_PICKUP &&
+            !allItemsPending &&
+            !END_STATUSES.includes(booking.status!) &&
+            TODAY >= PICKUP_DATE &&
+            !showEdit && (
+              <div className="bg-white w-full p-4 rounded-3xl flex mb-8 flex-wrap flex-col justify-center sm:justify-start">
+                <h3 className="mb-0 font-main text-lg">
+                  {t.requestDetailsPage.selfPickup.title[lang]}
+                </h3>
+                <p className="mb-4 text-sm">
+                  {t.requestDetailsPage.selfPickup.description[lang]}
+                </p>
+
+                <div className="flex gap-4 flex-wrap">
+                  {ORGS_WITH_SELF_PICKUP?.map((org) => {
+                    const { locations, id: orgId } = org;
+
+                    return (locations || []).map((loc, idx) => {
+                      if (loc.pickup_status === "returned" || !id) return;
+                      if (loc.pickup_status === "picked_up")
+                        return (
+                          <BookingReturnButton
+                            key={`${loc.id}-${idx}`}
+                            onSuccess={refetchBookings}
+                            id={id}
+                            org_id={orgId}
+                            location_id={loc.id}
+                            className="infoBtn flex !p-2 !px-4 gap-3 text-start items-center flex-1 sm:flex-0 h-fit"
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-semibold">{loc.name}</span>
+                              {
+                                t.requestDetailsPage.selfPickup.markAs.returned[
+                                  lang
+                                ]
+                              }
+                            </div>
+                          </BookingReturnButton>
+                        );
+
+                      if (PICKUP_DATE < TODAY) return;
+                      return (
+                        <BookingPickupButton
+                          id={id}
+                          key={`${loc.id}-${idx}`}
+                          location_id={loc.id}
+                          org_id={orgId}
+                          onSuccess={refetchBookings}
+                          className="infoBtn flex !p-2 !px-4 gap-3 text-start items-center flex-1 sm:flex-0 h-fit"
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{loc.name}</span>
+                            {
+                              t.requestDetailsPage.selfPickup.markAs.pickedUp[
+                                lang
+                              ]
+                            }
+                          </div>
+                        </BookingPickupButton>
+                      );
+                    });
+                  })}
+                </div>
+              </div>
+            )}
 
           <div>
             {/* Booking Items */}

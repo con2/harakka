@@ -12,6 +12,10 @@ export const requestDetailsPage = {
       en: "Quantity",
       fi: "Määrä",
     },
+    location: {
+      en: "Location",
+      fi: "Sijainti",
+    },
     status: {
       en: "Status",
       fi: "Tila",
@@ -29,6 +33,26 @@ export const requestDetailsPage = {
     redirectUnauthorized: {
       en: "Showing requests of {org_name}",
       fi: "Näytetään organisaation {org_name} pyynnöt",
+    },
+  },
+  selfPickup: {
+    title: {
+      en: "You have been granted self-pickup",
+      fi: "Sinulle on myönnetty itsepalvelunouto",
+    },
+    description: {
+      en: "Pick up your items at the following locations",
+      fi: "Nouda tuotteesi seuraavista sijainneista",
+    },
+    markAs: {
+      pickedUp: {
+        en: "Mark items as picked up",
+        fi: "Merkitse tuotteet noudetuiksi",
+      },
+      returned: {
+        en: "Mark items as returned",
+        fi: "Merkitse tuotteet palautetuiksi",
+      },
     },
   },
 };

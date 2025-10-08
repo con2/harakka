@@ -156,8 +156,7 @@
   }
 
   *:focus-visible {
-    outline: 2px solid var(--iridiscent-blue);
-    outline-offset: 4px;
+    outline: 3px solid rgb(47, 93, 158, 0.5);
   }
 }
 
@@ -243,23 +242,23 @@ li:has(.custom-toast) {
 
 .custom-toast {
   &::after {
-  content: "";
-  position: absolute;
-  border-radius: 0.75rem;
-  bottom: -1px !important;
-  left: -0.5px;
-  height: 4px !important;
-  width: 0;
-  background-color: #4caf50;
-  animation: progressBar 3s linear forwards;
-  animation-play-state: running;
-  z-index: 0;
-  transition: visibility 0s;
-  border-bottom-left-radius: 130px;
-  border-bottom-right-radius: 110px;
+    content: "";
+    position: absolute;
+    border-radius: 0.75rem;
+    bottom: -1px !important;
+    left: -0.5px;
+    height: 4px !important;
+    width: 0;
+    background-color: #4caf50;
+    animation: progressBar 3s linear forwards;
+    animation-play-state: running;
+    z-index: 0;
+    transition: visibility 0s;
+    border-bottom-left-radius: 130px;
+    border-bottom-right-radius: 110px;
   }
 
-  & button[data-action="true"]{
+  & button[data-action="true"] {
     background-color: #4caf50 !important;
   }
 }
