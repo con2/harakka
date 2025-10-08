@@ -53,10 +53,12 @@ Comprehensive documentation is available in the `docs` directory:
 
 ### Backend Documentation
 
-- [Database Schema](docs/developers/backend/database-schema.md) - Data structure
+- [Backend Overview](docs/developers/backend/backend-overview.md) - Architecture and modules
 - [API Reference](docs/developers/backend/api-reference.md) - API endpoints
-- [Supabase (Branching & Setup)](docs/developers/Supabase.md) - Branching, setup, and workflow
-- [Security](docs/developers/backend/security.md) - Authentication and authorization
+- [Modules](docs/developers/backend/modules.md) - Core modules and services
+- [Security](docs/developers/backend/security.md) - Security practices and implementations
+- [Email System](docs/developers/backend/email-system.md) - Email templates and SMTP setup
+- [Query Constructor](docs/developers/backend/queryconstructor.md) - Dynamic query building utility
 
 ### Database Documentation
 
