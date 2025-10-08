@@ -41,7 +41,6 @@ import {
 import { ItemImage } from "@/components/ItemImage";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileTable from "@/components/ui/MobileTable";
-import { isPending } from "@reduxjs/toolkit";
 
 const MyBookingsPage = () => {
   const { id } = useParams();
@@ -105,9 +104,6 @@ const MyBookingsPage = () => {
   const PICKUP_DATE = new Date(
     booking?.booking_items?.[0]?.start_date ?? "",
   ).setHours(0, 0, 0, 0);
-  // const END_DATE = new Date(
-  //   booking?.booking_items?.[0]?.end_date ?? "",
-  // ).setHours(0, 0, 0, 0);
   const TODAY = new Date().setHours(0, 0, 0, 0);
 
   // Check if all booking items are pending - only then allow editing
@@ -738,7 +734,7 @@ const MyBookingsPage = () => {
           </div>
 
           {HAS_SELF_PICKUP &&
-            !isPending &&
+            !allItemsPending &&
             !END_STATUSES.includes(booking.status!) &&
             TODAY >= PICKUP_DATE &&
             !showEdit && (
