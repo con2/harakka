@@ -7,6 +7,8 @@ export interface EmailProps {
   items: {
     item_id: string;
     quantity: number;
+    locationName?: string;
+    locationId?: string;
     translations: {
       fi: { name: string };
       en: { name: string };
@@ -22,6 +24,8 @@ export interface PickUpEmail {
   items: {
     item_id: string;
     quantity: number;
+    locationName?: string;
+    locationId?: string;
     translations: {
       fi: { name: string };
       en: { name: string };

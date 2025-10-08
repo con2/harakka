@@ -18,10 +18,23 @@ interface BookingPartlyConfirmationEmailProps extends EmailProps {
 const BookingPartlyConfirmationEmail = ({
   name,
   pickupDate,
-  location,
   confirmedItems,
   rejectedItems,
-}: BookingPartlyConfirmationEmailProps) => {
+}: BookingPartlyConfirmationEmailProps): React.ReactElement => {
+  // Define the type of each item in the confirmed items
+  type ItemType = EmailProps["items"][0];
+
+  // Group confirmed items by location with proper typing
+  const confirmedByLocation: Record<string, ItemType[]> = {};
+
+  confirmedItems.forEach((item) => {
+    const locationName = item.locationName || "Unknown location";
+    if (!confirmedByLocation[locationName]) {
+      confirmedByLocation[locationName] = [];
+    }
+    confirmedByLocation[locationName].push(item);
+  });
+
   return (
     <Html>
       <Head>
@@ -102,20 +115,56 @@ const BookingPartlyConfirmationEmail = ({
           <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
             Vahvistetut kohteet:
           </Text>
-          <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
-            {confirmedItems.map((item, index) => (
-              <li key={index}>
-                {item.translations.fi.name} (x{item.quantity})
-              </li>
-            ))}
-          </ul>
 
-          <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
+          {/* Group confirmed items by location - Finnish */}
+          {Object.entries(confirmedByLocation).map(
+            ([locationName, locationItems], locationIndex) => (
+              <div key={`fi-conf-${locationIndex}`}>
+                <Text
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    marginTop: "15px",
+                    marginBottom: "5px",
+                  }}
+                >
+                  Noutopaikka: {locationName}
+                </Text>
+                <ul style={{ paddingLeft: "20px", marginBottom: "10px" }}>
+                  {locationItems.map((item, itemIndex) => (
+                    <li
+                      key={itemIndex}
+                      style={{
+                        marginBottom: "4px",
+                        fontSize: "16px",
+                      }}
+                    >
+                      {item.translations.fi.name} (x{item.quantity})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ),
+          )}
+
+          <Text
+            style={{
+              fontWeight: "bold",
+              marginBottom: "8px",
+              marginTop: "20px",
+            }}
+          >
             Hylätyt kohteet:
           </Text>
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {rejectedItems.map((item, index) => (
-              <li key={index}>
+              <li
+                key={index}
+                style={{
+                  marginBottom: "4px",
+                  fontSize: "16px",
+                }}
+              >
                 {item.translations.fi.name} (x{item.quantity})
               </li>
             ))}
@@ -123,9 +172,6 @@ const BookingPartlyConfirmationEmail = ({
 
           <Text style={{ fontSize: "16px", marginBottom: "20px" }}>
             <strong>Noutopäivämääräsi pysyy samana:</strong> {pickupDate}
-            <br />
-            <strong>Noutopaikka:</strong> {location}
-            <br />
           </Text>
 
           <hr style={{ margin: "30px 0" }} />
@@ -142,30 +188,63 @@ const BookingPartlyConfirmationEmail = ({
           <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
             Confirmed items:
           </Text>
-          <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
-            {confirmedItems.map((item, index) => (
-              <li key={index}>
-                {item.translations?.en?.name} (x{item.quantity})
-              </li>
-            ))}
-          </ul>
 
-          <Text style={{ fontWeight: "bold", marginBottom: "8px" }}>
+          {/* Group confirmed items by location - English */}
+          {Object.entries(confirmedByLocation).map(
+            ([locationName, locationItems], locationIndex) => (
+              <div key={`en-conf-${locationIndex}`}>
+                <Text
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    marginTop: "15px",
+                    marginBottom: "5px",
+                  }}
+                >
+                  Pickup location: {locationName}
+                </Text>
+                <ul style={{ paddingLeft: "20px", marginBottom: "10px" }}>
+                  {locationItems.map((item, itemIndex) => (
+                    <li
+                      key={itemIndex}
+                      style={{
+                        marginBottom: "4px",
+                        fontSize: "16px",
+                      }}
+                    >
+                      {item.translations.en.name} (x{item.quantity})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ),
+          )}
+
+          <Text
+            style={{
+              fontWeight: "bold",
+              marginBottom: "8px",
+              marginTop: "20px",
+            }}
+          >
             Rejected items:
           </Text>
           <ul style={{ paddingLeft: "20px", marginBottom: "20px" }}>
             {rejectedItems.map((item, index) => (
-              <li key={index}>
-                {item.translations?.en?.name} (x{item.quantity})
+              <li
+                key={index}
+                style={{
+                  marginBottom: "4px",
+                  fontSize: "16px",
+                }}
+              >
+                {item.translations.en.name} (x{item.quantity})
               </li>
             ))}
           </ul>
 
           <Text style={{ fontSize: "16px", marginBottom: "20px" }}>
             <strong>Your pickup date remains the same:</strong> {pickupDate}
-            <br />
-            <strong>Pickup location:</strong> {location}
-            <br />
           </Text>
 
           <Section style={{ textAlign: "center", marginTop: "30px" }}>
