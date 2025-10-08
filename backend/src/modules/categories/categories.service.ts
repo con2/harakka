@@ -1,5 +1,6 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
+import { SupabaseClient } from "@supabase/supabase-js";
 import {
   CreateParamsDto,
   DeleteParamsDto,
@@ -9,9 +10,116 @@ import {
 import { getPaginationMeta, getPaginationRange } from "@src/utils/pagination";
 import { handleSupabaseError } from "@src/utils/handleError.utils";
 
+const MAX_SUBCATEGORIES = 8;
+const MAX_NESTING_DEPTH = 5;
+
 @Injectable()
 export class CategoriesService {
   constructor(private supabaseService: SupabaseService) {}
+
+  private async assertParentCanFitSubtree(
+    supabase: SupabaseClient,
+    parentId: string,
+    subtreeHeight: number,
+  ) {
+    const { count, error } = await supabase
+      .from("categories")
+      .select("id", { count: "exact", head: true })
+      .eq("parent_id", parentId);
+
+    if (error) handleSupabaseError(error);
+
+    if ((count ?? 0) >= MAX_SUBCATEGORIES) {
+      throw new BadRequestException(
+        `Parent category already has the maximum of ${MAX_SUBCATEGORIES} subcategories.`,
+      );
+    }
+
+    const parentDepth = await this.getCategoryDepth(supabase, parentId);
+    if (parentDepth + subtreeHeight > MAX_NESTING_DEPTH) {
+      throw new BadRequestException(
+        `Categories can only be nested up to ${MAX_NESTING_DEPTH} levels.`,
+      );
+    }
+  }
+
+  private async getCategoryDepth(
+    supabase: SupabaseClient,
+    categoryId: string,
+  ): Promise<number> {
+    let depth = 1;
+    let currentId: string | null = categoryId;
+    const visited = new Set<string>();
+
+    while (currentId) {
+      if (visited.has(currentId)) {
+        throw new BadRequestException(
+          "Category hierarchy contains a cycle. Please review the category tree before continuing.",
+        );
+      }
+      visited.add(currentId);
+
+      const { data, error } = await supabase
+        .from("categories")
+        .select("parent_id")
+        .eq("id", currentId)
+        .single();
+
+      if (error) handleSupabaseError(error);
+      if (!data) {
+        throw new BadRequestException("Parent category not found.");
+      }
+
+      const parentId = data.parent_id;
+      if (!parentId) {
+        return depth;
+      }
+
+      depth += 1;
+      currentId = parentId;
+    }
+
+    return depth;
+  }
+
+  private async getSubtreeHeight(
+    supabase: SupabaseClient,
+    categoryId: string,
+    visited = new Set<string>(),
+    descendants?: Set<string>,
+  ): Promise<number> {
+    if (visited.has(categoryId)) {
+      throw new BadRequestException(
+        "Category hierarchy contains a cycle. Please review the category tree before continuing.",
+      );
+    }
+    visited.add(categoryId);
+
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id")
+      .eq("parent_id", categoryId);
+
+    if (error) handleSupabaseError(error);
+
+    let maxChildHeight = 0;
+    for (const child of data ?? []) {
+      descendants?.add(child.id);
+
+      const childHeight = await this.getSubtreeHeight(
+        supabase,
+        child.id,
+        visited,
+        descendants,
+      );
+      if (childHeight > maxChildHeight) {
+        maxChildHeight = childHeight;
+      }
+    }
+
+    visited.delete(categoryId);
+    return maxChildHeight === 0 ? 1 : 1 + maxChildHeight;
+  }
 
   /**
    * Get All Categories
@@ -51,6 +159,10 @@ export class CategoriesService {
   async createCategory(params: CreateParamsDto) {
     const { supabase, newCategory } = params;
 
+    if (newCategory.parent_id) {
+      await this.assertParentCanFitSubtree(supabase, newCategory.parent_id, 1);
+    }
+
     const result = await supabase
       .from("categories")
       .insert(newCategory)
@@ -68,6 +180,58 @@ export class CategoriesService {
    */
   async updateCategory(params: UpdateParamsDto) {
     const { supabase, updateCategory, id } = params;
+
+    const { data: existingCategory, error: existingCategoryError } =
+      await supabase
+        .from("categories")
+        .select("parent_id")
+        .eq("id", id)
+        .single();
+
+    if (existingCategoryError) handleSupabaseError(existingCategoryError);
+
+    const currentParentId = existingCategory?.parent_id ?? null;
+    const parentProvided = Object.prototype.hasOwnProperty.call(
+      updateCategory,
+      "parent_id",
+    );
+    const nextParentId = parentProvided
+      ? (updateCategory.parent_id ?? null)
+      : currentParentId;
+
+    const parentChanged = nextParentId !== currentParentId;
+
+    if (parentChanged) {
+      if (nextParentId === id) {
+        throw new BadRequestException("A category cannot be its own parent.");
+      }
+
+      const descendants = new Set<string>();
+      const subtreeHeight = await this.getSubtreeHeight(
+        supabase,
+        id,
+        new Set<string>(),
+        descendants,
+      );
+
+      if (nextParentId && descendants.has(nextParentId)) {
+        throw new BadRequestException(
+          "A category cannot be moved under one of its descendants.",
+        );
+      }
+
+      if (nextParentId) {
+        await this.assertParentCanFitSubtree(
+          supabase,
+          nextParentId,
+          subtreeHeight,
+        );
+      } else if (subtreeHeight > MAX_NESTING_DEPTH) {
+        throw new BadRequestException(
+          `Categories can only be nested up to ${MAX_NESTING_DEPTH} levels.`,
+        );
+      }
+    }
 
     const result = await supabase
       .from("categories")
