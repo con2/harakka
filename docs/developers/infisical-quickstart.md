@@ -18,7 +18,7 @@ npm install -g @infisical/cli
 infisical login
 ```
 
-*Choose the same region as the project (ask team lead)*
+#### Choose the same region as the project (ask team lead)
 
 ### 3. Verify Access
 
@@ -31,16 +31,15 @@ infisical secrets get NODE_ENV --env=dev
 
 You have **two options**:
 
-**Option A: Use Infisical directly (recommended)**
+#### Option A: Use Infisical directly (recommended)
 
 ```bash
 npm run dev:infisical          # Run full app with Infisical
 npm run frontend:infisical     # Frontend only
 npm run backend:infisical      # Backend only
-npm run s:start:infisical      # Supabase with Infisical
 ```
 
-**Option B: Sync to local .env files**
+#### Option B: Sync to local .env files
 
 ```bash
 # PULL: Sync latest secrets to local files
@@ -97,19 +96,19 @@ infisical login
 
 ## Troubleshooting
 
-**"Authentication failed"**
+### "Authentication failed"
 
 ```bash
 infisical logout
 infisical login
 ```
 
-**"Permission denied"**
+### "Permission denied"
 
 - Ask project admin to invite you
 - Check you're in the right workspace
 
-**"No secrets found"**
+### "No secrets found"
 
 - Verify you're using `--env=dev`
 - Check with team lead that secrets are uploaded
@@ -117,8 +116,7 @@ infisical login
 ## Need Help?
 
 1. Check the full guide: `docs/developers/infisical-setup.md`
-2. Run the migration script: `./scripts/infisical-migrate.sh`
-3. Ask the team lead to check your Infisical permissions
+2. Ask the team lead to check your Infisical permissions
 
 ---
 
