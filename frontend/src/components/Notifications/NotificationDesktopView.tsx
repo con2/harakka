@@ -140,11 +140,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
                         <Info className="h-3 w-3 text-muted-foreground" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      align="center"
-                      className="max-w-xs"
-                    >
+                    <TooltipContent side="top" align="center">
                       <p className="text-xs">
                         {t.navigation.notifications.tooltip?.[lang] ||
                           "Click 'All' to see and delete all notifications across all contexts"}
@@ -201,7 +197,7 @@ export const NotificationDesktopView: React.FC<Props> = ({
             {t.navigation.notifications.none[lang]}
           </p>
         ) : (
-          <ScrollArea className="h-[70vh] sm:h-[80vh]">
+          <ScrollArea className="max-h-[70vh] sm:max-h-[80vh]">
             {visibleFeed.map((n) => {
               // ———————————— Translate Title / Message ————————————
               const tpl = // Translation template for this notification type
