@@ -34,8 +34,8 @@ export const roleManagement = {
   toast: {
     info: {
       permissionsUpdated: {
-        fi: "Käyttöoikeutesi on päivitetty.",
-        en: "Your permissions have been updated.",
+        fi: "Ylläpitäjä päivitti käyttöoikeutesi. Saatat huomata joitain muutoksia käytettävissä olevissa toiminnoissa.",
+        en: "An admin updated your access permissions. You may notice some changes in available actions.",
       },
     },
     success: {
