@@ -36,7 +36,7 @@ A comprehensive platform for managing and booking storage items across multiple 
 
 Comprehensive documentation is available in the `docs` directory:
 
-- [Quick Start Guide](docs/quick-start.md) - Initial setup and local development
+- [Quick Start Guide](docs/quick-start.md) - Initial setup and local development (initial super_admin creation)
 - [Setup Script Guide](docs/developers/workflows/scripts/setup.md) - Setup Script Guide
 - [Project Overview](docs/developers/overview.md) - Architectural overview
 - [Project Structure](docs/developers/project-structure.md) - Directory organization
