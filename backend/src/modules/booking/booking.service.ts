@@ -1094,10 +1094,11 @@ export class BookingService {
           .select(
             `
             id,
-            booking_items(
+            booking_items!inner(
               id,
               status,
               quantity,
+              provider_organization_id,
               storage_items (
                 translations
               )
@@ -1105,7 +1106,7 @@ export class BookingService {
           `,
           )
           .eq("id", bookingId)
-          .eq("provider_organization_id", providerOrgId);
+          .eq("booking_items.provider_organization_id", providerOrgId);
 
       if (bookingDetailsError) handleSupabaseError(bookingDetailsError);
       if (!bookingDetails) {
