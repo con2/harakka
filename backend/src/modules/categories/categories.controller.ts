@@ -28,7 +28,7 @@ export class CategoriesController {
 
   // Create New Category
   @Post()
-  @Roles(["tenant_admin"])
+  @Roles(["tenant_admin", "storage_manager"])
   async createCategory(
     @Req() req: AuthRequest,
     @Body() newCategory: CreateCategoryDto,
@@ -39,7 +39,7 @@ export class CategoriesController {
 
   // Update a Category
   @Patch(":id")
-  @Roles(["tenant_admin"])
+  @Roles(["tenant_admin", "storage_manager"])
   async updateCategory(
     @Req() req: AuthRequest,
     @Param("id") id: string,
@@ -55,7 +55,7 @@ export class CategoriesController {
 
   // Delete a Category
   @Delete(":id")
-  @Roles(["tenant_admin"])
+  @Roles(["tenant_admin", "storage_manager"])
   async deleteCategory(@Req() req: AuthRequest, @Param("id") id: string) {
     const { supabase } = req;
     return await this.categoryService.deleteCategory({ supabase, id });
