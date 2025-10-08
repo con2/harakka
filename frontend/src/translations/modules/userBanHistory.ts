@@ -36,6 +36,10 @@ export const userBanHistory = {
       fi: "Esto poistettu",
       en: "Unbanned",
     },
+    lifted: {
+      en: "Lifted",
+      fi: "Nostettu",
+    },
   },
   columns: {
     banType: {
