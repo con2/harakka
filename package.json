@@ -1,6 +1,6 @@
 {
-  "name": "full-stack-booking-app",
-  "version": "1.1.0",
+  "name": "harakka",
+  "version": "1.2.0",
   "description": "Full-Stack Storage & Booking Application",
   "main": "index.js",
   "authors": [
