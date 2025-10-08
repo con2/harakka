@@ -1,6 +1,10 @@
 import { ItemImage } from "@/components/ItemImage";
 import { Language } from "@/context/LanguageContext";
-import { BookingItemWithDetails, BookingWithDetails } from "@/types";
+import {
+  BookingItemWithDetails,
+  BookingWithDetails,
+  ExtendedBookingPreview,
+} from "@/types";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { t } from "@/translations";
 import { Button } from "@/components/ui/button";
@@ -24,21 +28,20 @@ export const getRequestDetailsColumns: (
   availability: Record<string, number>,
   removeItem: (item: BookingItemWithDetails) => void,
   isMobile: boolean,
+  locations: ExtendedBookingPreview["orgs"][number]["locations"],
 ) => ColumnDef<NonNullable<BookingWithDetails["booking_items"]>[number]>[] = (
-  lang: Language,
-  showEdit: boolean,
-  itemsMarkedForRemoval: Set<string>,
-  allItemsPending: boolean,
-  itemQuantities: Record<string, number>,
-  handleUpdateQuantity: (
-    item: BookingItemWithDetails,
-    newQuantity: number,
-  ) => void,
-  handleIncrementQuantity: (item: BookingItemWithDetails) => void,
-  handleDecrementQuantity: (item: BookingItemWithDetails) => void,
-  availability: Record<string, number>,
-  removeItem: (item: BookingItemWithDetails) => void,
-  isMobile: boolean,
+  lang,
+  showEdit,
+  itemsMarkedForRemoval,
+  allItemsPending,
+  itemQuantities,
+  handleUpdateQuantity,
+  handleIncrementQuantity,
+  handleDecrementQuantity,
+  availability,
+  removeItem,
+  isMobile,
+  locations,
 ) => [
   ...(isMobile
     ? []
@@ -68,9 +71,11 @@ export const getRequestDetailsColumns: (
       );
 
       return (
-        <span className={isMarkedForRemoval ? "line-through opacity-50" : ""}>
-          {formattedName}
-        </span>
+        <div className="max-w-[170px] sm:max-w-sm truncate justify-self-end md:justify-self-start">
+          <span className={isMarkedForRemoval ? "line-through opacity-50" : ""}>
+            {formattedName}
+          </span>
+        </div>
       );
     },
   },
@@ -149,6 +154,14 @@ export const getRequestDetailsColumns: (
         </div>
       );
     },
+  },
+  {
+    header: t.requestDetailsPage.columns.location[lang],
+    cell: ({ row }) => (
+      <div className="max-w-[170px] truncate justify-self-end md:justify-self-start">
+        {locations?.find((l) => l.id === row.original.location_id)?.name}
+      </div>
+    ),
   },
   {
     accessorKey: "status",
