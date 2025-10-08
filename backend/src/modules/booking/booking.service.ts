@@ -851,6 +851,8 @@ export class BookingService {
         const start = new Date(item.start_date);
         const end = new Date(item.end_date);
         const totalDays = calculateDuration(start, end);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
         // add loan period validation
         if (totalDays < 1) {
@@ -859,6 +861,12 @@ export class BookingService {
 
         if (totalDays > 42) {
           throw new BadRequestException("Booking cannot exceed 6 weeks");
+        }
+
+        if (start < today) {
+          throw new BadRequestException(
+            "Cannot create a booking with a start date in the past",
+          );
         }
 
         // Prepare booking item
