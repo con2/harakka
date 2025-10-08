@@ -12,36 +12,17 @@ A comprehensive platform for managing and booking storage items across multiple 
 - **Admin Dashboard**: Comprehensive tools for inventory and order management
 - **Responsive Design**: Seamless experience across desktop and mobile devices
 
-## Tech Stack
-
-### Frontend
-
-- **React 18** with TypeScript for type-safe component development
-- **Vite** for fast development and optimized builds
-- **Redux Toolkit** for centralized state management
-- **UI Components**: Shadcn/UI with Tailwind CSS for styling
-- **Axios** for API requests with automatic authentication
-- **React Router** for client-side routing
-- **Cypress** for end-to-end testing
-
-### Backend
-
-- **NestJS** for robust, modular API development
-- **TypeScript** for type safety across the application
-- **Supabase** for PostgreSQL database, authentication and storage
-- **Row-Level Security** for fine-grained data access control
-- **Email Integration** with nodemailer and React Email templates
-
 ## Documentation
 
 Comprehensive documentation is available in the `docs` directory:
 
 - [Quick Start Guide](docs/quick-start.md) - Initial setup and local development (initial super_admin creation)
 - [Setup Script Guide](docs/developers/workflows/scripts/setup.md) - Setup Script Guide
-- [Project Overview](docs/developers/overview.md) - Architectural overview
 - [Project Structure](docs/developers/project-structure.md) - Directory organization
 - [JWT and Roles](docs/developers/JWT-and-roles.md) - Authentication and authorization system
 - [Environment Variables](docs/developers/environment-variables.md) - environment variables guide
+- [Infisical Setup](docs/developers/infisical-setup.md) - Secure environment variable management with Infisical
+- [Tech stack](docs/developers/tech-stack.md) - Overview of technologies used
 
 ### Frontend Documentation
 
@@ -67,15 +48,14 @@ Comprehensive documentation is available in the `docs` directory:
 
 ### Database Documentation
 
-- [Getting Started Database](docs/developers/database/getting-started.md) - Setting up the database
+- [Getting Started Database](docs/developers/database/getting-started.md) - Setting up the databases
 - [Migrations](docs/developers/database/migration-seperation.md) - Managing migrations
 - [Row-Level Security (RLS)](docs/developers/database/row-level-security.md) - Implementing RLS policies
 - [SQL checks](docs/developers/database/SQL-checks.md) - Database integrity checks
 - [Subabase local development](docs/developers/database/supabase-local-development.md) - Local Supabase setup
+- [Supabase dotenvx](docs/developers/database/supabase-dotenvx.md) - Managing Supabase environment variables
 
 ### Workflow Documentation
 
-- [Development Cycle](docs/developers/workflows/development-cycle.md) - Git workflow
-- [Testing](docs/developers/workflows/testing.md) - Testing practices
 - [Default Deployment](docs/developers/workflows/default-deployment.md) - Default Production deployment (Azure)
-- [Contribution Guide](docs/developers/workflows/contribution-guide.md) - How to contribute
+- [Azure Instances Creation](docs/developers/workflows/azure-instances-creation.md) - Setting up Azure resources
