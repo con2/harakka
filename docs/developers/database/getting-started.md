@@ -1,4 +1,4 @@
-# Getting Started with FullStack Storage and Booking App
+# Getting Started with Harakka App Database Development
 
 This guide will help you set up your development environment and get the application running locally.
 
@@ -10,15 +10,14 @@ Before you begin, ensure you have the following installed:
 - **npm**: Usually comes with Node.js
 - **Git**: For version control ([Download](https://git-scm.com/))
 - **Supabase Account**: Sign up at [Supabase](https://supabase.com/)
-- **Azure Account**: For deployment ([Sign up](https://azure.microsoft.com/))
 
 ## Installation
 
 1. Clone the repository:
 
 ```sh
-git clone <https://github.com/Ermegilius/FullStack_Storage_and_Booking_App>
-cd FullStack_Storage_and_Booking_App
+git clone <https://github.com/con2/harakka.git>
+cd <root folder>
 ```
 
 2. Install dependencies:
@@ -203,101 +202,3 @@ For development against your hosted Supabase:
 ```sh
 npm run dev:live
 ```
-
-### Individual Components
-
-You can also start frontend and backend separately:
-
-```sh
-# Local development
-npm run frontend:local
-npm run backend:local
-
-# Live development
-npm run frontend:live
-npm run backend:live
-```
-
-### Legacy Command
-
-The following still works but doesn't specify environment:
-
-```sh
-npm run dev
-```
-
-After starting:
-
-- Frontend: <http://localhost:5180>
-- Backend API: <http://localhost:3000>
-- API Health Check: <http://localhost:3000/health>
-- Supabase Studio (local): <http://localhost:54323> (when using local Supabase)
-
-## Development Workflow
-
-Frontend (React + TypeScript)
-
-The frontend is built with:
-
-- React with TypeScript
-- Vite as the build tool
-- Redux Toolkit for state management
-- Shadcn/ui for UI components
-- Multilingual support (English/Finnish). See [Translation Guide](./frontend/translation.md) for details.
-
-Backend (REST API)
-The backend provides:
-
-- RESTful API endpoints
-- Supabase integration
-- Authentication and authorization
-- Row-Level Security implementation
-
-## Project Structure
-
-```
-project-root/
-├── frontend/                # React frontend application
-│   ├── public/              # Static files
-│   ├── src/                 # Source code
-│   │   ├── components/      # UI components
-│   │   ├── store/           # Redux store
-│   │   ├── translations/    # Language files
-│   │   └── ...
-│   └── ...
-├── backend/                 # Backend API
-│   ├── src/                 # Source code
-│   ├── dbSetStatements/     # Database setup SQL files
-│   └── ...
-└── docs/                    # Documentation
-```
-
-## Azure Deployment
-
-This application is configured for deployment to Azure:
-
-1. Frontend: Deployed as a Static Web App
-2. Backend: Deployed as an App Service
-3. Database: Managed by Supabase
-4. Storage: Managed by Supabase Storage
-5. CI/CD: GitHub Actions for automated deployment
-6. Environment Variables: Configured in Azure App Service settings and GitHub Secrets
-
-## Common Issues & Troubleshooting
-
-- **CORS errors**: Ensure your backend's ALLOWED_ORIGINS includes your frontend URL
-- **Authentication issues**: Verify your Supabase keys are correct
-- **Database connection issues**: Check your Supabase URL and keys
-- **Environment variable issues**:
-  - For local development, ensure `.env.supabase.local` exists and has correct values
-  - For live development, ensure `.env.local` exists and has correct values
-  - Check that you're using the right npm script (`dev:local` vs `dev:live`)
-- **Supabase CLI issues**:
-  - Run `npm run s:status` to check if local Supabase is running
-  - Run `npm run s:restart` if you encounter connection issues
-  - Ensure Docker is running (required for Supabase CLI)
-- **Port conflicts**:
-  - Frontend runs on port 5180
-  - Backend runs on port 3000
-  - Local Supabase runs on port 54321
-  - Supabase Studio runs on port 54323

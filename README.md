@@ -58,6 +58,10 @@ Comprehensive documentation is available in the `docs` directory:
 - [Supabase (Branching & Setup)](docs/developers/Supabase.md) - Branching, setup, and workflow
 - [Security](docs/developers/backend/security.md) - Authentication and authorization
 
+### Database Documentation
+
+- [Getting Started Database](docs/developers/database/getting-started.md) - Setting up the database
+
 ### Workflow Documentation
 
 - [Development Cycle](docs/developers/workflows/development-cycle.md) - Git workflow
