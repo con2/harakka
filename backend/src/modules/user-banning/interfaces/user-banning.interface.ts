@@ -4,14 +4,8 @@ import { Database } from "@common/supabase.types";
 type BanType =
   Database["public"]["Tables"]["user_ban_history"]["Row"]["ban_type"];
 
-export interface BanForRoleDto {
-  userId: string;
-  organizationId: string;
-  roleId: string;
-  banReason: string;
-  isPermanent?: boolean;
-  notes?: string;
-}
+type UserBanHistoryRow =
+  Database["public"]["Tables"]["user_ban_history"]["Row"];
 
 export interface BanForOrgDto {
   userId: string;
@@ -31,8 +25,8 @@ export interface BanForAppDto {
 export interface UnbanDto {
   userId: string;
   banType: BanType;
-  organizationId?: string; // Required for banForOrg
-  roleId?: string; // Required for banForRole
+  organizationId?: string; // Required for banForOrg / legacy banForRole
+  roleId?: string; // Legacy support for banForRole
   notes?: string;
 }
 
@@ -40,13 +34,23 @@ export interface UnbanDto {
 export interface BanOperationResult {
   success: boolean;
   message: string;
-  data?: unknown;
+  banRecord?: UserBanHistoryRow;
+  banRecords?: UserBanHistoryRow[];
+  ban_history_id?: string;
 }
 
 // User ban status check type
 export interface UserBanStatusCheck {
   userId: string;
-  isBannedFromApp: boolean;
-  bannedFromOrganizations: string[];
-  bannedFromRoles: string[];
+  isBanned: boolean;
+  isBannedForApp: boolean;
+  bannedFromOrganizations: Array<{
+    organizationId: string;
+    organizationName: string | null;
+  }>;
+  banReason: string | null;
+  latestBanType: string | null;
+  latestAction: string | null;
+  bannedAt: string | null;
+  isPermanent: boolean | null;
 }

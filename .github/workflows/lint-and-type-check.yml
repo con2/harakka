@@ -5,7 +5,7 @@ permissions:
 
 on:
   pull_request:
-    branches: [develop, deployment]
+    branches: [develop, main]
 
 env:
   NODE_VERSION: "20"

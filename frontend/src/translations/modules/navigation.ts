@@ -77,8 +77,12 @@ export const navigation = {
       fi: "Kaikki",
     },
     otherContextsPrefix: {
-      en: "Others",
-      fi: "Muut",
+      en: "Other orgs",
+      fi: "Muut org",
+    },
+    tooltip: {
+      en: "Click 'All' to see and delete all notifications across all contexts",
+      fi: "Klikkaa 'Kaikki' nähdäksesi ja poistaaksesi kaikki ilmoitukset kaikista konteksteista",
     },
     toasts: {
       switchedContext: {

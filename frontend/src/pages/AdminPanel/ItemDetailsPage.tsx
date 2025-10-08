@@ -122,6 +122,12 @@ const ItemDetailsPage = () => {
       }
     };
     void load();
+
+    // Remove selected item on unmount.
+    // This prevents a selected item from being displayed when creating a new item
+    return () => {
+      dispatch(clearSelectedItem());
+    };
   }, [activeOrgId, dispatch, id]);
 
   // Initialize form state once selectedItem is loaded
