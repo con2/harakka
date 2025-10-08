@@ -41,6 +41,7 @@ Comprehensive documentation is available in the `docs` directory:
 - [Project Overview](docs/developers/overview.md) - Architectural overview
 - [Project Structure](docs/developers/project-structure.md) - Directory organization
 - [JWT and Roles](docs/developers/JWT-and-roles.md) - Authentication and authorization system
+- [Environment Variables](docs/developers/environment-variables.md) - environment variables guide
 
 ### Frontend Documentation
 
