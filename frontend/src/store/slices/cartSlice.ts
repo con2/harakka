@@ -8,12 +8,54 @@ import {
   ErrorContext,
 } from "@/types";
 
+// Utility function to clear past dates from cart items
+const clearPastDates = (items: CartItem[]): CartItem[] => {
+  // safety check in case items is not an array
+  if (!Array.isArray(items)) {
+    return [];
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return items.map((item) => {
+    const startDate = item.startDate ? new Date(item.startDate) : null;
+    const endDate = item.endDate ? new Date(item.endDate) : null;
+
+    // If start date is in the past, clear both dates
+    if (startDate && startDate < today) {
+      return {
+        ...item,
+        startDate: undefined,
+        endDate: undefined,
+      };
+    }
+
+    // If end date is in the past but start date is valid, clear both for consistency
+    if (endDate && endDate < today) {
+      return {
+        ...item,
+        startDate: undefined,
+        endDate: undefined,
+      };
+    }
+
+    return item;
+  });
+};
+
 // Load cart from localStorage (if available)
 const loadCartFromStorage = (): CartState => {
   try {
     const cartData = localStorage.getItem("cart");
     if (cartData) {
-      return JSON.parse(cartData);
+      const parsedData = JSON.parse(cartData);
+      // clear past dates from loaded items
+      const itemsWithValidDates = clearPastDates(parsedData.items || []);
+
+      return {
+        ...parsedData,
+        items: itemsWithValidDates,
+      };
     }
   } catch (e) {
     console.error("Error loading cart from localStorage:", e);
