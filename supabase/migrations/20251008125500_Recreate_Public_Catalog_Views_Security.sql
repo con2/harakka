@@ -64,7 +64,7 @@ create view public.view_tag_popularity with (security_invoker = on) as
            FROM tags t
              LEFT JOIN storage_item_tags sit ON t.id = sit.tag_id
              LEFT JOIN booking_items bi ON sit.item_id = bi.item_id
-          GROUP BY t.id, t.translations, t.created_at
+          GROUP BY t.id, t.translations, t.created_at, t.updated_at
         )
  SELECT ranked_tags.id,
     ranked_tags.tag_name,
