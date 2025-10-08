@@ -1,7 +1,7 @@
 import { ItemImage } from "@/components/ItemImage";
 import { Language } from "@/context/LanguageContext";
 import { BookingItemWithDetails, BookingWithDetails } from "@/types";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import { t } from "@/translations";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Trash2 } from "lucide-react";
@@ -23,6 +23,7 @@ export const getRequestDetailsColumns: (
   handleDecrementQuantity: (item: BookingItemWithDetails) => void,
   availability: Record<string, number>,
   removeItem: (item: BookingItemWithDetails) => void,
+  isMobile: boolean,
 ) => ColumnDef<NonNullable<BookingWithDetails["booking_items"]>[number]>[] = (
   lang: Language,
   showEdit: boolean,
@@ -37,17 +38,24 @@ export const getRequestDetailsColumns: (
   handleDecrementQuantity: (item: BookingItemWithDetails) => void,
   availability: Record<string, number>,
   removeItem: (item: BookingItemWithDetails) => void,
+  isMobile: boolean,
 ) => [
-  {
-    accessorKey: "image",
-    header: "",
-    cell: ({ row }) => (
-      <ItemImage
-        itemId={row.original.item_id}
-        itemName={row.original.storage_items.translations[lang]?.item_name}
-      />
-    ),
-  },
+  ...(isMobile
+    ? []
+    : [
+        {
+          accessorKey: "image",
+          header: "",
+          cell: ({ row }: { row: Row<BookingItemWithDetails> }) => (
+            <ItemImage
+              itemId={row.original.item_id}
+              itemName={
+                row.original.storage_items.translations[lang]?.item_name
+              }
+            />
+          ),
+        },
+      ]),
   {
     accessorKey: "item_name",
     header: t.requestDetailsPage.columns.itemName[lang],
@@ -88,7 +96,7 @@ export const getRequestDetailsColumns: (
       }
 
       return (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center justify-self-end md:justify-self-center w-fit">
           <div className="flex items-center">
             <Button
               variant="outline"
@@ -155,29 +163,33 @@ export const getRequestDetailsColumns: (
       );
     },
   },
-  {
-    id: "actions",
-    header: showEdit ? t.requestDetailsPage.columns.actions[lang] : "",
-    cell: ({ row }) => {
-      const item = row.original;
-      if (!showEdit || item.status === "cancelled") {
-        return null;
-      }
+  ...(showEdit
+    ? [
+        {
+          id: "actions",
+          header: t.requestDetailsPage.columns.actions[lang],
+          cell: ({ row }: { row: Row<BookingItemWithDetails> }) => {
+            const item = row.original;
+            if (!showEdit || item.status === "cancelled") {
+              return null;
+            }
 
-      return (
-        <div className="flex justify-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => removeItem(item)}
-            className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 rounded-md"
-            aria-label="remove item"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      );
-    },
-    size: 60,
-  },
+            return (
+              <div className="flex justify-end md:justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeItem(item)}
+                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 rounded-md"
+                  aria-label="remove item"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          },
+          size: 60,
+        },
+      ]
+    : []),
 ];

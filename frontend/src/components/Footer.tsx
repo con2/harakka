@@ -1,5 +1,6 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { t } from "@/translations";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   // Translation
@@ -7,55 +8,82 @@ const Footer = () => {
 
   return (
     <footer className="bg-secondary text-white py-6 mt-auto">
-      <div className="max-w-4xl mx-auto px-4 text-center">
-        <div className="flex justify-center gap-8 mt-4 text-left text-sm">
-          <div className="flex flex-col flex-1">
+      <div className="max-w-4xl mx-auto px-8 text-center">
+        <div className="flex justify-center gap-8 mt-4 text-left text-sm group group-hover:[&_a]:underline flex-wrap">
+          <div className="flex flex-col flex-1 min-w-[120px]">
             <h3>{t.footer.sections.shop.title[lang]}</h3>
             <ul className="text-left">
               <li>
-                <a href="/storage">
+                <Link
+                  to="/storage"
+                  className="hover:underline underline-offset-2"
+                >
                   {t.footer.sections.shop.links.products[lang]}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/cart">{t.footer.sections.shop.links.cart[lang]}</a>
+                <Link to="/cart" className="hover:underline underline-offset-2">
+                  {t.footer.sections.shop.links.cart[lang]}
+                </Link>
               </li>
               <li>
-                <a href="/contact-us">
+                <Link
+                  to="/contact-us"
+                  className="hover:underline underline-offset-2"
+                >
                   {t.footer.sections.shop.links.contactUs[lang]}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-col flex-1 min-w-[120px]">
             <h3>{t.footer.sections.about.title[lang]}</h3>
             <ul className="text-left">
               <li>
-                <a href="/how-it-works">
+                <Link
+                  to="/how-it-works"
+                  className="hover:underline underline-offset-2"
+                >
                   {t.footer.sections.about.links.userGuides[lang]}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/privacy-policy">
+                <Link
+                  to="/privacy-policy"
+                  className="hover:underline underline-offset-2"
+                >
                   {t.footer.sections.about.links.privacyPolicy[lang]}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/terms-of-use">
+                <Link
+                  to="/terms-of-use"
+                  className="hover:underline underline-offset-2"
+                >
                   {t.footer.sections.about.links.termsOfUse[lang]}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
-          <div className="flex flex-col flex-1">
-            <h3>{t.footer.sections.stayUpdated.title[lang]}</h3>
+          <div className="flex flex-col flex-1 min-w-[200px]">
+            <h3>{t.footer.sections.theTeam.title[lang]}</h3>
             <div className="flex flex-col gap-2">
-              <p>{t.footer.sections.stayUpdated.description[lang]}</p>
-              {/* TODO: Add link */}
-              <p className="underline">
-                <a href="" target="_blank">
-                  {t.footer.sections.stayUpdated.newsletter[lang]}
-                </a>
+              <Link
+                to="/dev-team"
+                className="hover:underline underline-offset-2"
+              >
+                {t.footer.sections.theTeam.devTeam[lang]}
+              </Link>
+              <p>
+                {t.footer.sections.theTeam.photographer.prefix[lang]}{" "}
+                <Link
+                  to="https://www.flickr.com/people/darkismus/"
+                  target="_blank"
+                  className="underline"
+                >
+                  Tuomas Puikkonen
+                </Link>{" "}
+                {t.footer.sections.theTeam.photographer.suffix[lang]}
               </p>
             </div>
           </div>

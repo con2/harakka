@@ -34,6 +34,7 @@ import MyProfile from "@/pages/MyProfile";
 import MyBookingsPage from "@/pages/MyBookingsPage";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import TermsOfUse from "../pages/TermsOfUse";
+import DevTeam from "../pages/DevTeam";
 import Unauthorized from "../components/Unauthorized";
 import ItemsList from "../components/Items/ItemsList";
 import ItemDetails from "../components/Items/ItemsDetails";
@@ -52,6 +53,7 @@ import OrganizationsList from "../components/Organization/OrganizationsList";
 import ItemDetailsPage from "@/pages/AdminPanel/ItemDetailsPage";
 import AddCategory from "@/components/Admin/Categories/AddCategory";
 import MyBookings from "@/pages/MyBookings";
+import Reports from "@/pages/AdminPanel/Reports";
 
 export const router = createBrowserRouter([
   {
@@ -331,6 +333,16 @@ export const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
+          {
+            path: "reports",
+            element: (
+              <ProtectedRoute
+                allowedRoles={["tenant_admin", "storage_manager"]}
+              >
+                <Reports />
+              </ProtectedRoute>
+            ),
+          },
         ],
       },
       {
@@ -370,6 +382,10 @@ export const router = createBrowserRouter([
       {
         path: "/terms-of-use",
         element: <TermsOfUse />,
+      },
+      {
+        path: "/dev-team",
+        element: <DevTeam />,
       },
       {
         path: "/unauthorized",

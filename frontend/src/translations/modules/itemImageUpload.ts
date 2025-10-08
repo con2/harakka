@@ -14,6 +14,10 @@ export const itemImageUpload = {
       en: "File size must be less than {size}MB",
       fi: "Tiedoston koko ei saa ylittää {size}MB",
     },
+    tooManyFiles: {
+      en: "Only {max_files} images allowed",
+      fi: "Vain {max_files} kuvaa sallittu",
+    },
     invalidFileType: {
       en: "Invalid file type. Only images are allowed.",
       fi: "Virheellinen tiedostotyyppi. Vain kuvat ovat sallittuja.",
@@ -21,6 +25,38 @@ export const itemImageUpload = {
     emptyFile: {
       en: "File is empty",
       fi: "Tiedosto on tyhjä",
+    },
+    uploadingMain: {
+      success: {
+        en: "Image uploaded!",
+        fi: "Kuva ladattu!",
+      },
+      loading: {
+        en: "Uploading item image...",
+        fi: "Ladataan tuotekuvaa...",
+      },
+      error: {
+        en: "Failed to upload image, try again and contact support if the error persists.",
+        fi: "Kuvan lataaminen epäonnistui, yritä uudelleen ja ota yhteyttä tukeen, jos virhe toistuu.",
+      },
+    },
+    uploadingDetails: {
+      success: {
+        en: "Images uploaded!",
+        fi: "Kuvat ladattu!",
+      },
+      loading: {
+        en: "Uploading images...",
+        fi: "Ladataan kuvia...",
+      },
+      error: {
+        some: {
+          en: "Some images failed to upload",
+          fi: "Joidenkin kuvien lataus epäonnistui",
+        },
+        en: "Images failed to upload. Try again and contact support if the errors persists",
+        fi: "Kuvien lataus epäonnistui. Yritä uudelleen ja ota yhteyttä tukeen, jos virhe toistuu.",
+      },
     },
   },
   buttons: {

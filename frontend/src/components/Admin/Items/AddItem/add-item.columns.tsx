@@ -1,18 +1,22 @@
 // add-item-columns.tsx
 
 import { Button } from "@/components/ui/button";
-import { ItemFormData } from "@/types";
+import { CreateItemType } from "@common/items/form.types";
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, Trash2 } from "lucide-react";
+import { ClipboardPen, Trash } from "lucide-react";
 
 export const getItemColumns = (
-  onEdit: (item: ItemFormData) => void,
-  onDelete: (item: ItemFormData) => void,
-): ColumnDef<ItemFormData>[] => [
+  onEdit: (id: CreateItemType["id"]) => void,
+  onDelete: (item: CreateItemType) => void,
+): ColumnDef<CreateItemType>[] => [
   {
     header: "Item name",
     id: "item_name",
-    cell: ({ row }) => row.original.translations.en.item_name,
+    cell: ({ row }) => (
+      <div className="truncate max-w-[150px] justify-self-end">
+        {row.original.translations.en.item_name}
+      </div>
+    ),
   },
   {
     header: "Quantity",
@@ -22,20 +26,20 @@ export const getItemColumns = (
   {
     header: "Storage",
     id: "organization-location",
-    cell: ({ row }) => row.original.location_details?.name,
+    cell: ({ row }) => row.original.location.name,
   },
   {
     header: "Actions",
     cell: ({ row }) => {
       const item = row.original;
       return (
-        <>
+        <div className="flex gap-2 justify-self-end">
           <Button
             size="sm"
-            onClick={() => onEdit(item)}
+            onClick={() => onEdit(item.id)}
             className="text-highlight2/80 hover:text-highlight2 hover:bg-highlight2/20"
           >
-            <Edit className="h-4 w-4" />
+            <ClipboardPen className="h-4 w-4" />
           </Button>
           <Button
             size="sm"
@@ -44,9 +48,9 @@ export const getItemColumns = (
             className="text-red-600 hover:text-red-800 hover:bg-red-100"
             aria-label={`Delete ${item.translations.en.item_name}`}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash className="!h-4 !w-4" />
           </Button>
-        </>
+        </div>
       );
     },
   },

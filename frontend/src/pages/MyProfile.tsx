@@ -304,7 +304,7 @@ const MyProfile = () => {
                           key={index}
                           className="border p-4 rounded-md bg-slate-50"
                         >
-                          <div className="mb-2">
+                          <div className="mb-4">
                             <label className="flex items-center gap-2 text-sm">
                               <input
                                 className="accent-secondary"
@@ -322,7 +322,7 @@ const MyProfile = () => {
                             </label>
                           </div>
 
-                          <div>
+                          <div className="space-y-4">
                             <div>
                               <label className="block text-xs font-medium text-gray-700">
                                 {

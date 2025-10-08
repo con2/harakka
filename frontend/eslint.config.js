@@ -63,6 +63,7 @@ export default tseslint.config(
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
           destructuredArrayIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
           ignoreRestSiblings: true, // Allow unused vars when destructuring irrelevant properties.
         },
       ],
