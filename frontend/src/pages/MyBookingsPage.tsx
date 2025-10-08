@@ -41,6 +41,7 @@ import {
 import { ItemImage } from "@/components/ItemImage";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileTable from "@/components/ui/MobileTable";
+import { isPending } from "@reduxjs/toolkit";
 
 const MyBookingsPage = () => {
   const { id } = useParams();
@@ -737,6 +738,7 @@ const MyBookingsPage = () => {
           </div>
 
           {HAS_SELF_PICKUP &&
+            !isPending &&
             !END_STATUSES.includes(booking.status!) &&
             TODAY >= PICKUP_DATE &&
             !showEdit && (

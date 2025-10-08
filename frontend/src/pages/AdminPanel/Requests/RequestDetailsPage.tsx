@@ -640,6 +640,7 @@ function RequestDetailsPage() {
           </div>
         </div>
         {HAS_SELF_PICKUP &&
+          !allItemsPending &&
           TODAY >= PICKUP_DATE &&
           !END_STATUSES.includes(status) &&
           !showEdit && (
