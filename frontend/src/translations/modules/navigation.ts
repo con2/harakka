@@ -48,6 +48,10 @@ export const navigation = {
       en: "Notifications",
       fi: "Ilmoitukset",
     },
+    description: {
+      en: "View and manage your notifications",
+      fi: "Tarkastele ja hallinnoi ilmoituksiasi",
+    },
     none: {
       en: "Nothing new yet.",
       fi: "Ei uusia ilmoituksia",
